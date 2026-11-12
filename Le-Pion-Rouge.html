@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Pion Rouge : la zone de chalandise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Idée : une table de jeu claire en fond, des cartes de verre dépoli, un accent rouge pion et un filet de laiton. */
+:root{
+  --bg:#e8eeec;
+  --surface:rgba(255,255,255,.88);
+  --ink:#12201c;
+  --muted:#58685f;
+  --accent:#a8322a;
+  --accent-dark:#7e231d;
+  --gold:#b58a2e;
+  --ok:#1f8a58;
+  --ko:#c4452f;
+  --line:#d3ddda;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+a{color:var(--accent-dark)}
+.scene{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.scene svg{width:100%;height:100%;display:block}
+.scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(236,242,240,.10) 0%,rgba(236,242,240,.5) 55%,rgba(236,242,240,.85) 100%)}
+.wrap{position:relative;z-index:1;max-width:580px;margin:0 auto;padding:18px 16px 56px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px 12px;flex-wrap:wrap}
+.top>div:first-child{display:contents}
+.top .brand{flex:1 1 100%}
+.brand{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.22em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.brand::before{content:"";width:22px;height:2px;background:var(--gold);display:block}
+.chrono{display:inline-flex;align-items:center;gap:8px;margin:0;padding:4px 12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;font-variant-numeric:tabular-nums;font-size:16px;font-weight:700;letter-spacing:.04em}
+.chrono::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.keytag{display:flex;align-items:center;gap:5px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;backdrop-filter:blur(10px)}
+.slot{width:13px;height:13px;border-radius:50%;border:1.5px solid #aebdb8;background:transparent}
+.slot.on{background:var(--accent);border-color:var(--accent)}
+.card{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);border-radius:22px;padding:26px 22px;box-shadow:0 24px 60px rgba(18,32,28,.14)}
+.eyebrow{margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-dark)}
+h1,h2{font-family:var(--display);font-weight:700;line-height:1.08;margin:0 0 14px;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:44px}
+h2{font-size:28px}
+p{margin:0 0 12px}
+.phrase{font-family:var(--display);font-weight:600;font-size:25px;line-height:1.28;margin:14px 0 22px;padding:0 0 0 16px;border-left:3px solid var(--gold);text-wrap:balance}
+.btn{font:700 16px var(--body);min-height:50px;border-radius:999px;border:2px solid var(--accent);background:var(--accent);color:#fff;padding:0 24px;cursor:pointer;transition:background .15s,transform .15s}
+.btn:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.btn:focus-visible,.chip:focus-visible,.link:focus-visible,.opt:focus-visible,.seg:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 140px}
+.link{background:none;border:0;padding:14px 0 0;font:600 15px var(--body);color:var(--accent-dark);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.hint{margin:14px 0 0;padding:12px 14px;background:#fff;border:1px dashed var(--gold);border-radius:12px;font-size:15px}
+.fb{border-left:4px solid;padding:12px 14px;margin:14px 0;background:#fff;border-radius:0 12px 12px 0;font-size:16px}
+.fb.ok{border-color:var(--ok)}
+.fb.ko{border-color:var(--ko)}
+.field{display:flex;flex-direction:column;gap:6px;margin:18px 0}
+.field label{font-weight:600;font-size:15px}
+input[type=text],textarea{font:400 18px var(--body);min-height:50px;padding:8px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:140px;font-size:15px}
+.small{font-size:14px;color:var(--muted)}
+.line{min-height:66px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border:1.5px dashed #aebdb8;border-radius:14px;background:#fff;margin:12px 0}
+.placeholder{font-size:15px;color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+.chip{font:600 16px var(--body);min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-align:left;transition:border-color .15s}
+.chip:hover{border-color:var(--accent)}
+.chip.placed{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip:disabled{opacity:.5;cursor:default}
+.ctx{font-size:14px;margin:0 0 4px;color:var(--muted)}
+.client{font-family:var(--display);font-weight:500;font-size:23px;line-height:1.3;margin:14px 0 18px;padding:0 0 0 16px;border-left:3px solid var(--gold)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:500 16px var(--body);text-align:left;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.good{border-color:var(--ok);background:#e6f4ec}
+.opt.bad{border-color:var(--ko);background:#fbe9e5}
+.opt:disabled{cursor:default}
+.gauge-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-top:6px;color:var(--muted)}
+.gauge{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--ko),var(--gold),var(--ok));background-size:600px 100%;transition:width .4s}
+.digit{width:88px;height:108px;display:grid;place-items:center;margin:8px 0 14px;background:var(--accent);color:#fff;border-radius:18px;font-family:var(--display);font-size:64px;font-weight:700}
+.pts{font-weight:700;color:var(--accent-dark)}
+.code-in{font:700 30px var(--display);letter-spacing:.3em;text-align:center;max-width:320px}
+.err{min-height:24px;color:var(--ko);font-weight:600;margin:0 0 8px}
+.bulletin{border:1.5px solid var(--line);border-radius:16px;padding:18px;margin:14px 0;background:#fff}
+.bulletin dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}
+.bulletin dt{font-weight:600;color:var(--muted)}
+.bulletin dd{margin:0;font-variant-numeric:tabular-nums;font-weight:600}
+.copytext{font-size:14px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;user-select:all;word-break:break-word}
+.rules{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;margin:0 0 12px}
+.rules ul{margin:6px 0 0;padding-left:18px}
+.tbl{overflow-x:auto;margin:0 0 16px;border-radius:14px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}
+th,td{padding:8px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--ink);color:#fff;font-weight:600}
+tr:last-child td{border-bottom:0}
+.qn{font-weight:700;margin:6px 0 10px}
+.wrow{margin:0 0 16px}
+.wdef{margin:0 0 6px;font-size:15px}
+.wrow input{max-width:280px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.wrow.ok input{border-color:var(--ok);background:#e6f4ec}
+.wmeta{font-size:13px;color:var(--muted);margin-left:8px}
+.first{font-family:var(--display);color:var(--accent-dark);font-weight:700}
+.mail{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;display:flex;flex-direction:column;gap:4px}
+.seg{font:400 15.5px var(--body);text-align:left;background:transparent;border:2px solid transparent;border-radius:10px;padding:7px 9px;color:var(--ink);cursor:pointer;line-height:1.45}
+.seg:hover{border-color:var(--line)}
+.seg.sel{border-color:var(--gold);background:#fbf3df}
+.seg.hit{border-color:var(--ok);background:#e6f4ec}
+.seg.bad{border-color:var(--ko);background:#fbe9e5;text-decoration:line-through}
+.seg.miss{border:2px dashed var(--ko);background:#fff}
+.seg:disabled{cursor:default}
+.foot{text-align:center;font-size:13px;color:var(--muted)}
+.vlist{padding-left:18px;margin:12px 0}
+.vlist li{margin:0 0 6px}
+.cd-wrap{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.cd-bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.cd-bar i{display:block;height:100%;background:var(--accent);transition:width 1s linear}
+.cd-bar i.low{background:var(--ko)}
+.cd{font-variant-numeric:tabular-nums;font-weight:700;min-width:48px;text-align:right}
+.ans{max-width:300px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.tiles{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+.tile{width:46px;height:56px;display:grid;place-items:center;background:var(--ink);color:#fff;border-radius:12px;font-family:var(--display);font-size:28px;font-weight:700}
+.scene7{margin:8px 0 12px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.scene7 svg{display:block;width:100%;height:auto}
+.line.stack{flex-direction:column;align-items:stretch}
+.line.stack .chip{width:100%}
+select{font:400 16px var(--body);min-height:48px;padding:8px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.prow{margin:0 0 14px;display:flex;flex-direction:column;gap:6px}
+.prow p{margin:0;font-weight:600}
+.ok-t{color:var(--ok);font-weight:700}
+.ko-t{color:var(--ko);font-weight:700}
+.carnet{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:15px;backdrop-filter:blur(10px)}
+.carnet summary{cursor:pointer;font-weight:700}
+.carnet ol{margin:8px 0 0;padding-left:20px}
+.carnet li{margin:0 0 6px}
+.ord{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.orow{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px 8px 8px 12px}
+.orow .num{font-family:var(--display);font-weight:700;color:var(--accent-dark);min-width:18px}
+.orow .tx{flex:1;font-size:16px;line-height:1.4}
+.mv{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-size:16px;cursor:pointer}
+.mv:disabled{opacity:.25;cursor:default}
+.mv:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.gauge i,.btn,.chip,.opt,.cd-bar i{transition:none}}
+@media (max-width:400px){h1{font-size:36px}.card{padding:22px 18px}}
+
+.tbl.nosel,.nosel{user-select:none;-webkit-user-select:none}
+.map{margin:8px 0 14px;border-radius:14px;border:1px solid var(--line);background:#fff;overflow:hidden}
+.map svg{display:block;width:100%;height:auto}
+.tbl select{min-height:40px;padding:4px 8px;font-size:15px;min-width:104px}
+.tbl td.n{white-space:nowrap}
+.items{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.it{border-left:4px solid;padding:9px 12px;background:#fff;border-radius:0 12px 12px 0;font-size:15px}
+.it.ok{border-color:var(--ok)}
+.it.ko{border-color:var(--ko)}
+.it.man{border-color:var(--gold)}
+.it small{display:block;color:var(--muted);margin-top:2px}
+.stmts{display:flex;flex-direction:column;gap:12px;margin:10px 0}
+.stmt{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.stmt p{margin:0 0 6px;font-size:15.5px}
+.facts{display:grid;grid-template-columns:1fr auto;gap:2px 14px;margin:8px 0 12px;font-size:15px}
+.facts b{font-variant-numeric:tabular-nums}
+.sub{font-weight:700;margin:16px 0 4px}
+.rad{border:0;padding:0;margin:14px 0}
+.rad legend{font-weight:600;font-size:15px;margin:0 0 8px;padding:0}
+.radl{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px;cursor:pointer;font-size:15.5px;line-height:1.4}
+.radl:has(input:checked){border-color:var(--accent);background:#fbeceb}
+.radl input{margin-top:3px;accent-color:var(--accent);width:18px;height:18px;flex:none}
+.rap{position:sticky;bottom:10px;z-index:5;background:#fff;border:2px solid var(--accent);box-shadow:0 8px 24px rgba(18,32,28,.22);max-height:70vh;overflow:auto;border-radius:16px;padding:6px 14px}
+.rap summary{color:var(--accent-dark);font-size:16px;padding:8px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="scene"><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+<linearGradient id="tbl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe6d6"/><stop offset="1" stop-color="#e3d6bf"/></linearGradient>
+<linearGradient id="brd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7f1e4"/><stop offset="1" stop-color="#e9ddc4"/></linearGradient>
+</defs>
+<rect width="1200" height="800" fill="url(#tbl)"/>
+<g transform="translate(600 420) rotate(-8)">
+<rect x="-300" y="-300" width="600" height="600" rx="18" fill="url(#brd)" stroke="#b58a2e" stroke-width="4" opacity=".9"/>
+<g fill="#c9b78f" opacity=".45">
+<rect x="-300" y="-300" width="100" height="100"/><rect x="-100" y="-300" width="100" height="100"/><rect x="100" y="-300" width="100" height="100"/>
+<rect x="-200" y="-200" width="100" height="100"/><rect x="0" y="-200" width="100" height="100"/><rect x="200" y="-200" width="100" height="100"/>
+<rect x="-300" y="-100" width="100" height="100"/><rect x="-100" y="-100" width="100" height="100"/><rect x="100" y="-100" width="100" height="100"/>
+<rect x="-200" y="0" width="100" height="100"/><rect x="0" y="0" width="100" height="100"/><rect x="200" y="0" width="100" height="100"/>
+<rect x="-300" y="100" width="100" height="100"/><rect x="-100" y="100" width="100" height="100"/><rect x="100" y="100" width="100" height="100"/>
+<rect x="-200" y="200" width="100" height="100"/><rect x="0" y="200" width="100" height="100"/><rect x="200" y="200" width="100" height="100"/>
+</g>
+</g>
+<g transform="translate(250 230)"><circle r="46" fill="#a8322a"/><ellipse cy="-8" rx="26" ry="24" fill="#c0463d"/><circle cy="-52" r="22" fill="#a8322a"/></g>
+<g transform="translate(930 560)"><circle r="40" fill="#1c322c"/><ellipse cy="-7" rx="23" ry="21" fill="#2d4a42"/><circle cy="-46" r="19" fill="#1c322c"/></g>
+<g transform="translate(980 190) rotate(14)"><rect x="-44" y="-44" width="88" height="88" rx="16" fill="#fff" stroke="#12201c" stroke-width="3"/><g fill="#12201c"><circle cx="-20" cy="-20" r="7"/><circle cx="20" cy="-20" r="7"/><circle cx="0" cy="0" r="7"/><circle cx="-20" cy="20" r="7"/><circle cx="20" cy="20" r="7"/></g></g>
+<g transform="translate(220 640) rotate(-12)"><rect x="-40" y="-40" width="80" height="80" rx="15" fill="#fff" stroke="#12201c" stroke-width="3"/><g fill="#a8322a"><circle cx="-18" cy="-18" r="7"/><circle cx="18" cy="18" r="7"/><circle cx="0" cy="0" r="7"/></g></g>
+</svg></div>
+<div class="wrap" id="app"></div>
+<script>
+/* ---------- Constantes ---------- */
+const SALT="pion-rouge-2026",STATE_V=2;
+const ZN=['Primaire','Secondaire','Tertiaire','Hors zone'];
+const COM=[
+ {n:"Pontoise",km:2,min:4,pop:11800,ang:75},
+ {n:"Osny",km:5,min:8,pop:8400,ang:200},
+ {n:"Cergy",km:12,min:9,pop:9600,ang:215},
+ {n:"Éragny",km:11,min:14,pop:8200,ang:262},
+ {n:"Jouy-le-Moutier",km:13,min:17,pop:7300,ang:160},
+ {n:"Auvers-sur-Oise",km:9,min:24,pop:4900,ang:-10},
+ {n:"Neuville-sur-Oise",km:22,min:27,pop:6300,ang:300},
+ {n:"Taverny",km:25,min:29,pop:7600,ang:80},
+ {n:"Franconville",km:31,min:38,pop:18000,ang:20}
+];
+const zoneOf=m=>m<=10?0:m<=20?1:m<=30?2:3;
+const zoneKm=k=>k<=10?0:k<=20?1:k<=30?2:3;
+COM.forEach(c=>c.z=zoneOf(c.min));
+const CMP=[{n:"Le Plateau",c:0},{n:"Le Dé Pipé",c:4},{n:"Pions & Cie",c:6},{n:"Jeux Max",c:8}];
+const EPN=["La carte","Les habitants","Km ou minutes","La condition","Les indicateurs","Familles et dépenses","La concurrence","Le CA potentiel","Le conseil","Le choix du site"];
+const EPLIM=[300,210,180,150,300,420,420,300,300,360];
+const NEP=EPN.length;
+
+/* ---------- Outils ---------- */
+const $app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z]/g,'');
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const nf=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const eur=n=>nf(n)+' €';
+const sgn=n=>(n<0?'−':'')+nf(Math.abs(n));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function rngOf(str){let h=2166136261;for(const ch of str){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}let a=h>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rr=(r,a,b,step)=>a+step*Math.floor(r()*((b-a)/step+1));
+const r100=n=>Math.round(n/100)*100;
+function parseNum(s){s=String(s==null?'':s).replace(/[\s  €%]/g,'').replace(',','.');return /^-?\d+(\.\d+)?$/.test(s)?parseFloat(s):NaN}
+function sig(name,score,time){
+  const base=norm(name)+'|'+score+'|'+time+'|'+SALT;
+  let h1=2166136261>>>0,h2=5381;
+  for(let i=0;i<base.length;i++){const c=base.charCodeAt(i);h1^=c;h1=Math.imul(h1,16777619)>>>0;h2=((h2*33)^c)>>>0;}
+  const s=(h1.toString(36)+h2.toString(36)).toUpperCase().replace(/[^A-Z0-9]/g,'').padEnd(6,'0');
+  return s.slice(0,3)+'-'+s.slice(3,6);
+}
+
+/* ---------- Données propres à chaque élève ---------- */
+function makeData(seedStr){
+  const r=rngOf(norm(seedStr)||'ELEVE');
+  for(let tries=0;tries<400;tries++){
+    const pop=COM.map((c,i)=>i===8?c.pop:r100(c.pop*(0.88+r()*0.24)));
+    const zp=[0,0,0];COM.forEach((c,i)=>{if(c.z<3)zp[c.z]+=pop[i]});
+    const total=zp[0]+zp[1]+zp[2];
+    const thr=Math.floor((total-2000)/5000)*5000;
+    const rev=[];rev[0]=rr(r,2100,2500,50);rev[1]=rev[0]-rr(r,100,250,50);rev[2]=rev[1]-rr(r,100,250,50);
+    const enf=[];enf[0]=rr(r,28,36,1);enf[1]=enf[0]-rr(r,2,5,1);enf[2]=enf[1]-rr(r,2,5,1);
+    const car=[];car[0]=rr(r,84,90,1);car[1]=car[0]+rr(r,2,5,1);car[2]=car[1]+rr(r,1,3,1);
+    const fam=[rr(r,2100,2700,100),rr(r,1300,1700,100),rr(r,1600,2000,100)];
+    const taux=[rr(r,40,60,5),rr(r,20,30,5),rr(r,5,15,5)];
+    const bud=[rr(r,220,260,10),rr(r,180,210,10),rr(r,140,170,10)];
+    const fc=fam.map((f,i)=>f*taux[i]/100);
+    const dep=fc.map((f,i)=>f*bud[i]);
+    const dtot=dep[0]+dep[1]+dep[2];
+    const ca=[rr(r,70000,95000,5000),rr(r,100000,130000,5000),rr(r,80000,100000,5000),rr(r,60000,80000,5000)];
+    const part=[rr(r,85,95,5),rr(r,55,65,5),rr(r,35,45,5),null];
+    const pess=[Math.min(100,part[0]+10),part[1]+15,part[2]+10];
+    const cz=[0,1,2].map(i=>ca[i]*part[i]/100),cp=[0,1,2].map(i=>ca[i]*pess[i]/100);
+    const ctot=cz[0]+cz[1]+cz[2],cptot=cp[0]+cp[1]+cp[2];
+    const pot=dtot-ctot,pot2=dtot-cptot;
+    const min=Math.floor((pot-3000)/10000)*10000;
+    if(pot-min<3000||pot2>min-5000||min<100000)continue;
+    const roles=[0,1,2];for(let i=2;i>0;i--){const j=Math.floor(r()*(i+1));[roles[i],roles[j]]=[roles[j],roles[i]]}
+    const delt=[rr(r,20,40,1)*1000,rr(r,5,12,1)*1000,-rr(r,30,60,1)*1000],SN=['Centre-ville','Zone commerciale','Près de la gare'];
+    const sites=roles.map((ro,i)=>{const p=min+delt[ro],ct=rr(r,120000,200000,5000);return {n:SN[i],pot:p,ct,dep:p+ct}});
+    return {pop,zp,total,thr,rev,enf,car,fam,taux,bud,fc,dep,dtot,ca,part,pess,cz,cp,ctot,cptot,pot,pot2,min,sites};
+  }
+  return null;
+}
+
+/* ---------- État ---------- */
+function fresh(){return {ord:{},v:STATE_V,screen:'intro',name:'',t0:null,tEnd:null,ep:0,phase:'play',epT0:null,D:null,form:{},items:[],pts:Array(NEP).fill(0),times:Array(NEP).fill(0),log:[],done:Array(NEP).fill(false)}}
+let S=fresh();
+const elapsed=()=>S.t0?((S.tEnd||Date.now())-S.t0):0;
+const total=()=>S.pts.reduce((a,b)=>a+b,0);
+const val=id=>S.form[id]==null?'':S.form[id];
+
+/* ---------- Composants ---------- */
+const card=h=>`<section class="card">${h}</section>`;
+function head(){
+  const slots=EPN.map((_,i)=>`<span class="slot ${S.done[i]?'on':''}"></span>`).join('');
+  return `<div class="top"><div><div class="brand">Le Pion Rouge</div></div><div class="chrono" id="chrono">${fmt(elapsed())}</div><div class="keytag" aria-label="Progression">${slots}</div></div>`;
+}
+function rappel(){
+  return `<details class="carnet rap"><summary>Besoin d'aide ? Ouvre le rappel de cours</summary><ul style="margin:8px 0 0;padding-left:18px">
+  <li>Zone primaire : 0 à 10 min de trajet en voiture. Secondaire : 10 à 20 min. Tertiaire : 20 à 30 min. Au-delà de 30 min : hors zone.</li>
+  <li>Courbe isochrone : même temps de trajet (elle se déforme selon les routes et les obstacles). Courbe isométrique : même distance (c'est un cercle).</li>
+  <li>Familles clientes = familles avec enfants × taux d'attractivité.</li>
+  <li>Dépenses de la zone = familles clientes × budget annuel par famille.</li>
+  <li>CA pris par un concurrent = son CA × part de ses clients qui habitent la zone.</li>
+  <li>CA potentiel = dépenses de la zone − CA pris par les concurrents.</li></ul></details>`;
+}
+const fInp=(id,lab,ph)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><input type="text" inputmode="decimal" autocomplete="off" id="${id}" data-f="1" placeholder="${ph||''}" value="${esc(val(id))}"></div>`;
+const fSel=(id,lab,opts)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><select id="${id}" data-f="1">${['—'].concat(opts).map(o=>`<option value="${esc(o)}" ${val(id)===o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+const comOrder=()=>S.ord.com||(S.ord.com=shuffle(COM.map((_,i)=>i)));
+const cmpOrder=()=>S.ord.cmp||(S.ord.cmp=shuffle(CMP.map((_,i)=>i)));
+const qSel=(id,lab,arr)=>{const o=S.ord[id]||(S.ord[id]=shuffle(arr.map((_,i)=>i)));return `<fieldset class="rad"><legend>${lab}</legend>${o.map((i,n)=>`<label class="radl"><input type="radio" name="${id}" value="${esc(arr[i])}" ${val(id)===arr[i]?'checked':''}><span>${esc(arr[i])}</span></label>`).join('')}</fieldset>`};
+const fTa=(id,lab,rows)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><textarea id="${id}" data-f="1" rows="${rows||4}">${esc(val(id))}</textarea></div>`;
+const recall=(rows,t)=>`<div class="rules"><strong>${t}</strong><div class="facts">${rows.map(r=>`<span>${r[0]}</span><b>${r[1]}</b>`).join('')}</div></div>`;
+function table(heads,rows,cls){return `<div class="tbl nosel"><table><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i===0?'n':''}">${c}</td>`).join('')}</tr>`).join('')}</table></div>`}
+
+/* Carte */
+function mapSvg(mode){
+  const cx=300,cy=300,K=8,zc=['#1f6f5c','#4a9c86','#c9a24a','#9aa5a1'];
+  const side={Osny:'l',"Jouy-le-Moutier":'l',Cergy:'l',"Éragny":'l',Franconville:'l'};
+  const halo='stroke="#f7f9f6" stroke-width="4" paint-order="stroke"';
+  let o=`<svg viewBox="20 125 580 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carte autour du Pion Rouge">`;
+  o+=`<rect x="0" y="0" width="600" height="620" fill="#f7f9f6"/>`;
+  [10,20,30].forEach(k=>{o+=`<circle cx="${cx}" cy="${cy}" r="${k*K}" fill="none" stroke="#8a9a94" stroke-width="2" stroke-dasharray="6 7"/><text x="${cx-k*K*0.707-4}" y="${cy+k*K*0.707+14}" font-size="14" fill="#58685f" text-anchor="end" ${halo}>${k} km</text>`});
+  o+=`<path d="M345 0 C330 150 360 260 345 330 S330 520 350 600" fill="none" stroke="#7fb2d4" stroke-width="16" opacity=".75"/><text x="370" y="470" font-size="14" fill="#3b7aa3" ${halo}>la rivière</text>`;
+  o+=`<rect x="333" y="190" width="26" height="10" rx="2" fill="#12201c"/><text x="329" y="186" font-size="13" fill="#12201c" text-anchor="end" ${halo}>seul pont</text>`;
+  o+=`<line x1="300" y1="300" x2="110" y2="178" stroke="#e0a03a" stroke-width="8" stroke-linecap="round"/><text x="104" y="166" font-size="14" fill="#8a5c10" ${halo}>voie rapide</text>`;
+  COM.forEach((c,i)=>{
+    const a=c.ang*Math.PI/180,x=cx+c.km*K*Math.cos(a),y=cy+c.km*K*Math.sin(a);
+    c.x=x;c.y=y;
+    const fill=mode==='zones'||mode==='comp'?zc[c.z]:'#12201c',left=side[c.n]==='l';
+    o+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${fill}" stroke="#fff" stroke-width="2.5"/>`;
+    const tx=left?x-11:x+11,an=left?'end':'start';
+    o+=`<text x="${tx.toFixed(1)}" y="${(y+1).toFixed(1)}" font-size="16" font-weight="700" fill="#12201c" text-anchor="${an}" ${halo}>${esc(c.n)}</text><text x="${tx.toFixed(1)}" y="${(y+16).toFixed(1)}" font-size="13.5" fill="#445149" text-anchor="${an}" ${halo}>${c.min} min</text>`;
+  });
+  if(mode==='comp')CMP.forEach(k=>{const c=COM[k.c],left=side[c.n]==='l',tx=left?c.x-11:c.x+11;o+=`<rect x="${(tx+(left?-70:0)).toFixed(1)}" y="${(c.y+22).toFixed(1)}" width="11" height="11" fill="#a8322a" stroke="#fff"/><text x="${(tx+(left?-76+0:15)).toFixed(1)}" y="${(c.y+32).toFixed(1)}" font-size="13" font-weight="700" fill="#a8322a" text-anchor="${left?'end':'start'}" ${halo}>${esc(k.n)}</text>`});
+  o+=`<polygon points="300,282 304.5,295 318,295 307,303 311,316 300,308 289,316 293,303 282,295 295.5,295" fill="#a8322a" stroke="#fff" stroke-width="2"/>`;
+  o+=`<text x="300" y="270" font-size="15" font-weight="700" fill="#a8322a" text-anchor="middle" ${halo}>Le Pion Rouge</text>`;
+  return o+`</svg>`;
+}
+
+/* ---------- Écrans ---------- */
+function vIntro(){
+  return card(`<p class="eyebrow">Cas d'entraînement · environ 55 minutes</p><h1>Le Pion Rouge</h1>
+  <p>Mme Morel veut ouvrir <strong>Le Pion Rouge</strong>, un bar à jeux de société à Pontoise. Tu es conseiller(ère) stagiaire : tu dois étudier sa zone de chalandise et lui dire s'il faut ouvrir.</p>
+  <p>Dix épreuves, une à la fois, avec un chrono. Prends une calculatrice et une feuille de brouillon.</p>
+  <div class="rules"><strong>Les règles</strong><ul><li>Les noms de communes sont réels, mais les distances, temps et chiffres sont inventés.</li><li>Tes chiffres sont propres à toi : ceux d'un camarade seront différents.</li><li>Tu ne peux pas revenir en arrière. Si le chrono finit, ta réponse est envoyée.</li><li>Une erreur de calcul dans une épreuve n'est pas punie dans la suivante.</li></ul></div>
+  <div class="field"><label for="prenom">Ton prénom et l'initiale de ton nom (exemple : Léa M.)</label><input type="text" id="prenom" maxlength="30" autocomplete="off"></div>
+  <button class="btn" data-act="start" style="width:100%">Commencer</button>
+  <p class="small" style="margin-top:12px">Rien n'est enregistré : si tu fermes la page, tu recommences.</p>
+  <p class="foot"><a href="#prof">Espace professeur</a></p>`);
+}
+function epHead(k,intro){
+  const left=EPLIM[k]-Math.floor((Date.now()-S.epT0)/1000);
+  const cd=S.phase==='play'?`<div class="cd-wrap"><div class="cd-bar"><i id="cdbar" style="width:${Math.max(0,left)/EPLIM[k]*100}%"></i></div><span class="cd" id="cd">${Math.max(0,left)} s</span></div>`:'';
+  return `<p class="eyebrow">Épreuve ${k+1} sur ${NEP}</p><h2>${EPN[k]}</h2>${S.phase==='play'?cd+`<p>${intro}</p>`:''}`;
+}
+const EPV=[];
+
+/* 1 : la carte */
+EPV[0]={intro:`Place chaque commune dans sa zone, d'après son temps de trajet. Le Pion Rouge est l'étoile.`,
+ play(){
+  return `<div class="map">${mapSvg('plain')}</div>`+table(['Commune','km','min','Zone'],comOrder().map(i=>[esc(COM[i].n),COM[i].km,COM[i].min,`<select id="z_${i}" data-f="1" aria-label="Zone de ${esc(COM[i].n)}">${['—'].concat(ZN).map(o=>`<option ${val('z_'+i)===o?'selected':''}>${o}</option>`).join('')}</select>`]));
+ },
+ check(){return COM.map((c,i)=>selItem('Zone de '+c.n,'z_'+i,ZN[c.z],`${c.min} min : `+['entre 0 et 10 min, primaire.','entre 10 et 20 min, secondaire.','entre 20 et 30 min, tertiaire.','plus de 30 min, hors zone.'][c.z]))},
+ res(){return `<div class="map">${mapSvg('zones')}</div>`}};
+
+/* 2 : les habitants */
+EPV[1]={intro:`Regroupe les communes par zone (sans compter celles hors zone) et calcule le nombre d'habitants. Puis calcule le total de la zone de chalandise.`,
+ play(){const D=S.D;
+  return table(['Commune','Habitants','Temps'],comOrder().map(i=>[esc(COM[i].n),nf(D.pop[i]),COM[i].min+' min']))+fInp('hp','Habitants de la zone primaire')+fInp('hs','Habitants de la zone secondaire')+fInp('ht','Habitants de la zone tertiaire')+fInp('htot','Total de la zone de chalandise');
+ },
+ check(){const D=S.D,L=z=>COM.map((c,i)=>c.z===z?c.n+' '+nf(D.pop[i]):null).filter(Boolean).join(' + ');
+  return [numItem('Zone primaire','hp',[D.zp[0]],nf,L(0)+' = '+nf(D.zp[0])),numItem('Zone secondaire','hs',[D.zp[1]],nf,L(1)+' = '+nf(D.zp[1])),numItem('Zone tertiaire','ht',[D.zp[2]],nf,L(2)+' = '+nf(D.zp[2])),
+   numItem('Total de la zone','htot',[D.total,sNum('hp')+sNum('hs')+sNum('ht')],nf,'Primaire + secondaire + tertiaire = '+nf(D.total)+'. Franconville est hors zone.')]}};
+
+/* 3 : km ou minutes */
+const OPT3=[{id:'a',t:"La courbe isochrone, car les clients comptent en temps de trajet réel"},{id:'b',t:"La courbe isométrique, car un cercle est simple à tracer et à mesurer sur la carte"},{id:'c',t:"Aucune des deux, car une zone de chalandise n'a pas de limite précise"}];
+EPV[2]={intro:`Compare deux communes : leur zone d'après la distance seule (10, 20 et 30 km), puis leur vraie zone d'après le temps de trajet.`,
+ play(){const A=COM[5],C=COM[2];
+  return `<div class="map">${mapSvg('plain')}</div>`+`<p><strong>${A.n}</strong> : ${A.km} km, ${A.min} min. <strong>${C.n}</strong> : ${C.km} km, ${C.min} min.</p>`+
+  fSel('a_km',`${A.n} : zone selon la distance seule`,ZN.slice(0,3))+fSel('a_t',`${A.n} : vraie zone (temps)`,ZN.slice(0,3))+fSel('c_km',`${C.n} : zone selon la distance seule`,ZN.slice(0,3))+fSel('c_t',`${C.n} : vraie zone (temps)`,ZN.slice(0,3))+
+  qSel('courbe','Quelle courbe est la plus pertinente pour un commerce ?',OPT3.map(o=>o.t));
+ },
+ check(){const A=COM[5],C=COM[2];
+  return [selItem(A.n+' : zone selon la distance',`a_km`,ZN[zoneKm(A.km)],`${A.km} km : moins de 10 km, donc primaire en distance.`),selItem(A.n+' : vraie zone','a_t',ZN[A.z],`${A.min} min : la rivière et son seul pont rallongent le trajet, donc tertiaire.`),
+   selItem(C.n+' : zone selon la distance','c_km',ZN[zoneKm(C.km)],`${C.km} km : entre 10 et 20 km, donc secondaire en distance.`),selItem(C.n+' : vraie zone','c_t',ZN[C.z],`${C.min} min : la voie rapide raccourcit le trajet, donc primaire.`),
+   selItem('Courbe la plus pertinente','courbe',OPT3[0].t,"L'isochrone suit les routes et les obstacles : elle montre ce que vit vraiment le client.")]}};
+
+/* 4 : la condition */
+EPV[3]={intro:`Compare le total d'habitants à la condition du franchiseur.`,
+ play(){const D=S.D;
+  return `<p>Le franchiseur exige une zone de chalandise d'au moins <strong>${nf(D.thr)} habitants</strong>.</p>`+recall([['Zone primaire',nf(D.zp[0])],['Zone secondaire',nf(D.zp[1])],['Zone tertiaire',nf(D.zp[2])],['Total de la zone',nf(D.total)]],'Tes résultats corrigés de l\'épreuve 2')+fSel('cond','La condition est-elle remplie avec les trois zones ?',['Oui','Non'])+fInp('ps','Habitants avec seulement les zones primaire et secondaire')+fInp('part','Part de la zone primaire dans le total (en %, arrondie à l\'unité)');
+ },
+ check(){const D=S.D,sp=sNum('hp')+sNum('hs'),st=sNum('hp')+sNum('hs')+sNum('ht');
+  return [selItem('Condition remplie ?','cond',D.total>=D.thr?'Oui':'Non',`${nf(D.total)} habitants, contre ${nf(D.thr)} demandés.`),
+   numItem('Zones primaire + secondaire','ps',[D.zp[0]+D.zp[1],sp],nf,`${nf(D.zp[0])} + ${nf(D.zp[1])} = ${nf(D.zp[0]+D.zp[1])}. C'est ${D.zp[0]+D.zp[1]>=D.thr?'suffisant':'insuffisant'} : il faut ${nf(D.thr)}.`),
+   numItem('Part de la zone primaire','part',[Math.round(D.zp[0]/D.total*100),Math.round(D.zp[0]/st*100)],n=>n+' %',`${nf(D.zp[0])} ÷ ${nf(D.total)} × 100 = ${Math.round(D.zp[0]/D.total*100)} %.`,1)]}};
+
+/* 5 : les indicateurs */
+function stmts(){
+  const D=S.D;
+  return [
+   {t:`En zone primaire, ${D.enf[0]} % des foyers ont des enfants : c'est la part la plus élevée.`,a:'Favorable',n:`Les familles avec enfants sont la cible d'un bar à jeux, et elles sont nombreuses près du bar.`},
+   {t:`Les ménages sont très motorisés : au moins ${D.car[0]} % ont une voiture dans toutes les zones.`,a:'Favorable',n:`La zone se mesure en voiture : les clients peuvent venir facilement.`},
+   {t:`Le revenu moyen baisse quand on s'éloigne : ${nf(D.rev[0])} € en zone primaire contre ${nf(D.rev[2])} € en zone tertiaire.`,a:'Vigilance',n:`Plus on s'éloigne, moins le budget des ménages est élevé : c'est un point de vigilance.`},
+   {t:`Le revenu moyen est le plus élevé en zone tertiaire.`,a:'Faux',n:`Faux : le revenu est le plus élevé en zone primaire (${nf(D.rev[0])} €).`},
+   {t:`Moins d'un ménage sur deux possède une voiture en zone primaire.`,a:'Faux',n:`Faux : ${D.car[0]} % des ménages ont une voiture en zone primaire.`},
+   {t:`La part de foyers avec enfants est la plus forte en zone tertiaire (${D.enf[2]} %).`,a:'Faux',n:`Faux : c'est la plus faible en zone tertiaire. La plus forte est en zone primaire (${D.enf[0]} %).`}
+  ];
+}
+const L5='ABCDEF';
+EPV[4]={intro:`Lis les indicateurs de la zone et les six phrases ci-dessous. Certaines sont fausses. Choisis deux points favorables et un point de vigilance, puis justifie ce dernier.`,
+ play(){const D=S.D,st=stmts(),order=S.ord5||(S.ord5=shuffle([0,1,2,3,4,5])),LS=L5.split('');
+  return table(['Zone','Revenu par mois','Foyers avec enfants','Ménages avec voiture'],[0,1,2].map(z=>[['Primaire','Secondaire','Tertiaire'][z],nf(D.rev[z])+' €',D.enf[z]+' %',D.car[z]+' %']))+
+  `<div class="stmts">${order.map((i,n)=>`<div class="stmt"><p><b>${LS[n]}.</b> ${st[i].t}</p></div>`).join('')}</div>`+
+  fSel('f1','Point favorable n° 1 (lettre de la phrase)',LS)+fSel('f2','Point favorable n° 2 (une autre lettre)',LS)+fSel('vg','Point de vigilance (lettre de la phrase)',LS)+
+  fTa('vig','Justifie ton point de vigilance en une phrase, avec un chiffre du tableau.',3);
+ },
+ res(){const st=stmts(),order=S.ord5||[0,1,2,3,4,5];
+  return `<div class="items">${order.map((i,n)=>`<div class="it ${st[i].a==='Faux'?'ko':'ok'}"><b>${L5[n]}. ${st[i].a}</b><small>${esc(st[i].t)}</small><small>${esc(st[i].n)}</small></div>`).join('')}</div>`},
+ check(){const st=stmts(),order=S.ord5||[0,1,2,3,4,5],idx=id=>{const l=val(id);return l&&l!=='—'?order[L5.indexOf(l)]:-1};
+  const fav=order.map((i,n)=>st[i].a==='Favorable'?L5[n]:null).filter(Boolean).join(' ou '),vgl=order.map((i,n)=>st[i].a==='Vigilance'?L5[n]:null).filter(Boolean).join('');
+  const a=idx('f1'),b=idx('f2'),c=idx('vg');
+  const it=[
+   {q:'Point favorable n° 1',a:val('f1')&&val('f1')!=='—'?val('f1'):'(vide)',c:fav,ok:a>=0&&st[a].a==='Favorable',why:a>=0?st[a].n:'Pas de réponse.'},
+   {q:'Point favorable n° 2',a:val('f2')&&val('f2')!=='—'?val('f2'):'(vide)',c:fav,ok:b>=0&&st[b].a==='Favorable'&&b!==a,why:b>=0?(b===a?'Tu as choisi deux fois la même phrase.':st[b].n):'Pas de réponse.'},
+   {q:'Point de vigilance',a:val('vg')&&val('vg')!=='—'?val('vg'):'(vide)',c:vgl,ok:c>=0&&st[c].a==='Vigilance',why:c>=0?st[c].n:'Pas de réponse.'}
+  ];
+  it.forEach(x=>{x.rep=false;x.pts=x.ok?1:0});
+  it.push(manItem('Justification du point de vigilance','vig',val('vig').trim().length>=15&&/\d/.test(val('vig'))));return it}};
+
+/* 6 : familles clientes et dépenses */
+EPV[5]={intro:`Calcule les familles clientes de chaque zone, puis les dépenses annuelles de chaque zone, puis le total.`,
+ play(){const D=S.D;
+  return table(['Zone','Familles avec enfants','Taux','Budget par famille'],[0,1,2].map(z=>[['Primaire','Secondaire','Tertiaire'][z],nf(D.fam[z]),D.taux[z]+' %',D.bud[z]+' €']))+
+  `<div class="sub">Familles clientes</div>`+fInp('fc0','Zone primaire')+fInp('fc1','Zone secondaire')+fInp('fc2','Zone tertiaire')+
+  `<div class="sub">Dépenses annuelles (en €)</div>`+fInp('d0','Zone primaire')+fInp('d1','Zone secondaire')+fInp('d2','Zone tertiaire')+fInp('dt','Total des dépenses de la zone de chalandise');
+ },
+ check(){const D=S.D,Z=['primaire','secondaire','tertiaire'],it=[];
+  [0,1,2].forEach(z=>it.push(numItem('Familles clientes, zone '+Z[z],'fc'+z,[D.fc[z]],nf,`${nf(D.fam[z])} × ${D.taux[z]} % = ${nf(D.fc[z])}.`)));
+  [0,1,2].forEach(z=>it.push(numItem('Dépenses, zone '+Z[z],'d'+z,[D.dep[z],sNum('fc'+z)*D.bud[z]],eur,`${nf(D.fc[z])} × ${D.bud[z]} € = ${eur(D.dep[z])}.`)));
+  it.push(numItem('Total des dépenses','dt',[D.dtot,sNum('d0')+sNum('d1')+sNum('d2')],eur,`${nf(D.dep[0])} + ${nf(D.dep[1])} + ${nf(D.dep[2])} = ${eur(D.dtot)}.`));return it}};
+
+/* 7 : la concurrence */
+const QC1=[{t:"Il est dans la zone : une partie des habitants de la zone peut le choisir."},{t:"Il est trop loin pour attirer les clients de la zone, donc il ne prend personne."},{t:"Il appartient au même propriétaire que Le Pion Rouge et partage ses clients."}];
+const QC2=[{t:"Une partie de ses clients habite en dehors de la zone de chalandise."},{t:"Un concurrent n'est jamais compté en entier, c'est une règle fixe de la profession."},{t:"Il faut garder la moitié de son CA pour payer ses charges."}];
+EPV[6]={intro:`Tiens compte de la concurrence. Les concurrents sont les carrés rouges sur la carte.`,
+ play(){const D=S.D;
+  return `<div class="map">${mapSvg('comp')}</div>`+table(['Concurrent','Trajet','CA annuel','Part du CA venant de la zone'],cmpOrder().map(i=>[esc(CMP[i].n)+'<br><small>'+esc(COM[CMP[i].c].n)+'</small>',COM[CMP[i].c].min+'\u00a0min',eur(D.ca[i]),i===3?'—':D.part[i]+' %']))+
+  fSel('conc','Quel concurrent ne doit pas être pris en compte ?',CMP.map(k=>k.n))+
+  qSel('q1',`Pions & Cie est à 27 min, en zone tertiaire. Pourquoi peut-il quand même prendre des clients au Pion Rouge ?`,QC1.map(o=>o.t))+
+  qSel('q2','Pourquoi ne retire-t-on pas la totalité de son chiffre d\'affaires ?',QC2.map(o=>o.t))+
+  `<div class="sub">CA venant réellement de la zone (CA × part), pour les concurrents à garder</div>`+fInp('c0','Le Plateau')+fInp('c1','Le Dé Pipé')+fInp('c2','Pions & Cie')+fInp('ct','Total des concurrents à garder');
+ },
+ check(){const D=S.D;
+  return [selItem('Concurrent à ne pas compter','conc','Jeux Max','Jeux Max est à 38 min : hors zone, donc ses clients ne sont pas ceux du Pion Rouge.'),
+   selItem('Pourquoi Pions & Cie prend des clients','q1',QC1[0].t,'Il est à 27 min : dans la zone tertiaire. Une partie des habitants de la zone peut donc le préférer.'),
+   selItem('Pourquoi une partie seulement','q2',QC2[0].t,"Seule la part de ses clients qui habite la zone nous concerne : le reste vient d'ailleurs."),
+   ...[0,1,2].map(i=>numItem('CA de la zone, '+CMP[i].n,'c'+i,[D.cz[i]],eur,`${eur(D.ca[i])} × ${D.part[i]} % = ${eur(D.cz[i])}.`)),
+   numItem('Total des concurrents','ct',[D.ctot,sNum('c0')+sNum('c1')+sNum('c2')],eur,`${nf(D.cz[0])} + ${nf(D.cz[1])} + ${nf(D.cz[2])} = ${eur(D.ctot)}.`)]}};
+
+/* 8 : le CA potentiel */
+EPV[7]={intro:`Calcule le CA potentiel du Pion Rouge, dis s'il est rentable, puis refais le calcul dans un scénario pessimiste.`,
+ play(){const D=S.D;
+  return `<p>Le franchiseur exige un CA annuel d'au moins <strong>${eur(D.min)}</strong>.</p>`+recall([['Dépenses de la zone (épreuve 6)',eur(D.dtot)],['CA pris par les concurrents (épreuve 7)',eur(D.ctot)]],'Tes résultats corrigés')+fInp('pot','CA potentiel du Pion Rouge (dépenses de la zone − CA pris par les concurrents)')+fSel('ver','Le projet est-il rentable ?',['Rentable','Non rentable'])+fInp('ec','Écart avec le minimum (en €, sans signe)')+
+  `<div class="sub">Scénario pessimiste</div><p>La part du CA qui vient de la zone passe à ${D.pess[0]} % pour Le Plateau, ${D.pess[1]} % pour Le Dé Pipé et ${D.pess[2]} % pour Pions & Cie.</p>`+fInp('pot2','Nouveau CA potentiel')+fSel('ver2','Le projet est-il rentable dans ce scénario ?',['Rentable','Non rentable']);
+ },
+ check(){const D=S.D,sp=sNum('dt')-sNum('ct'),vd=n=>n>=D.min?'Rentable':'Non rentable';
+  const mix=[D.pot,sp,sNum('dt')-D.ctot,D.dtot-sNum('ct')];
+  const cp=D.cp[0]+D.cp[1]+D.cp[2];
+  return [numItem('CA potentiel','pot',mix,eur,`${eur(D.dtot)} − ${eur(D.ctot)} = ${eur(D.pot)}.`),
+   selItem('Rentable ?','ver',vd(D.pot),`${eur(D.pot)} ${D.pot>=D.min?'dépasse':'est sous'} le minimum de ${eur(D.min)}.`,[vd(sNum('pot'))]),
+   numItem('Écart avec le minimum','ec',[Math.abs(D.pot-D.min),Math.abs(sNum('pot')-D.min)],eur,`${eur(D.pot)} − ${eur(D.min)} = ${sgn(D.pot-D.min)} €.`),
+   numItem('CA potentiel pessimiste','pot2',[D.pot2,sNum('dt')-cp,D.dtot-cp+0],eur,`Concurrents : ${nf(D.cp[0])} + ${nf(D.cp[1])} + ${nf(D.cp[2])} = ${eur(cp)}. ${eur(D.dtot)} − ${eur(cp)} = ${eur(D.pot2)}.`),
+   selItem('Rentable (pessimiste) ?','ver2',vd(D.pot2),`${eur(D.pot2)} ${D.pot2>=D.min?'dépasse':'est sous'} le minimum : écart de ${sgn(D.pot2-D.min)} €.`,[vd(sNum('pot2'))])]}};
+
+/* 9 : le conseil */
+EPV[8]={intro:`Rédige ton conseil à Mme Morel en 4 à 5 lignes : ouvrir ou non, avec le nombre d'habitants, le CA potentiel et l'écart, et une réserve. `,
+ play(){const D=S.D;return recall([['Habitants de la zone',nf(D.total)],['Condition du franchiseur',nf(D.thr)+' habitants'],['CA potentiel',eur(D.pot)],['Minimum exigé',eur(D.min)],['CA potentiel pessimiste',eur(D.pot2)]],'Tes résultats corrigés')+fTa('conseil','Ton conseil à Mme Morel',6)},
+ check(){const D=S.D,t=val('conseil').replace(/[\s  .]/g,''),has=n=>t.includes(String(Math.round(Math.abs(n))));
+  const sp=sNum('dt')-sNum('ct');
+  return [boolItem('Le conseil donne le nombre d\'habitants de la zone',has(D.total)||has(sNum('htot')),`Il fallait écrire ${nf(D.total)} habitants.`),
+   boolItem('Le conseil donne le CA potentiel',has(D.pot)||has(sp)||has(sNum('pot')),`Il fallait écrire ${eur(D.pot)}.`),
+   boolItem("Le conseil donne l'écart avec le minimum",has(D.pot-D.min)||has(sNum('ec')),`Il fallait écrire ${sgn(D.pot-D.min)} €.`),
+   manItem('Conseil rédigé','conseil',val('conseil').trim().length>=60)]}};
+/* 10 : le choix du site */
+const bestSite=()=>S.D.sites.reduce((a,b)=>b.pot>a.pot?b:a);
+EPV[9]={intro:`Mme Morel hésite : trois emplacements sont possibles à Pontoise. Pour chacun, calcule le CA potentiel, dis s'il est rentable, puis conseille un site.`,
+ play(){const D=S.D;
+  return `<p>Le franchiseur exige toujours un CA annuel d'au moins <strong>${eur(D.min)}</strong>.</p>`+
+  table(['Site','Dépenses zone','CA concurrents'],D.sites.map(x=>[esc(x.n),eur(x.dep),eur(x.ct)]))+
+  D.sites.map((x,i)=>`<div class="sub">${esc(x.n)}</div>`+fInp('sp'+i,'CA potentiel')+fSel('sv'+i,'Rentable ?',['Rentable','Non rentable'])).join('')+
+  `<div class="sub">Ton conseil</div>`+fSel('best','Quel site conseilles-tu à Mme Morel ?',D.sites.map(x=>x.n))+fTa('whyb','Justifie en une ou deux phrases, avec le CA potentiel du site choisi.',3);
+ },
+ check(){const D=S.D,vd=n=>n>=D.min?'Rentable':'Non rentable',it=[];
+  D.sites.forEach((x,i)=>it.push(numItem('CA potentiel, '+x.n,'sp'+i,[x.pot],eur,`${eur(x.dep)} − ${eur(x.ct)} = ${eur(x.pot)}.`)));
+  D.sites.forEach((x,i)=>it.push(selItem('Rentable ? '+x.n,'sv'+i,vd(x.pot),`${eur(x.pot)} ${x.pot>=D.min?'dépasse':'est sous'} le minimum de ${eur(D.min)}.`,[vd(sNum('sp'+i))])));
+  const b=bestSite(),mine=D.sites.map((x,i)=>({n:x.n,p:sNum('sp'+i)})).filter(o=>!isNaN(o.p)),alt=mine.length===3?[mine.reduce((a,c)=>c.p>a.p?c:a).n]:[];
+  it.push(selItem('Meilleur site','best',b.n,`${b.n} a le CA potentiel le plus élevé : ${eur(b.pot)}.`,alt));
+  const t=val('whyb').replace(/[\s\u00a0\u202f.]/g,'');
+  it.push(boolItem('La justification donne le CA potentiel du site choisi',t.includes(String(b.pot))||t.includes(String(Math.round(sNum('sp'+D.sites.findIndex(x=>x.n===val('best')))||0))),`Il fallait écrire ${eur(b.pot)}.`));
+  it.push(manItem('Justification','whyb',val('whyb').trim().length>=30));return it},
+ res(){const b=bestSite(),ok=val('best')===b.n;return `<div class="rules"><strong>${ok?'Mme Morel signe le bail !':'Mme Morel hésite encore.'}</strong><p style="margin:6px 0 0">${ok?`Elle choisit « ${esc(b.n)} » : ${eur(b.pot)} de CA potentiel, soit ${eur(b.pot-S.D.min)} de plus que le minimum exigé.`:`Le meilleur site était « ${esc(b.n)} » avec ${eur(b.pot)} de CA potentiel. Regarde la correction pour comprendre l'écart.`}</p></div>`}};
+const MAXPTS=9+4+5+3+3+7+7+5+3+8;
+
+/* ---------- Correction ---------- */
+const sNum=id=>{const v=parseNum(val(id));return isNaN(v)?NaN:v};
+function numItem(lab,id,cands,f,note,tol){
+  const raw=val(id),v=parseNum(raw),t=tol==null?0.5:tol;
+  let ok=false,rep=false;
+  if(!isNaN(v)){if(Math.abs(v-cands[0])<=t)ok=true;else if(cands.slice(1).some(c=>!isNaN(c)&&Math.abs(v-c)<=t)){ok=true;rep=true}}
+  return {q:lab,a:raw.trim()||'(vide)',c:f(cands[0]),ok,rep,why:note,pts:ok?1:0};
+}
+function selItem(lab,id,exp,note,alt){
+  const a=val(id),ok=a===exp||(alt||[]).includes(a)&&a!=='—';
+  return {q:lab,a:a==='—'||!a?'(vide)':a,c:exp,ok,rep:ok&&a!==exp,why:note,pts:ok?1:0};
+}
+const boolItem=(lab,ok,note)=>({q:lab,a:ok?'Oui':'Non',c:'Oui',ok,rep:false,why:ok?'':note,pts:ok?1:0});
+const manItem=(lab,id,filled)=>({q:lab,a:(val(id)||'(vide)').trim()||'(vide)',c:'À corriger par le professeur',ok:null,man:true,filled,why:filled?'':'Réponse trop courte ou sans chiffre.',pts:0});
+
+function vEp(){
+  const k=S.ep,E=EPV[k];
+  if(S.phase==='play')return head()+card(epHead(k,E.intro)+(k===0?'':'')+E.play()+`<button class="btn" data-act="submit" style="width:100%;margin-top:6px">Valider mes réponses</button>`)+rappel();
+  const n=S.items.filter(i=>!i.man).length,g=S.items.filter(i=>i.pts>0).length,pts=S.pts[k];
+  const list=S.items.map(i=>i.man?`<div class="it man"><b>${esc(i.q)}</b> : à corriger par le professeur.${i.filled?'':'<small>Réponse trop courte ou sans chiffre.</small>'}</div>`:`<div class="it ${i.ok?'ok':'ko'}"><b>${esc(i.q)}</b> : ${i.ok?'juste':'à revoir'}${i.rep?' (erreur reportée acceptée)':''}${i.ok&&!i.rep?'':`<small>Ta réponse : ${esc(i.a)}${i.ok?'':` · Attendu : ${esc(i.c)}`}</small>`}${i.why&&!i.ok?`<small>${esc(i.why)}</small>`:''}</div>`).join('');
+  const last=k===NEP-1;
+  return head()+card(`<p class="eyebrow">Épreuve ${k+1} sur ${NEP}</p><h2>${EPN[k]} : ${pts} sur ${S.items.reduce((a,i)=>a+(i.man?0:1),0)}</h2>${E.res?E.res():''}<div class="items">${list}</div><button class="btn" data-act="next" style="width:100%">${last?'Voir mon bulletin':'Épreuve suivante'}</button>`)+rappel();
+}
+
+/* ---------- Récapitulatif et bulletin ---------- */
+function bulletinText(){const t=total(),time=fmt(elapsed()),name=S.name||'Élève';return {t,time,name,txt:`Le Pion Rouge | ${name} | ${t}/${MAXPTS} | ${time} | code ${sig(name,t,time)}`}}
+function recapGroups(){const g={};S.log.forEach(e=>{(g[e.k]=g[e.k]||[]).push(e)});return g}
+function recapText(){
+  const b=bulletinText(),g=recapGroups(),D=S.D;
+  let o=b.txt+'\n\nRÉCAPITULATIF DE '+b.name.toUpperCase()+'\nScore : '+b.t+' / '+MAXPTS+' | Temps : '+b.time+'\nSeuil du franchiseur : '+nf(D.thr)+' habitants, '+eur(D.min)+' de CA\n';
+  Object.keys(g).sort((x,y)=>x-y).forEach(k=>{
+    o+='\n== Épreuve '+(+k+1)+' : '+EPN[k]+' ('+S.pts[k]+' pt, '+fmt(S.times[k])+') ==\n';
+    g[k].forEach(e=>{o+=(e.man?'[À CORRIGER] ':e.ok?'[OK] ':'[ERREUR] ')+e.q+'\n   Ma réponse : '+e.a+'\n';if(!e.ok&&!e.man)o+='   Attendu : '+e.c+'\n';if(e.rep)o+='   (erreur reportée acceptée)\n';});
+  });
+  return o;
+}
+function recapHtml(){
+  const b=bulletinText(),g=recapGroups(),D=S.D;
+  let rows='',det='';
+  Object.keys(g).sort((x,y)=>x-y).forEach(k=>{
+    const sc=g[k].filter(e=>!e.man);
+    rows+=`<tr><td>${+k+1}. ${esc(EPN[k])}</td><td>${S.pts[k]} / ${sc.length}</td><td>${fmt(S.times[k])}</td></tr>`;
+    det+=`<h3>${+k+1}. ${esc(EPN[k])} <span>${S.pts[k]} pt(s)</span></h3>`+g[k].map(e=>`<div class="e ${e.man?'mn':e.ok?'ok':'ko'}"><b>${e.man?'À corriger':e.ok?'Juste':'Erreur'}</b> ${esc(e.q)}<br>Ma réponse : <i>${esc(e.a)}</i>${(e.ok||e.man)?'':`<br>Attendu : <i>${esc(e.c)}</i>`}${e.rep?'<br><small>Erreur reportée acceptée.</small>':''}${(!e.ok&&!e.man&&e.why)?`<br><small>${esc(e.why)}</small>`:''}</div>`).join('');
+  });
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Récapitulatif - ${esc(b.name)}</title><style>body{font:15px/1.5 system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#12201c}h1{font-size:24px;margin:0}h3{margin:22px 0 6px;font-size:17px;border-bottom:2px solid #a8322a}h3 span{float:right;color:#a8322a}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccd5d1;padding:5px 8px;text-align:left}.code{font:14px monospace;background:#f1ece6;padding:10px;border-radius:8px;word-break:break-all}.e{padding:7px 10px;margin:6px 0;border-left:5px solid;border-radius:4px;background:#f6f8f7}.ok{border-color:#1f8a58}.ko{border-color:#c0392b;background:#fdf1ef}.mn{border-color:#b58a2e;background:#fbf3df}small{color:#555}@media print{body{margin:0}}</style></head><body><h1>Le Pion Rouge : récapitulatif</h1><p><b>${esc(b.name)}</b> | Score ${b.t} / ${MAXPTS} | Temps ${b.time}</p><p>Données de l'élève : seuil de ${nf(D.thr)} habitants, CA minimum de ${eur(D.min)}, ${nf(D.total)} habitants dans la zone, CA potentiel de ${eur(D.pot)}.</p><p class="code">${esc(b.txt)}</p><h2>Résumé par épreuve</h2><table><tr><th>Épreuve</th><th>Points</th><th>Temps</th></tr>${rows}</table><h2>Détail des réponses</h2>${det}</body></html>`;
+}
+function vFin(){
+  const b=bulletinText(),lvl=b.t>=Math.round(MAXPTS*0.85)?'Conseiller(ère) confirmé(e)':b.t>=Math.round(MAXPTS*0.6)?'Bonne étude, quelques calculs à revoir':'À retravailler : relis les corrections';
+  return card(`<p class="eyebrow">Dossier terminé</p><h2>Ton bulletin</h2>
+  <div class="bulletin"><dl><dt>Conseiller(ère)</dt><dd>${esc(b.name)}</dd><dt>Score</dt><dd>${b.t} / ${MAXPTS}</dd><dt>Temps</dt><dd>${b.time}</dd><dt>Niveau</dt><dd>${lvl}</dd></dl></div>
+  <p class="small">Enregistre ton fichier récapitulatif (tes réponses, tes erreurs, ton score et ton code), puis dépose-le dans le travail à faire sur Pronote.</p>
+  <button class="btn" data-act="save" id="savebtn" style="width:100%">Enregistrer le fichier</button>
+  <p class="small" id="savemsg" role="status"></p>`);
+}
+function vProf(){
+  return card(`<p class="eyebrow">Espace professeur</p><h2>Vérifier des bulletins</h2>
+  <p>Colle un ou plusieurs textes reçus des élèves (une ligne par élève). Le code est recalculé à partir du prénom, du score et du temps.</p>
+  <div class="field"><label for="profin">Textes des élèves</label><textarea id="profin"></textarea></div>
+  <button class="btn" data-act="verify" style="width:100%">Vérifier</button><ul class="vlist" id="vres"></ul><p class="small"><a href="#jeu">Retour au jeu</a></p>`);
+}
+
+/* ---------- Rendu ---------- */
+function render(){
+  if(location.hash==='#prof'){$app.innerHTML=vProf();return}
+  let h='';
+  if(S.screen==='intro')h=vIntro();
+  else if(S.screen==='ep')h=vEp();
+  else h=head()+vFin();
+  $app.innerHTML=h;window.scrollTo(0,0);
+}
+function saveForm(){document.querySelectorAll('[data-f]').forEach(el=>{S.form[el.id]=el.value});document.querySelectorAll('input[type=radio]:checked').forEach(el=>{S.form[el.name]=el.value})}
+function submit(){
+  const k=S.ep;saveForm();
+  S.items=EPV[k].check();
+  S.pts[k]=S.items.reduce((a,i)=>a+(i.pts||0),0);
+  S.times[k]=Date.now()-S.epT0;
+  S.items.forEach(i=>S.log.push({k,q:i.q,a:i.a,c:i.c,ok:i.man?null:i.ok,man:!!i.man,rep:!!i.rep,why:i.why||''}));
+  S.done[k]=true;S.phase='res';
+}
+function act(a,v){
+  switch(a){
+    case 'start':{
+      const el=document.getElementById('prenom'),name=((el&&el.value)||'').replace(/\|/g,'').trim().slice(0,30);
+      if(!name){el.focus();return}
+      S=fresh();S.name=name;S.D=makeData(name);S.t0=Date.now();S.epT0=Date.now();S.screen='ep';break;
+    }
+    case 'submit':if(S.screen!=='ep'||S.phase!=='play')return;submit();break;
+    case 'next':
+      if(S.ep>=NEP-1){S.tEnd=Date.now();S.screen='fin';break}
+      S.ep++;S.phase='play';S.epT0=Date.now();S.form={};S.items=[];break;
+    case 'copy':{
+      const btn=document.getElementById('copybtn'),txt=document.getElementById('copytext').textContent;
+      try{navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Texte copié'},()=>{btn.textContent='Sélectionne le texte ci-dessus'})}catch(e){btn.textContent='Sélectionne le texte ci-dessus'}
+      return;
+    }
+    case 'save':{
+      const msg=document.getElementById('savemsg'),name=((S.name||'eleve').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]/g,'')||'eleve'),html=recapHtml();
+      (async()=>{
+        try{
+          const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+          if(!d){
+            try{
+              const url=URL.createObjectURL(new Blob([html],{type:'text/html'})),an=document.createElement('a');
+              an.href=url;an.download='Pion-Rouge-'+name+'.html';document.body.appendChild(an);an.click();an.remove();
+              setTimeout(()=>URL.revokeObjectURL(url),4000);
+              msg.textContent="Fichier enregistré dans tes téléchargements. Dépose-le sur Pronote.";
+            }catch(e2){msg.textContent="Enregistrement impossible. Réessaie, ou fais une capture d'écran de ton bulletin."}
+            return;
+          }
+          await d.save({filename:'Pion-Rouge-'+name+'.html',data:new Blob([html],{type:'text/html'})});
+          msg.textContent="Fichier enregistré. Dépose-le sur Pronote.";
+        }catch(e){msg.textContent="Enregistrement non effectué. Clique de nouveau sur le bouton."}
+      })();
+      return;
+    }
+    case 'copyrecap':{
+      const btn=document.getElementById('recbtn'),txt=recapText();
+      try{navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Récapitulatif copié'},()=>{btn.textContent='Copie impossible'})}catch(e){btn.textContent='Copie impossible'}
+      return;
+    }
+    case 'verify':{
+      const lines=(document.getElementById('profin').value||'').split('\n').map(l=>l.trim()).filter(Boolean);
+      const out=lines.map(l=>{
+        const p=l.split('|').map(x=>x.trim());
+        if(p.length<5)return `<li><strong>Illisible</strong> : ${esc(l)}</li>`;
+        const name=p[1],score=parseInt(p[2],10),time=p[3],code=p[4].replace(/^code\s*/i,'').toUpperCase();
+        if(isNaN(score))return `<li><strong>Illisible</strong> : ${esc(l)}</li>`;
+        return sig(name,score,time)===code?`<li><strong>Valide</strong> : ${esc(name)}, ${esc(p[2])} en ${esc(time)}.</li>`:`<li><strong>Invalide</strong> : ${esc(name)} (texte modifié ou code inventé).</li>`;
+      });
+      document.getElementById('vres').innerHTML=out.length?out.join(''):'<li>Aucun texte collé.</li>';
+      return;
+    }
+    default:return;
+  }
+  render();
+}
+$app.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled)act(b.dataset.act,b.dataset.v)});
+$app.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='prenom')act('start')});
+window.addEventListener('hashchange',render);
+setInterval(()=>{
+  const c=document.getElementById('chrono');
+  if(c&&S.t0&&!S.tEnd)c.textContent=fmt(elapsed());
+  if(location.hash==='#prof'||S.screen!=='ep'||S.phase!=='play')return;
+  const left=EPLIM[S.ep]-Math.floor((Date.now()-S.epT0)/1000);
+  const cd=document.getElementById('cd'),bar=document.getElementById('cdbar');
+  if(cd)cd.textContent=Math.max(0,left)+' s';
+  if(bar){bar.style.width=Math.max(0,left)/EPLIM[S.ep]*100+'%';bar.className=left<=15?'low':''}
+  if(left<=0)act('submit');
+},1000);
+function boot(d){
+  if(d&&d.v===STATE_V&&d.screen&&d.D&&Array.isArray(d.log))S=d;
+  render();
+}
+if(window.claude&&window.claude.hot){
+  window.claude.hot.snapshot(()=>S);
+  window.claude.hot.ready?window.claude.hot.ready(boot):boot(window.claude.hot.data);
+}else{boot()}
+</script></body></html>

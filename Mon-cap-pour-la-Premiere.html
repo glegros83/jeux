@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon cap pour la Première</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Idée : une table de jeu claire en fond, des cartes de verre dépoli, un accent rouge pion et un filet de laiton. */
+:root{
+  --bg:#e8eeec;
+  --surface:rgba(255,255,255,.88);
+  --ink:#12201c;
+  --muted:#58685f;
+  --accent:#2a7f62;
+  --accent-dark:#1c5c46;
+  --gold:#b58a2e;
+  --ok:#1f8a58;
+  --ko:#c4452f;
+  --line:#d3ddda;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+a{color:var(--accent-dark)}
+.scene{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.scene svg{width:100%;height:100%;display:block}
+.scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(236,242,240,.10) 0%,rgba(236,242,240,.5) 55%,rgba(236,242,240,.85) 100%)}
+.wrap{position:relative;z-index:1;max-width:580px;margin:0 auto;padding:18px 16px 56px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px 12px;flex-wrap:wrap}
+.top>div:first-child{display:contents}
+.top .brand{flex:1 1 100%}
+.brand{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.22em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.brand::before{content:"";width:22px;height:2px;background:var(--gold);display:block}
+.chrono{display:inline-flex;align-items:center;gap:8px;margin:0;padding:4px 12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;font-variant-numeric:tabular-nums;font-size:16px;font-weight:700;letter-spacing:.04em}
+.chrono::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.keytag{display:flex;align-items:center;gap:5px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;backdrop-filter:blur(10px)}
+.slot{width:13px;height:13px;border-radius:50%;border:1.5px solid #aebdb8;background:transparent}
+.slot.on{background:var(--accent);border-color:var(--accent)}
+.card{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);border-radius:22px;padding:26px 22px;box-shadow:0 24px 60px rgba(18,32,28,.14)}
+.eyebrow{margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-dark)}
+h1,h2{font-family:var(--display);font-weight:700;line-height:1.08;margin:0 0 14px;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:44px}
+h2{font-size:28px}
+p{margin:0 0 12px}
+.phrase{font-family:var(--display);font-weight:600;font-size:25px;line-height:1.28;margin:14px 0 22px;padding:0 0 0 16px;border-left:3px solid var(--gold);text-wrap:balance}
+.btn{font:700 16px var(--body);min-height:50px;border-radius:999px;border:2px solid var(--accent);background:var(--accent);color:#fff;padding:0 24px;cursor:pointer;transition:background .15s,transform .15s}
+.btn:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.btn:focus-visible,.chip:focus-visible,.link:focus-visible,.opt:focus-visible,.seg:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 140px}
+.link{background:none;border:0;padding:14px 0 0;font:600 15px var(--body);color:var(--accent-dark);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.hint{margin:14px 0 0;padding:12px 14px;background:#fff;border:1px dashed var(--gold);border-radius:12px;font-size:15px}
+.fb{border-left:4px solid;padding:12px 14px;margin:14px 0;background:#fff;border-radius:0 12px 12px 0;font-size:16px}
+.fb.ok{border-color:var(--ok)}
+.fb.ko{border-color:var(--ko)}
+.field{display:flex;flex-direction:column;gap:6px;margin:18px 0}
+.field label{font-weight:600;font-size:15px}
+input[type=text],textarea{font:400 18px var(--body);min-height:50px;padding:8px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:140px;font-size:15px}
+.small{font-size:14px;color:var(--muted)}
+.line{min-height:66px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border:1.5px dashed #aebdb8;border-radius:14px;background:#fff;margin:12px 0}
+.placeholder{font-size:15px;color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+.chip{font:600 16px var(--body);min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-align:left;transition:border-color .15s}
+.chip:hover{border-color:var(--accent)}
+.chip.placed{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip:disabled{opacity:.5;cursor:default}
+.ctx{font-size:14px;margin:0 0 4px;color:var(--muted)}
+.client{font-family:var(--display);font-weight:500;font-size:23px;line-height:1.3;margin:14px 0 18px;padding:0 0 0 16px;border-left:3px solid var(--gold)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:500 16px var(--body);text-align:left;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.good{border-color:var(--ok);background:#e6f4ec}
+.opt.bad{border-color:var(--ko);background:#fbe9e5}
+.opt:disabled{cursor:default}
+.gauge-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-top:6px;color:var(--muted)}
+.gauge{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--ko),var(--gold),var(--ok));background-size:600px 100%;transition:width .4s}
+.digit{width:88px;height:108px;display:grid;place-items:center;margin:8px 0 14px;background:var(--accent);color:#fff;border-radius:18px;font-family:var(--display);font-size:64px;font-weight:700}
+.pts{font-weight:700;color:var(--accent-dark)}
+.code-in{font:700 30px var(--display);letter-spacing:.3em;text-align:center;max-width:320px}
+.err{min-height:24px;color:var(--ko);font-weight:600;margin:0 0 8px}
+.bulletin{border:1.5px solid var(--line);border-radius:16px;padding:18px;margin:14px 0;background:#fff}
+.bulletin dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}
+.bulletin dt{font-weight:600;color:var(--muted)}
+.bulletin dd{margin:0;font-variant-numeric:tabular-nums;font-weight:600}
+.copytext{font-size:14px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;user-select:all;word-break:break-word}
+.rules{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;margin:0 0 12px}
+.rules ul{margin:6px 0 0;padding-left:18px}
+.tbl{overflow-x:auto;margin:0 0 16px;border-radius:14px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}
+th,td{padding:8px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--ink);color:#fff;font-weight:600}
+tr:last-child td{border-bottom:0}
+.qn{font-weight:700;margin:6px 0 10px}
+.wrow{margin:0 0 16px}
+.wdef{margin:0 0 6px;font-size:15px}
+.wrow input{max-width:280px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.wrow.ok input{border-color:var(--ok);background:#e6f4ec}
+.wmeta{font-size:13px;color:var(--muted);margin-left:8px}
+.first{font-family:var(--display);color:var(--accent-dark);font-weight:700}
+.mail{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;display:flex;flex-direction:column;gap:4px}
+.seg{font:400 15.5px var(--body);text-align:left;background:transparent;border:2px solid transparent;border-radius:10px;padding:7px 9px;color:var(--ink);cursor:pointer;line-height:1.45}
+.seg:hover{border-color:var(--line)}
+.seg.sel{border-color:var(--gold);background:#fbf3df}
+.seg.hit{border-color:var(--ok);background:#e6f4ec}
+.seg.bad{border-color:var(--ko);background:#fbe9e5;text-decoration:line-through}
+.seg.miss{border:2px dashed var(--ko);background:#fff}
+.seg:disabled{cursor:default}
+.foot{text-align:center;font-size:13px;color:var(--muted)}
+.vlist{padding-left:18px;margin:12px 0}
+.vlist li{margin:0 0 6px}
+.cd-wrap{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.cd-bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.cd-bar i{display:block;height:100%;background:var(--accent);transition:width 1s linear}
+.cd-bar i.low{background:var(--ko)}
+.cd{font-variant-numeric:tabular-nums;font-weight:700;min-width:48px;text-align:right}
+.ans{max-width:300px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.tiles{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+.tile{width:46px;height:56px;display:grid;place-items:center;background:var(--ink);color:#fff;border-radius:12px;font-family:var(--display);font-size:28px;font-weight:700}
+.scene7{margin:8px 0 12px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.scene7 svg{display:block;width:100%;height:auto}
+.line.stack{flex-direction:column;align-items:stretch}
+.line.stack .chip{width:100%}
+select{font:400 16px var(--body);min-height:48px;padding:8px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.prow{margin:0 0 14px;display:flex;flex-direction:column;gap:6px}
+.prow p{margin:0;font-weight:600}
+.ok-t{color:var(--ok);font-weight:700}
+.ko-t{color:var(--ko);font-weight:700}
+.carnet{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:15px;backdrop-filter:blur(10px)}
+.carnet summary{cursor:pointer;font-weight:700}
+.carnet ol{margin:8px 0 0;padding-left:20px}
+.carnet li{margin:0 0 6px}
+.ord{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.orow{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px 8px 8px 12px}
+.orow .num{font-family:var(--display);font-weight:700;color:var(--accent-dark);min-width:18px}
+.orow .tx{flex:1;font-size:16px;line-height:1.4}
+.mv{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-size:16px;cursor:pointer}
+.mv:disabled{opacity:.25;cursor:default}
+.mv:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.gauge i,.btn,.chip,.opt,.cd-bar i{transition:none}}
+@media (max-width:400px){h1{font-size:36px}.card{padding:22px 18px}}
+
+.tbl.nosel,.nosel{user-select:none;-webkit-user-select:none}
+.map{margin:8px 0 14px;border-radius:14px;border:1px solid var(--line);background:#fff;overflow:hidden}
+.map svg{display:block;width:100%;height:auto}
+.tbl select{min-height:40px;padding:4px 8px;font-size:15px;min-width:104px}
+.tbl td.n{white-space:nowrap}
+.items{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.it{border-left:4px solid;padding:9px 12px;background:#fff;border-radius:0 12px 12px 0;font-size:15px}
+.it.ok{border-color:var(--ok)}
+.it.ko{border-color:var(--ko)}
+.it.man{border-color:var(--gold)}
+.it small{display:block;color:var(--muted);margin-top:2px}
+.stmts{display:flex;flex-direction:column;gap:12px;margin:10px 0}
+.stmt{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.stmt p{margin:0 0 6px;font-size:15.5px}
+.facts{display:grid;grid-template-columns:1fr auto;gap:2px 14px;margin:8px 0 12px;font-size:15px}
+.facts b{font-variant-numeric:tabular-nums}
+.sub{font-weight:700;margin:16px 0 4px}
+.rad{border:0;padding:0;margin:14px 0}
+.rad legend{font-weight:600;font-size:15px;margin:0 0 8px;padding:0}
+.radl{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px;cursor:pointer;font-size:15.5px;line-height:1.4}
+.radl:has(input:checked){border-color:var(--accent);background:#e6f4ee}
+.radl input{margin-top:3px;accent-color:var(--accent);width:18px;height:18px;flex:none}
+.rap{position:sticky;bottom:10px;z-index:5;background:#fff;border:2px solid var(--accent);box-shadow:0 8px 24px rgba(18,32,28,.22);max-height:70vh;overflow:auto;border-radius:16px;padding:6px 14px}
+.rap summary{color:var(--accent-dark);font-size:16px;padding:8px 0;text-align:center}
+.mini{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.85);border:1px solid var(--line)}.mini-svg{width:130px;flex:none}.mini-svg svg{display:block;width:100%;height:auto}.mini-t{font-weight:600;font-size:14px}
+</style>
+</head>
+<body>
+<div class="scene"><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcecf7"/><stop offset="1" stop-color="#f3f1e6"/></linearGradient></defs>
+<rect width="1200" height="800" fill="url(#sky)"/>
+<circle cx="980" cy="150" r="70" fill="#f6dd8a" opacity=".8"/>
+<path d="M0 560 Q200 470 420 540 T820 520 T1200 500 V800 H0Z" fill="#c9dfc5"/>
+<path d="M0 640 Q300 580 600 630 T1200 600 V800 H0Z" fill="#b6d1b0"/>
+<g fill="#9db5c9" opacity=".9"><rect x="120" y="440" width="120" height="130"/><polygon points="110,440 180,390 250,440"/><rect x="270" y="470" width="90" height="100"/><polygon points="262,470 315,430 368,470"/></g>
+<g fill="#8aa0b4"><rect x="470" y="430" width="200" height="140"/><rect x="490" y="400" width="26" height="40"/><rect x="540" y="380" width="26" height="60"/><rect x="590" y="410" width="26" height="30"/></g>
+<g fill="#cfd8de"><circle cx="503" cy="380" r="16"/><circle cx="520" cy="360" r="20"/><circle cx="553" cy="340" r="18"/></g>
+<g fill="#a9b9c9"><rect x="760" y="440" width="170" height="130"/><polygon points="750,440 845,395 940,440"/><rect x="780" y="460" width="14" height="110" fill="#e9eef3"/><rect x="812" y="460" width="14" height="110" fill="#e9eef3"/><rect x="844" y="460" width="14" height="110" fill="#e9eef3"/><rect x="876" y="460" width="14" height="110" fill="#e9eef3"/></g>
+<g fill="#9db5c9" opacity=".9"><rect x="990" y="470" width="110" height="100"/><polygon points="982,470 1045,425 1108,470"/></g>
+</svg></div>
+<div class="wrap" id="app"></div>
+<script>
+const STATE_V=1;
+const $app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+const VN={A:'MCV option A',B:'MCV option B',C:'Métiers de l\'accueil'};
+const VL={A:'Bac Pro MCV option A : animation et gestion de l\'espace commercial',B:'Bac Pro MCV option B : prospection clientèle et valorisation de l\'offre commerciale',C:'Bac Pro Métiers de l\'accueil'};
+const VKEYS=['A','B','C'];
+const LIKE=['J\'aimerais beaucoup','Pourquoi pas','Pas pour moi'];
+const TASTES=[{v:"A",t:"Réorganiser un rayon pour qu'il soit plus joli et plus facile à parcourir."},
+ {v:"A",t:"Recevoir une livraison, vérifier les produits et les ranger."},
+ {v:"A",t:"Préparer une vitrine ou une animation pour une promotion."},
+ {v:"A",t:"Poser des étiquettes de prix et vérifier qu'elles sont justes."},
+ {v:"A",t:"Suivre les stocks et signaler ce qui manque en rayon."},
+ {v:"A",t:"Imaginer comment présenter un produit pour qu'il attire l'œil."},
+ {v:"A",t:"Rester debout et bouger une grande partie de la journée dans un magasin."},
+ {v:"A",t:"Remplir un rayon vide rapidement avant l'ouverture."},
+ {v:"B",t:"Convaincre un client hésitant de choisir un produit."},
+ {v:"B",t:"Aborder des personnes pour leur présenter une offre."},
+ {v:"B",t:"Trouver les arguments qui rendent une offre intéressante pour un client."},
+ {v:"B",t:"Comprendre les besoins d'un client pour lui proposer le produit adapté."},
+ {v:"B",t:"Relancer un client qui n'a pas encore répondu à une offre."},
+ {v:"B",t:"Atteindre un objectif de ventes fixé pour la journée."},
+ {v:"B",t:"Préparer un argumentaire et le présenter à voix haute."},
+ {v:"B",t:"Écrire un compte rendu après un contact avec un client."},
+ {v:"C",t:"Accueillir une personne perdue et l'orienter avec le sourire."},
+ {v:"C",t:"Répondre au téléphone et noter correctement un message."},
+ {v:"C",t:"Gérer l'arrivée de plusieurs visiteurs en gardant son calme."},
+ {v:"C",t:"Renseigner des personnes (horaires, lieux, démarches) de façon claire."},
+ {v:"C",t:"Rester aimable avec une personne énervée ou pressée."},
+ {v:"C",t:"Organiser un planning de rendez-vous et prévenir les personnes concernées."},
+ {v:"C",t:"Répondre à des demandes par mail ou sur un écran d'accueil."},
+ {v:"C",t:"Garder une tenue et une attitude soignées toute la journée face au public."}];
+const MIS={
+ A:{title:"Mission : magasin de jeux de société",intro:"Lundi, 8 h. Tu travailles dans un magasin de jeux de société. Une palette de nouveautés vient d'arriver et la promotion de Noël commence jeudi.",
+  qs:[{id:'ma1',q:"Par quoi commences-tu ?",o:["Je contrôle la livraison et je range les produits","Je prépare la mise en avant de la promotion","Je vérifie les étiquettes de prix"]},
+      {id:'ma2',q:"Qu'est-ce qui te paraîtrait le plus difficile dans cette journée ?",o:["Aller vite et porter des cartons","Rendre le rayon attractif","Être précis sur les prix et les stocks"]},
+      {id:'ma3',q:"Il manque 5 exemplaires d'un jeu en promotion. Que fais-tu ?",o:["Je vérifie le stock en réserve","Je préviens mon responsable","Je mets une autre promotion à la place"]},
+      {id:'ma4',q:"Quelle tâche aimerais-tu garder pour toi toute la semaine ?",o:["Ranger et organiser le rayon","Créer l'ambiance de la vitrine","Contrôler les prix et le stock"]}]},
+ B:{title:"Mission : abonnements d'une salle de sport",intro:"Tu travailles pour une salle de sport. Ton objectif aujourd'hui : présenter l'offre d'abonnement à 10 personnes.",
+  qs:[{id:'mb1',q:"Ta première phrase pour accrocher une personne ?",o:["Je lui pose une question sur ses habitudes sportives","J'annonce directement le prix de la promotion","Je présente la salle et son histoire"]},
+      {id:'mb2',q:"Une personne dit : « C'est trop cher. » Tu fais quoi ?",o:["Je lui demande ce qui compte le plus pour elle","Je lui propose une offre moins chère","J'explique pourquoi ce prix est justifié"]},
+      {id:'mb3',q:"À la fin de la journée, tu as convaincu 3 personnes sur 10. Tu…",o:["Je cherche comment mieux aborder les gens","Je pense que c'est un bon résultat","Je demande conseil à un collègue plus expérimenté"]},
+      {id:'mb4',q:"Quel moment de la vente préfères-tu ?",o:["Le premier contact","La discussion sur les besoins","La conclusion de la vente"]}]},
+ C:{title:"Mission : accueil d'une mairie",intro:"Tu es à l'accueil d'une mairie. Le téléphone sonne alors que deux personnes attendent devant toi.",
+  qs:[{id:'mc1',q:"Que fais-tu en premier ?",o:["Je décroche et je préviens poliment les personnes que j'arrive","Je finis avec les personnes puis je rappelle","Je laisse sonner"]},
+      {id:'mc2',q:"Qu'est-ce qui te plairait le plus dans ce poste ?",o:["Parler à des personnes différentes toute la journée","Organiser et orienter les flux de visiteurs","Gérer le standard et donner des informations"]},
+      {id:'mc3',q:"Une personne est énervée : elle attend depuis 20 minutes. Tu…",o:["Je m'excuse et je lui explique combien de temps il reste","Je lui dis qu'elle doit attendre comme les autres","Je cherche un collègue pour m'aider"]},
+      {id:'mc4',q:"Quelle partie du poste te plairait le moins ?",o:["Répondre souvent aux mêmes questions","Rester à un poste fixe","Gérer les personnes mécontentes"]}]}
+};
+const VF=[
+ {t:"En Première, les trois voies (MCV A, MCV B, Accueil) sont déjà communes en Seconde.",a:true,w:"Vrai : la Seconde MRC prépare aux trois voies, tu choisis en fin de Seconde."},
+ {t:"En MCV option B, on fait uniquement du téléphone.",a:false,w:"Faux : la prospection et la vente peuvent se faire par téléphone, en face à face ou par écrit."},
+ {t:"La MCV option A concerne surtout l'espace de vente : rayons, mise en avant, animation.",a:true,w:"Vrai : c'est l'animation et la gestion de l'espace commercial."},
+ {t:"En Métiers de l'accueil, on travaille seulement derrière un comptoir.",a:false,w:"Faux : accueil physique, mais aussi téléphonique et numérique."},
+ {t:"Choisir une voie en Première ferme toutes les portes pour la suite.",a:false,w:"Faux : ton choix de Première ne t'enferme pas, tu peux ensuite discuter des poursuites d'études."},
+ {t:"Ce que j'ai aimé faire en stage ou en mission est un bon indice pour choisir.",a:true,w:"Vrai : ce qui te plaît vraiment est un des meilleurs critères."}
+];
+VF.push({t:"Pour choisir sa voie, mieux vaut suivre ses goûts et ses points forts que ses amis.",a:true,w:"Vrai : tu feras ce métier ou cette formation, pas tes amis."});
+VF.push({t:"Les périodes en entreprise permettent de tester ce qu'on aime et ce qu'on n'aime pas.",a:true,w:"Vrai : c'est le meilleur moyen de vérifier un choix."});
+const COND=["Bouger toute la journée","Parler à beaucoup de personnes","Avoir des objectifs chiffrés à atteindre","Travailler en équipe","Avoir un poste fixe, toujours au même endroit","Avoir des horaires réguliers","Travailler dans le calme","Voir le résultat concret de mon travail (un rayon fini, une vitrine)"];
+const IMP=['Très important','Assez important','Pas important'];
+const SKILLS=["Rester calme sous pression","Parler à des inconnus","Être organisé(e)","Être précis(e) (prix, chiffres, orthographe)","Convaincre quelqu'un","Être patient(e)","Travailler en équipe","Prendre des initiatives"];
+const LVL=['1 - Pas encore à l\'aise','2 - Moyen','3 - À l\'aise','4 - Très à l\'aise'];
+const ACTS=["Parler de mon choix à mon professeur principal","Rencontrer la psychologue de l'Éducation nationale","Demander à des élèves de Première ce qu'ils en pensent","Y réfléchir pendant ma prochaine période en entreprise"];
+const STEPS=['Goûts 1/2','Goûts 2/2','Mission 1','Mission 2','Mission 3','Ce qui compte','Points forts','Expérience','Idées reçues','Mon choix'];
+const NST=STEPS.length;
+
+function fresh(){return {v:STATE_V,screen:'intro',name:'',t0:null,tEnd:null,step:0,phase:'play',form:{},ord:{},mord:null,log:[],err:''}}
+let S=fresh();
+const val=id=>S.form[id]==null?'':S.form[id];
+const elapsed=()=>S.t0?((S.tEnd||Date.now())-S.t0):0;
+const card=h=>`<section class="card">${h}</section>`;
+const qSel=(id,lab,arr)=>{const o=S.ord[id]||(S.ord[id]=shuffle(arr.map((_,i)=>i)));return `<fieldset class="rad"><legend>${lab}</legend>${o.map(i=>`<label class="radl"><input type="radio" name="${id}" value="${esc(arr[i])}" ${val(id)===arr[i]?'checked':''}><span>${esc(arr[i])}</span></label>`).join('')}</fieldset>`};
+const fixedRad=(id,lab,arr)=>`<fieldset class="rad"><legend>${lab}</legend>${arr.map(x=>`<label class="radl"><input type="radio" name="${id}" value="${esc(x)}" ${val(id)===x?'checked':''}><span>${esc(x)}</span></label>`).join('')}</fieldset>`;
+const fTa=(id,lab,rows)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><textarea id="${id}" data-f="1" rows="${rows||4}">${esc(val(id))}</textarea></div>`;
+const fSel=(id,lab,opts)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><select id="${id}" data-f="1">${['—'].concat(opts).map(o=>`<option ${val(id)===o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+
+/* ordre des missions propre à chaque élève */
+const misOrder=()=>S.mord||(S.mord=shuffle(VKEYS));
+
+
+/* profil */
+function profile(){
+  const g={A:0,B:0,C:0},n={A:0,B:0,C:0};
+  TASTES.forEach((x,i)=>{const a=val('t'+i);n[x.v]++;g[x.v]+=a===LIKE[0]?2:a===LIKE[1]?1:0});
+  const out={};
+  VKEYS.forEach(v=>{
+    const p1=n[v]?g[v]/(2*n[v]):0,r=parseInt(val('rate'+v),10),p2=isNaN(r)?p1:(r-1)/4;
+    out[v]=Math.round((0.6*p1+0.4*p2)*100);
+  });
+  return out;
+}
+const ranking=()=>[val('c1'),val('c2'),val('c3')];
+const topProfile=()=>{const p=profile();return VKEYS.slice().sort((a,b)=>p[b]-p[a])[0]};
+
+function head(){
+  const slots=STEPS.map((_,i)=>`<span class="slot ${(S.screen==='fin'||S.step>i||(S.step===i&&S.phase==='res'))?'on':''}"></span>`).join('');
+  return `<div class="top"><div class="brand">Mon cap pour la Première</div><div class="chrono" id="chrono">${fmt(elapsed())}</div><div class="keytag" aria-label="Progression">${slots}</div></div>`;
+}
+
+/* ---- pages ---- */
+function vIntro(){
+  return card(`<p class="eyebrow">Ton orientation pour la Première · environ 45 minutes</p><h1>Mon cap pour la Première</h1>
+  <p>Bientôt, tu choisis ta voie : <b>MCV option A</b>, <b>MCV option B</b> ou <b>Métiers de l'accueil</b>. Ce jeu t'aide à y voir plus clair, avec des mises en situation.</p>
+  <div class="rules"><strong>Comment ça marche</strong><ul><li>Il n'y a pas de bonnes ou de mauvaises réponses pour tes goûts : réponds sincèrement.</li><li>Tu fais 3 mini-missions pour découvrir chaque voie, puis tu dis ce qui compte pour toi et tes points forts.</li><li>Tu finis par ton choix et tes raisons.</li><li>À la fin, tu enregistres ton fichier et tu le déposes sur Pronote.</li></ul></div>
+  <div class="field"><label for="prenom">Ton prénom et l'initiale de ton nom (exemple : Léa M.)</label><input type="text" id="prenom" maxlength="30" autocomplete="off"></div>
+  <button class="btn" data-act="start" style="width:100%">Commencer</button>
+  <p class="small" style="margin-top:12px">Tes réponses ne sont lues que par ton professeur. Rien n'est envoyé tant que tu ne déposes pas le fichier.</p>`);
+}
+function rows(arr){return arr}
+function vStep(){
+  const k=S.step;let body='',title='',intro='';
+  if(k<=1){
+    title='Mes goûts ('+(k+1)+'/2)';intro="Pour chaque activité, dis ce que tu en penses. Il n'y a pas de bonne réponse.";
+    const o=(S.ord.tt||(S.ord.tt=shuffle(TASTES.map((_,i)=>i)))).slice(k*12,k*12+12);
+    body=`<div class="stmts">${o.map(i=>`<div class="stmt"><p>${esc(TASTES[i].t)}</p><select id="t${i}" data-f="1" aria-label="${esc(TASTES[i].t)}">${['—'].concat(LIKE).map(x=>`<option ${val('t'+i)===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>`).join('')}</div>`;
+  }else if(k<=4){
+    const v=misOrder()[k-2],m=MIS[v];title=m.title;intro=m.intro;
+    body=m.qs.map(q=>qSel(q.id,esc(q.q),q.o)).join('')+fSel('rate'+v,'Cette mission m\'a plu (1 = pas du tout, 5 = beaucoup)',['1','2','3','4','5'])+fTa('why'+v,"Dis en une phrase ce que tu as aimé ou pas dans cette mission.",3);
+  }else if(k===5){
+    title='Ce qui compte pour moi';intro="Dans un futur métier, qu'est-ce qui est important pour toi ?";
+    const o=S.ord.cd||(S.ord.cd=shuffle(COND.map((_,i)=>i)));
+    body=`<div class="stmts">${o.map(i=>`<div class="stmt"><p>${esc(COND[i])}</p><select id="cd${i}" data-f="1" aria-label="${esc(COND[i])}">${['—'].concat(IMP).map(x=>`<option ${val('cd'+i)===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>`).join('')}</div>`;
+  }else if(k===6){
+    title='Mes points forts';intro="Sois honnête : évalue-toi sur chaque point.";
+    const o=S.ord.sk||(S.ord.sk=shuffle(SKILLS.map((_,i)=>i)));
+    body=`<div class="stmts">${o.map(i=>`<div class="stmt"><p>${esc(SKILLS[i])}</p><select id="sk${i}" data-f="1" aria-label="${esc(SKILLS[i])}">${['—'].concat(LVL).map(x=>`<option ${val('sk'+i)===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>`).join('')}</div>`;
+  }else if(k===7){
+    title='Mon expérience';intro="Pense à tes stages, à tes cours et à ta vie de tous les jours.";
+    body=fTa('exp1',"Ce que j'ai préféré faire en stage ou en cours de vente ou d'accueil.",3)+fTa('exp2',"Ce que je n'ai pas aimé faire.",3)+fTa('exp3',"Un métier ou une suite d'études qui me fait envie, même si c'est encore flou.",3);
+  }else if(k===8){
+    title='Idées reçues';intro="Vrai ou faux ? Tu auras la correction juste après.";
+    const o=S.ord.vf||(S.ord.vf=shuffle(VF.map((_,i)=>i)));
+    body=o.map(i=>fixedRad('vf'+i,esc(VF[i].t),['Vrai','Faux'])).join('');
+  }else{
+    title='Mon choix';intro="Classe les trois voies et explique tes raisons.";
+    const opts=VKEYS.map(v=>VN[v]);
+    body=fSel('c1','Mon 1er choix',opts)+fSel('c2','Mon 2e choix',opts)+fSel('c3','Mon 3e choix',opts)+
+    fTa('just',"Pourquoi ce premier choix ? Appuie-toi sur ce que tu as vécu dans le jeu (2 phrases au moins).",4)+
+    fTa('doubt',"Qu'est-ce qui te fait hésiter ?",3)+
+    `<fieldset class="rad"><legend>Ce que je vais faire pour confirmer mon choix</legend>${ACTS.map((a,i)=>`<label class="radl"><input type="checkbox" name="act${i}" ${val('act'+i)==='1'?'checked':''}><span>${esc(a)}</span></label>`).join('')}</fieldset>`;
+  }
+  const err=S.err?`<p class="small" style="color:#c0392b"><b>${esc(S.err)}</b></p>`:'';
+  return head()+card(`<p class="eyebrow">Étape ${k+1} sur ${NST}</p><h2>${esc(title)}</h2><p>${esc(intro)}</p>${body}${err}<button class="btn" data-act="submit" style="width:100%;margin-top:6px">${k===NST-1?'Terminer':'Valider et continuer'}</button>`)+
+  `<details class="carnet rap"><summary>Besoin d'aide ?</summary><p style="margin:8px 0 0">${VKEYS.map(v=>`<b>${esc(VN[v])}</b> : ${esc(VL[v].split(': ')[1]||VL[v])}`).join('<br>')}</p></details>`;
+}
+function vVfRes(){
+  const items=VF.map((x,i)=>{const a=val('vf'+i),ok=(a==='Vrai')===x.a&&a!=='';return `<div class="it ${ok?'ok':'ko'}"><b>${esc(x.t)}</b> : ${ok?'juste':'à revoir'}<small>${esc(x.w)}</small></div>`}).join('');
+  return head()+card(`<p class="eyebrow">Étape 9 sur ${NST}</p><h2>Correction</h2><div class="items">${items}</div><button class="btn" data-act="next" style="width:100%">Continuer</button>`);
+}
+function barRow(v,p){return `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-weight:600"><span>${esc(VN[v])}</span><span>${p} %</span></div><div style="height:14px;border-radius:8px;background:#e6efe9;overflow:hidden"><div style="width:${p}%;height:100%;background:var(--accent)"></div></div></div>`}
+function consistency(){const c=ranking()[0],t=tendance();return t.includes(c)?`Ton premier choix correspond à tes réponses.`:`Ton premier choix (${c}) est différent de ce vers quoi penchent tes réponses (${t}). Ce n'est pas un problème : explique-le avec tes mots à ton professeur.`}
+const hesite=()=>val('doubt').trim().length>=10?'oui':'non';
+function bulletinText(){const p=profile(),r=ranking();return `Mon cap pour la Première | ${S.name} | ${r.join(' > ')} | Profil A ${p.A}% B ${p.B}% Accueil ${p.C}% | ${fmt(elapsed())} | hésite ${hesite()}`}
+function flags(p,r){const o=VKEYS.slice().sort((a,b)=>p[b]-p[a]),f=[];if(r[0]!==VN[o[0]])f.push('Premier choix différent du profil ('+VN[o[0]]+')');if(p[o[0]]-p[o[1]]<15)f.push('Profil partagé entre '+VN[o[0]]+' et '+VN[o[1]]);if(hesite()==='oui')f.push('L\'élève exprime des hésitations');return f}
+function tendance(){const p=profile(),o=VKEYS.slice().sort((x,y)=>p[y]-p[x]);return p[o[0]]-p[o[1]]<15?`${VN[o[0]]} et ${VN[o[1]]}`:VN[o[0]]}
+function vFin(){
+  const r=ranking();
+  return head()+card(`<p class="eyebrow">Étape terminée</p><h2>Ton cap</h2>
+  <p>Tes réponses penchent surtout vers : <b>${esc(tendance())}</b>. C'est une aide, pas un verdict : tu es le mieux placé pour décider.</p>
+  <div class="bulletin"><dl><dt>Prénom</dt><dd>${esc(S.name)}</dd><dt>1er choix</dt><dd>${esc(r[0])}</dd><dt>2e choix</dt><dd>${esc(r[1])}</dd><dt>3e choix</dt><dd>${esc(r[2])}</dd></dl><p>${esc(consistency())}</p></div>
+  <p class="small">Ton professeur lira tes réponses détaillées pour t'aider à confirmer ton choix. Enregistre ton fichier, puis dépose-le dans le travail à faire sur Pronote.</p>
+  <button class="btn" data-act="save" style="width:100%">Enregistrer le fichier</button><p class="small" id="savemsg" role="status"></p>`);
+}
+function recapHtml(){
+  const p=profile(),r=ranking();
+  const tastes=TASTES.map((x,i)=>`<tr><td>${esc(VN[x.v])}</td><td>${esc(x.t)}</td><td>${esc(val('t'+i)||'(vide)')}</td></tr>`).join('');
+  const mis=VKEYS.map(v=>`<h3>${esc(MIS[v].title)}</h3>`+MIS[v].qs.map(q=>`<p><b>${esc(q.q)}</b><br>${esc(val(q.id)||'(vide)')}</p>`).join('')+`<p>Note : ${esc(val('rate'+v)||'—')} / 5<br>Commentaire : <i>${esc(val('why'+v)||'(vide)')}</i></p>`).join('');
+  const vf=VF.map((x,i)=>{const a=val('vf'+i),ok=(a==='Vrai')===x.a&&a!=='';return `<tr><td>${esc(x.t)}</td><td>${esc(a||'(vide)')}</td><td>${ok?'juste':'à revoir'}</td></tr>`}).join('');
+  const fl=flags(p,r).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>Rien de particulier</li>';
+  const cond=COND.map((c,i)=>`<tr><td>${esc(c)}</td><td>${esc(val('cd'+i)||'(vide)')}</td></tr>`).join('');
+  const sk=SKILLS.map((c,i)=>`<tr><td>${esc(c)}</td><td>${esc(val('sk'+i)||'(vide)')}</td></tr>`).join('');
+  const acts=ACTS.filter((a,i)=>val('act'+i)==='1').map(a=>`<li>${esc(a)}</li>`).join('')||'<li>(aucune)</li>';
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Mon cap - ${esc(S.name)}</title><style>body{font:15px/1.5 system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#12201c}h1{font-size:24px;margin:0}h2{border-bottom:2px solid #2a7f62;margin-top:26px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccd5d1;padding:5px 8px;text-align:left;vertical-align:top}.code{font:14px monospace;background:#e6f4ee;padding:10px;border-radius:8px;word-break:break-all}</style></head><body><h1>Mon cap pour la Première</h1><p><b>${esc(S.name)}</b> | Temps ${fmt(elapsed())}</p><p class="code">${esc(bulletinText())}</p>
+  <h2>Choix</h2><ol>${r.map(x=>`<li>${esc(x)}</li>`).join('')}</ol><p><b>Raisons :</b> ${esc(val('just')||'(vide)')}</p><p><b>Hésitations :</b> ${esc(val('doubt')||'(vide)')}</p><p><b>Actions prévues :</b></p><ul>${acts}</ul><p><i>${esc(consistency())}</i></p>
+  <h2>Points d'attention pour le professeur</h2><ul>${fl}</ul><h2>Profil</h2><p>MCV A : ${p.A} % | MCV B : ${p.B} % | Accueil : ${p.C} %</p><h2>Goûts</h2><table><tr><th>Voie</th><th>Activité</th><th>Réponse</th></tr>${tastes}</table>
+  <h2>Ce qui compte pour moi</h2><table><tr><th>Critère</th><th>Réponse</th></tr>${cond}</table><h2>Points forts (auto-évaluation)</h2><table><tr><th>Compétence</th><th>Réponse</th></tr>${sk}</table><h2>Expérience</h2><p><b>Préféré :</b> ${esc(val('exp1'))}</p><p><b>Pas aimé :</b> ${esc(val('exp2'))}</p><p><b>Métier ou études envisagés :</b> ${esc(val('exp3'))}</p><h2>Missions</h2>${mis}<h2>Idées reçues</h2><table><tr><th>Affirmation</th><th>Réponse</th><th>Résultat</th></tr>${vf}</table></body></html>`;
+}
+
+/* ---- moteur ---- */
+function vProf(){return card(`<p class="eyebrow">Espace professeur</p><h2>Vue de classe</h2><p>Colle les lignes de synthèse des fichiers reçus (une par élève, au début de chaque fichier).</p><div class="field"><label for="profin">Lignes des élèves</label><textarea id="profin" rows="6"></textarea></div><button class="btn" data-act="verify" style="width:100%">Afficher le tableau</button><div id="vres"></div><p class="small"><a href="#jeu">Retour</a></p>`)}
+function render(){if(location.hash==='#prof'){$app.innerHTML=vProf();return}if(S.screen==='intro')$app.innerHTML=vIntro();else if(S.screen==='fin')$app.innerHTML=vFin();else $app.innerHTML=(S.step===8&&S.phase==='res')?vVfRes():vStep();window.scrollTo(0,0)}
+function saveForm(){
+  document.querySelectorAll('[data-f]').forEach(el=>{S.form[el.id]=el.value});
+  document.querySelectorAll('input[type=radio]:checked').forEach(el=>{S.form[el.name]=el.value});
+  document.querySelectorAll('input[type=checkbox]').forEach(el=>{S.form[el.name]=el.checked?'1':'0'});
+}
+function validate(){
+  const k=S.step,miss=id=>!val(id)||val(id)==='—';
+  if(k<=1){const o=S.ord.tt.slice(k*12,k*12+12);if(o.some(i=>miss('t'+i)))return "Réponds à toutes les activités."}
+  if(k>=2&&k<=4){const v=misOrder()[k-2];if(MIS[v].qs.some(q=>miss(q.id))||miss('rate'+v))return "Réponds aux questions et donne une note.";if(val('why'+v).trim().length<8)return "Écris une phrase sur la mission."}
+  if(k===5&&COND.some((_,i)=>miss('cd'+i)))return "Réponds à toutes les lignes.";
+  if(k===6&&SKILLS.some((_,i)=>miss('sk'+i)))return "Évalue-toi sur tous les points.";
+  if(k===7&&(val('exp1').trim().length<8||val('exp2').trim().length<4||val('exp3').trim().length<4))return "Remplis les trois cases (même une réponse courte).";
+  if(k===8&&VF.some((_,i)=>miss('vf'+i)))return "Réponds à toutes les affirmations.";
+  if(k===9){const r=ranking();if(r.some(x=>!x||x==='—'))return "Classe les trois voies.";if(new Set(r).size<3)return "Chaque voie doit apparaître une seule fois.";if(val('just').trim().length<40)return "Explique ton choix en 2 phrases au moins."}
+  return '';
+}
+function act(a){
+  switch(a){
+    case 'start':{const el=document.getElementById('prenom'),n=((el&&el.value)||'').replace(/\|/g,'').trim().slice(0,30);if(!n){el.focus();return}S=fresh();S.name=n;S.t0=Date.now();S.screen='step';break}
+    case 'submit':{saveForm();const e=validate();S.err=e;if(e)break;
+      if(S.step===8){S.phase='res';break}
+      if(S.step===9){S.tEnd=Date.now();S.screen='fin';break}
+      S.step++;break}
+    case 'next':S.step++;S.phase='play';S.err='';break;
+    case 'save':{
+      const msg=document.getElementById('savemsg'),nm=(S.name.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]/g,'')||'eleve'),html=recapHtml();
+      (async()=>{try{
+        const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+        if(!d){try{const url=URL.createObjectURL(new Blob([html],{type:'text/html'})),an=document.createElement('a');an.href=url;an.download='Cap-'+nm+'.html';document.body.appendChild(an);an.click();an.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);msg.textContent="Fichier enregistré dans tes téléchargements. Dépose-le sur Pronote."}catch(e2){msg.textContent="Enregistrement impossible. Réessaie."}return}
+        await d.save({filename:'Cap-'+nm+'.html',data:new Blob([html],{type:'text/html'})});msg.textContent="Fichier enregistré. Dépose-le sur Pronote.";
+      }catch(e){msg.textContent="Enregistrement non effectué. Clique de nouveau sur le bouton."}})();return}
+    case 'verify':{
+      const L=(document.getElementById('profin').value||'').split('\n').map(l=>l.trim()).filter(Boolean),rows=[],cnt={};
+      L.forEach(l=>{const p=l.split('|').map(x=>x.trim());if(p.length<5)return;const ch=p[2].split('>').map(x=>x.trim()),m=p[3].match(/A (\d+)% B (\d+)% Accueil (\d+)%/);if(!m)return;
+        const pr={A:+m[1],B:+m[2],C:+m[3]},o=VKEYS.slice().sort((a,b)=>pr[b]-pr[a]),f=[];
+        if(ch[0]!==VN[o[0]])f.push('choix ≠ profil');if(pr[o[0]]-pr[o[1]]<15)f.push('profil partagé');if(/oui/.test(p[5]||''))f.push('hésite');
+        cnt[ch[0]]=(cnt[ch[0]]||0)+1;rows.push([esc(p[1]),esc(ch[0]),esc(ch[1]||''),esc(ch[2]||''),m[1]+' %',m[2]+' %',m[3]+' %',esc(f.join(', ')||'—')])});
+      const sum=Object.keys(cnt).map(k=>`${esc(k)} : ${cnt[k]}`).join(' · ');
+      document.getElementById('vres').innerHTML=rows.length?`<p><b>1ers choix :</b> ${sum}</p><div class="tbl"><table><tr><th>Élève</th><th>1er</th><th>2e</th><th>3e</th><th>A</th><th>B</th><th>Acc.</th><th>Attention</th></tr>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i===0?'n':''}">${c}</td>`).join('')}</tr>`).join('')}</table></div>`:'<p>Aucune ligne lisible.</p>';
+      return}
+    default:return;
+  }
+  render();
+}
+$app.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled)act(b.dataset.act)});
+$app.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='prenom')act('start')});
+window.addEventListener('hashchange',render);
+setInterval(()=>{const c=document.getElementById('chrono');if(c&&S.t0&&!S.tEnd)c.textContent=fmt(elapsed())},1000);
+function boot(d){if(d&&d.v===STATE_V&&d.screen&&Array.isArray(d.log))S=d;render()}
+if(window.claude&&window.claude.hot){window.claude.hot.snapshot(()=>S);window.claude.hot.ready?window.claude.hot.ready(boot):boot(window.claude.hot.data)}else{boot()}
+</script></body></html>

@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panique à l'accueil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Idée : un hall d'hôtel clair et architecturé en fond, des cartes de verre dépoli par-dessus, un seul accent émeraude et un filet de laiton. */
+:root{
+  --bg:#e8eeec;
+  --surface:rgba(255,255,255,.88);
+  --ink:#12201c;
+  --muted:#58685f;
+  --accent:#0e7a62;
+  --accent-dark:#0a5c4a;
+  --gold:#b58a2e;
+  --ok:#1f8a58;
+  --ko:#c4452f;
+  --line:#d3ddda;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+a{color:var(--accent-dark)}
+.scene{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.scene svg{width:100%;height:100%;display:block}
+.scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(236,242,240,.10) 0%,rgba(236,242,240,.5) 55%,rgba(236,242,240,.85) 100%)}
+.wrap{position:relative;z-index:1;max-width:580px;margin:0 auto;padding:18px 16px 56px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px 12px;flex-wrap:wrap}
+.top>div:first-child{display:contents}
+.top .brand{flex:1 1 100%}
+.brand{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.22em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.brand::before{content:"";width:22px;height:2px;background:var(--gold);display:block}
+.chrono{display:inline-flex;align-items:center;gap:8px;margin:0;padding:4px 12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;font-variant-numeric:tabular-nums;font-size:16px;font-weight:700;letter-spacing:.04em}
+.chrono::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.keytag{display:flex;align-items:center;gap:5px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;backdrop-filter:blur(10px)}
+.slot{width:13px;height:13px;border-radius:50%;border:1.5px solid #aebdb8;background:transparent}
+.slot.on{background:var(--accent);border-color:var(--accent)}
+.card{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);border-radius:22px;padding:26px 22px;box-shadow:0 24px 60px rgba(18,32,28,.14)}
+.eyebrow{margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-dark)}
+h1,h2{font-family:var(--display);font-weight:700;line-height:1.08;margin:0 0 14px;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:44px}
+h2{font-size:28px}
+p{margin:0 0 12px}
+.phrase{font-family:var(--display);font-weight:600;font-size:25px;line-height:1.28;margin:14px 0 22px;padding:0 0 0 16px;border-left:3px solid var(--gold);text-wrap:balance}
+.btn{font:700 16px var(--body);min-height:50px;border-radius:999px;border:2px solid var(--accent);background:var(--accent);color:#fff;padding:0 24px;cursor:pointer;transition:background .15s,transform .15s}
+.btn:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.btn:focus-visible,.chip:focus-visible,.link:focus-visible,.opt:focus-visible,.seg:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 140px}
+.link{background:none;border:0;padding:14px 0 0;font:600 15px var(--body);color:var(--accent-dark);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.hint{margin:14px 0 0;padding:12px 14px;background:#fff;border:1px dashed var(--gold);border-radius:12px;font-size:15px}
+.fb{border-left:4px solid;padding:12px 14px;margin:14px 0;background:#fff;border-radius:0 12px 12px 0;font-size:16px}
+.fb.ok{border-color:var(--ok)}
+.fb.ko{border-color:var(--ko)}
+.field{display:flex;flex-direction:column;gap:6px;margin:18px 0}
+.field label{font-weight:600;font-size:15px}
+input[type=text],textarea{font:400 18px var(--body);min-height:50px;padding:8px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:140px;font-size:15px}
+.small{font-size:14px;color:var(--muted)}
+.line{min-height:66px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border:1.5px dashed #aebdb8;border-radius:14px;background:#fff;margin:12px 0}
+.placeholder{font-size:15px;color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+.chip{font:600 16px var(--body);min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-align:left;transition:border-color .15s}
+.chip:hover{border-color:var(--accent)}
+.chip.placed{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip:disabled{opacity:.5;cursor:default}
+.ctx{font-size:14px;margin:0 0 4px;color:var(--muted)}
+.client{font-family:var(--display);font-weight:500;font-size:23px;line-height:1.3;margin:14px 0 18px;padding:0 0 0 16px;border-left:3px solid var(--gold)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:500 16px var(--body);text-align:left;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.good{border-color:var(--ok);background:#e6f4ec}
+.opt.bad{border-color:var(--ko);background:#fbe9e5}
+.opt:disabled{cursor:default}
+.gauge-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-top:6px;color:var(--muted)}
+.gauge{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--ko),var(--gold),var(--ok));background-size:600px 100%;transition:width .4s}
+.digit{width:88px;height:108px;display:grid;place-items:center;margin:8px 0 14px;background:var(--accent);color:#fff;border-radius:18px;font-family:var(--display);font-size:64px;font-weight:700}
+.pts{font-weight:700;color:var(--accent-dark)}
+.code-in{font:700 30px var(--display);letter-spacing:.3em;text-align:center;max-width:320px}
+.err{min-height:24px;color:var(--ko);font-weight:600;margin:0 0 8px}
+.bulletin{border:1.5px solid var(--line);border-radius:16px;padding:18px;margin:14px 0;background:#fff}
+.bulletin dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}
+.bulletin dt{font-weight:600;color:var(--muted)}
+.bulletin dd{margin:0;font-variant-numeric:tabular-nums;font-weight:600}
+.copytext{font-size:14px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;user-select:all;word-break:break-word}
+.rules{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;margin:0 0 12px}
+.rules ul{margin:6px 0 0;padding-left:18px}
+.tbl{overflow-x:auto;margin:0 0 16px;border-radius:14px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}
+th,td{padding:8px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--ink);color:#fff;font-weight:600}
+tr:last-child td{border-bottom:0}
+.qn{font-weight:700;margin:6px 0 10px}
+.wrow{margin:0 0 16px}
+.wdef{margin:0 0 6px;font-size:15px}
+.wrow input{max-width:280px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.wrow.ok input{border-color:var(--ok);background:#e6f4ec}
+.wmeta{font-size:13px;color:var(--muted);margin-left:8px}
+.first{font-family:var(--display);color:var(--accent-dark);font-weight:700}
+.mail{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;display:flex;flex-direction:column;gap:4px}
+.seg{font:400 15.5px var(--body);text-align:left;background:transparent;border:2px solid transparent;border-radius:10px;padding:7px 9px;color:var(--ink);cursor:pointer;line-height:1.45}
+.seg:hover{border-color:var(--line)}
+.seg.sel{border-color:var(--gold);background:#fbf3df}
+.seg.hit{border-color:var(--ok);background:#e6f4ec}
+.seg.bad{border-color:var(--ko);background:#fbe9e5;text-decoration:line-through}
+.seg.miss{border:2px dashed var(--ko);background:#fff}
+.seg:disabled{cursor:default}
+.foot{text-align:center;font-size:13px;color:var(--muted)}
+.vlist{padding-left:18px;margin:12px 0}
+.vlist li{margin:0 0 6px}
+.cd-wrap{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.cd-bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.cd-bar i{display:block;height:100%;background:var(--accent);transition:width 1s linear}
+.cd-bar i.low{background:var(--ko)}
+.cd{font-variant-numeric:tabular-nums;font-weight:700;min-width:48px;text-align:right}
+.ans{max-width:300px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.tiles{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+.tile{width:46px;height:56px;display:grid;place-items:center;background:var(--ink);color:#fff;border-radius:12px;font-family:var(--display);font-size:28px;font-weight:700}
+.scene7{margin:8px 0 12px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.scene7 svg{display:block;width:100%;height:auto}
+.line.stack{flex-direction:column;align-items:stretch}
+.line.stack .chip{width:100%}
+select{font:400 16px var(--body);min-height:48px;padding:8px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.prow{margin:0 0 14px;display:flex;flex-direction:column;gap:6px}
+.prow p{margin:0;font-weight:600}
+.ok-t{color:var(--ok);font-weight:700}
+.ko-t{color:var(--ko);font-weight:700}
+.carnet{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:15px;backdrop-filter:blur(10px)}
+.carnet summary{cursor:pointer;font-weight:700}
+.carnet ol{margin:8px 0 0;padding-left:20px}
+.carnet li{margin:0 0 6px}
+.ord{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.orow{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px 8px 8px 12px}
+.orow .num{font-family:var(--display);font-weight:700;color:var(--accent-dark);min-width:18px}
+.orow .tx{flex:1;font-size:16px;line-height:1.4}
+.mv{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-size:16px;cursor:pointer}
+.mv:disabled{opacity:.25;cursor:default}
+.mv:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.gauge i,.btn,.chip,.opt,.cd-bar i{transition:none}}
+@media (max-width:400px){h1{font-size:36px}.card{padding:22px 18px}}
+</style>
+</head>
+<body>
+<div class="scene"><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs>
+<linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7e3e1"/><stop offset="1" stop-color="#eef0ea"/></linearGradient>
+<linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfd8df"/><stop offset=".7" stop-color="#e6f1f0"/><stop offset="1" stop-color="#f6f8f3"/></linearGradient>
+<linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfcabb"/><stop offset="1" stop-color="#ece9df"/></linearGradient>
+<linearGradient id="wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9a7a4a"/><stop offset="1" stop-color="#b8985f"/></linearGradient>
+<linearGradient id="strip" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8c36a" stop-opacity="0"/><stop offset=".5" stop-color="#f3d58c"/><stop offset="1" stop-color="#e8c36a" stop-opacity="0"/></linearGradient>
+<radialGradient id="glow"><stop offset="0" stop-color="#fff3c9"/><stop offset=".45" stop-color="#f7dc92" stop-opacity=".55"/><stop offset="1" stop-color="#f7dc92" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1200" height="800" fill="url(#wall)"/>
+<!-- baies vitrées -->
+<g>
+<rect x="90" y="70" width="1020" height="470" fill="url(#glass)"/>
+<g fill="#12201c" opacity=".55">
+<rect x="86" y="66" width="1028" height="8"/><rect x="86" y="536" width="1028" height="8"/>
+<rect x="86" y="66" width="8" height="478"/><rect x="1106" y="66" width="8" height="478"/>
+<rect x="260" y="70" width="5" height="470"/><rect x="430" y="70" width="5" height="470"/><rect x="600" y="70" width="5" height="470"/><rect x="770" y="70" width="5" height="470"/><rect x="940" y="70" width="5" height="470"/>
+<rect x="90" y="200" width="1020" height="4"/>
+</g>
+<!-- skyline lointain -->
+<g fill="#9fb8bd" opacity=".35"><rect x="110" y="400" width="60" height="140"/><rect x="180" y="360" width="46" height="180"/><rect x="620" y="390" width="70" height="150"/><rect x="700" y="340" width="40" height="200"/><rect x="960" y="380" width="80" height="160"/></g>
+</g>
+<!-- sol -->
+<rect y="540" width="1200" height="260" fill="url(#floor)"/>
+<g fill="#ffffff" opacity=".22"><polygon points="260,545 430,545 380,800 120,800"/><polygon points="600,545 770,545 800,800 560,800"/><polygon points="940,545 1110,545 1200,800 920,800"/></g>
+<!-- panneau bois derrière le comptoir -->
+<rect x="360" y="250" width="420" height="300" fill="url(#wood)"/>
+<g stroke="#7b5f35" stroke-width="2" opacity=".55"><path d="M390 250V550M420 250V550M450 250V550M480 250V550M510 250V550M540 250V550M570 250V550M600 250V550M630 250V550M660 250V550M690 250V550M720 250V550M750 250V550"/></g>
+<rect x="540" y="330" width="60" height="4" fill="#f3d58c"/>
+<rect x="552" y="344" width="36" height="4" fill="#f3d58c" opacity=".7"/>
+<!-- comptoir -->
+<rect x="300" y="470" width="540" height="22" rx="4" fill="#12201c"/>
+<rect x="312" y="492" width="516" height="110" fill="#f6f4ee"/>
+<rect x="312" y="590" width="516" height="6" fill="url(#strip)"/>
+<rect x="312" y="602" width="516" height="22" fill="#e1ddd0" opacity=".7"/>
+<!-- suspensions -->
+<g stroke="#12201c" stroke-width="2" opacity=".6"><line x1="470" y1="0" x2="470" y2="170"/><line x1="570" y1="0" x2="570" y2="130"/><line x1="670" y1="0" x2="670" y2="170"/></g>
+<circle cx="470" cy="190" r="70" fill="url(#glow)"/><circle cx="570" cy="150" r="70" fill="url(#glow)"/><circle cx="670" cy="190" r="70" fill="url(#glow)"/>
+<circle cx="470" cy="190" r="22" fill="#fff6d8"/><circle cx="570" cy="150" r="22" fill="#fff6d8"/><circle cx="670" cy="190" r="22" fill="#fff6d8"/>
+<!-- plante -->
+<g transform="translate(980 500)">
+<rect x="-34" y="40" width="68" height="90" rx="10" fill="#12201c"/>
+<g fill="#2a6b52"><ellipse cx="0" cy="-20" rx="16" ry="80" transform="rotate(-8)"/><ellipse cx="-24" cy="-6" rx="14" ry="66" transform="rotate(-32)"/><ellipse cx="24" cy="-6" rx="14" ry="66" transform="rotate(30)"/><ellipse cx="-44" cy="14" rx="12" ry="50" transform="rotate(-58)"/><ellipse cx="44" cy="14" rx="12" ry="50" transform="rotate(56)"/></g>
+</g>
+<!-- fauteuil -->
+<g transform="translate(150 560)">
+<rect x="0" y="40" width="170" height="64" rx="22" fill="#12201c"/>
+<rect x="10" y="-4" width="150" height="70" rx="26" fill="#1c322c"/>
+<rect x="14" y="104" width="6" height="22" fill="#b58a2e"/><rect x="150" y="104" width="6" height="22" fill="#b58a2e"/>
+</g>
+<!-- ombre portée du comptoir -->
+<ellipse cx="570" cy="640" rx="300" ry="16" fill="#12201c" opacity=".12"/>
+</svg>
+</div>
+<div class="wrap" id="app"></div>
+<script>
+/* ---------- Contenu ---------- */
+const SALT="cergy-accueil-2026";
+const STATE_V=9;
+const CODE="372915";
+const DIGITS=[3,7,2,9,1,5,1,1,1,1,1,1];
+const LABELS=["Le comptoir","Le standard","Le client mécontent","Le planning","Le mot mystère","Le courrier","Les 6 erreurs","Le check-in","La fiche client","Le bon service","Les avis en ligne","Le client étranger"];
+
+/* Étape 1 */
+const PH=[
+ {t:"Bonjour madame, bienvenue à l'Hôtel Le Grand Cergy.",ok:true,why:"Salutation et mot d'accueil : le client se sent attendu."},
+ {t:"Pas de souci, je m'en occupe.",ok:false,why:"« Pas de souci » est familier et négatif. On préfère « Avec plaisir, je m'en occupe. »"},
+ {t:"Je vous écoute.",ok:true,why:"Courte, polie, positive : le client comprend que tu es disponible."},
+ {t:"Qu'est-ce qu'il y a ?",ok:false,why:"Ton brusque. Même une question courte se formule poliment : « Que puis-je faire pour vous ? »"},
+ {t:"Désolé, c'est la procédure.",ok:false,why:"Argument d'autorité sans solution. On explique la règle et on propose une alternative."},
+ {t:"Je ne peux pas vous donner cette information, mais je vous mets en relation avec la personne qui le peut.",ok:true,why:"Tu refuses sans fermer la porte : le client est orienté."},
+ {t:"Vous vous trompez, madame.",ok:false,why:"Contredire frontalement braque le client. On reformule : « Je vérifie pour être sûre de bien comprendre. »"},
+ {t:"Je vous remercie de votre patience.",ok:true,why:"Le remerciement valorise l'effort du client plutôt que de s'excuser pour tout."},
+ {t:"Là, je peux rien faire pour vous.",ok:false,why:"Phrase de blocage, en plus familière. On dit ce qu'on PEUT faire."},
+ {t:"Je vous rappelle dans cinq minutes avec la réponse.",ok:true,why:"Engagement précis et daté : le client sait à quoi s'attendre (à condition de le tenir)."}
+];
+const H1="Pose-toi deux questions : est-ce poli ? est-ce que le client sait ce que je fais pour lui ?";
+
+/* Étape 2 */
+const R2=[
+ {ctx:"Le téléphone sonne à la réception. Tu décroches.",
+  chips:{a:"Hôtel Le Grand Cergy, bonjour.",b:"Léa à l'appareil.",c:"Comment puis-je vous aider ?",x:"Allô ?",y:"Oui, j'écoute, c'est pour quoi ?",z:"Qui êtes-vous ?"},
+  answer:['a','b','c'],
+  fb:"Entreprise et salutation, prénom, offre d'aide : le client sait où il est et à qui il parle."},
+ {ctx:"Un client demande une chambre double pour le 14. Tu dois vérifier ton planning.",
+  chips:{d:"Puis-je vous mettre en attente un instant, le temps de vérifier ?",e:"Je vous remercie de votre patience, monsieur Martin.",f:"Bonne nouvelle : une chambre double est libre le 14.",u:"Restez en ligne, je regarde.",v:"Attendez, je regarde.",w:"Voilà, c'était long, hein."},
+  answer:['d','e','f'],
+  fb:"Tu demandes l'accord avant la mise en attente, tu remercies au retour, puis tu donnes la réponse."},
+ {ctx:"La directrice est absente. Un client veut lui parler. Tu prends un message.",
+  chips:{g:"Madame Roche est absente pour le moment.",h:"Puis-je prendre un message ?",i:"Je le lui transmets dès son retour.",j:"Elle n'est pas là, rappelez plus tard.",k:"Je sais pas où elle est.",l:"Laissez votre numéro, on verra."},
+  answer:['g','h','i'],
+  fb:"Tu expliques l'absence, tu proposes de prendre un message, puis tu t'engages à le transmettre."}
+];
+const H2="Situation 1 : l'hôtel, ton prénom, puis ta proposition d'aide. Situation 2 : tu demandes, tu remercies, tu réponds. Situation 3 : tu expliques, tu proposes, tu t'engages.";
+
+/* Étape 3 */
+const R=[
+ {c:"Ça fait vingt minutes que j'attends et ma chambre n'est même pas prête !",o:[
+  {t:"Je comprends votre agacement, monsieur. Je vérifie tout de suite où en est votre chambre.",p:2,why:"Tu reconnais l'émotion et tu t'engages sur une action immédiate."},
+  {t:"Je suis vraiment désolée, monsieur, c'est inadmissible, ça ne devrait jamais arriver chez nous, je vais voir ce que je peux faire pour vous.",p:1,why:"Tu critiques ton propre hôtel et tu ne t'engages sur rien de précis."},
+  {t:"Calmez-vous, monsieur, je n'y suis pour rien.",p:0,why:"« Calmez-vous » énerve davantage, et tu te défausses."},
+  {t:"Le service d'étage n'a pas fini le ménage, ce n'est pas moi qui m'occupe de cela, il faut simplement patienter encore un peu.",p:0,why:"Tu renvoies la faute sur d'autres sans excuse ni solution."}]},
+ {c:"Je veux un geste commercial, sinon je repars !",o:[
+  {t:"Je comprends. Je préviens ma responsable tout de suite.",p:2,why:"Tu restes honnête sur ton pouvoir de décision et tu escalades immédiatement."},
+  {t:"Je vais voir avec ma responsable si un geste est possible, mais je ne vous promets rien pour le moment.",p:1,why:"Bonne direction, mais froid : pas de délai annoncé, aucune attention pour le client."},
+  {t:"Nous ne faisons pas de gestes commerciaux dans cet hôtel, monsieur, c'est la règle et elle s'applique à tout le monde.",p:0,why:"Refus sec : le client entend « débrouillez-vous »."},
+  {t:"Libre à vous de partir, monsieur, nous avons beaucoup d'autres clients qui attendent une chambre.",p:0,why:"Faute grave : jamais de provocation, même sous pression."}]},
+ {c:"Je ne connais pas du tout Cergy. Où est-ce que je peux dîner ce soir ?",o:[
+  {t:"Avec plaisir, monsieur. Il y a un italien et une brasserie à cinq minutes à pied. Lequel vous tente ? Je réserve pour vous.",p:2,why:"Tu proposes des choix concrets, tu poses une question et tu offres un service."},
+  {t:"Il y a pas mal de restaurants dans le centre-ville de Cergy, vous trouverez facilement quelque chose en vous promenant un peu.",p:1,why:"C'est vrai, mais trop vague : le client n'est pas vraiment aidé."},
+  {t:"Je ne sais pas, regardez sur Internet.",p:0,why:"Tu renvoies le client vers un outil au lieu de le conseiller."},
+  {t:"Ce n'est pas mon travail de vous conseiller.",p:0,why:"Conseiller le client fait partie du métier de réceptionniste."}]},
+ {c:"Très bien, merci pour le conseil. Je peux avoir ma clé ?",o:[
+  {t:"Voici votre clé, monsieur Durand. Encore désolée pour l'attente. Je reste à la réception si besoin.",p:2,why:"Nom du client, excuse, disponibilité : il repart rassuré."},
+  {t:"Voilà votre clé, monsieur. Bon séjour.",p:1,why:"Correct mais froid : un mot d'excuse et de disponibilité changerait la dernière impression."},
+  {t:"Voici votre clé. Je précise que l'hôtel n'est pas responsable des objets laissés dans la chambre, ni des retards de ménage éventuels.",p:0,why:"Tu finis sur une précaution juridique au lieu d'un geste d'accueil."},
+  {t:"Vous voyez, ce n'était pas si long.",p:0,why:"Tu minimises son ressenti, il va le prendre mal."}]}
+];
+const H3="Une bonne réponse reconnaît l'émotion, s'excuse sobrement, puis propose une action concrète avec un délai.";
+
+/* Étape 4 */
+const PLAN=[
+ ["101","Simple","Rez-de-chaussée","Occupée, départ le 15 au matin"],
+ ["102","Double","1er étage","Départ le 14 au matin. Réservée du 16 au 18"],
+ ["103","Double PMR","Rez-de-chaussée","Départ le 14 au matin. Réservée du 17 au 19"],
+ ["104","Familiale (4 pers.)","2e étage","Libre"],
+ ["105","Double","2e étage","Travaux, utilisable à partir du 16"]
+];
+const Q4=[
+ {type:'choice',text:"Mme Roux voyage seule, en fauteuil roulant. Elle arrive le 14 et repart le 16. Quelle chambre lui attribues-tu ?",options:["101","102","103","104"],answer:2,
+  why:"La 103 est la seule chambre accessible. Elle est libre dès le 14 (départ le matin) et sa prochaine réservation commence le 17."},
+ {type:'choice',text:"Un couple arrive le 15 et repart le 18. Quelle chambre proposes-tu ?",options:["102","103","104","105"],answer:2,
+  why:"La 102 est prise dès le 16, la 103 dès le 17, la 105 est en travaux jusqu'au 16. Aucune double n'est libre : la règle autorise alors la familiale 104."},
+ {type:'choice',text:"M. Petit voyage seul. Il arrive le 15 et repart le 17. Quelle chambre lui attribues-tu ?",options:["101","102","104","105"],answer:0,
+  why:"La 101 est la plus petite chambre qui convient et elle est libre dès le 15 (départ le matin). La 102 est réservée dès le 16, la 105 est en travaux jusqu'au 16, la 104 est trop grande."},
+ {type:'num',text:"Calcule le prix du séjour d'un couple en chambre double, du 14 au 16, avec petit-déjeuner pour deux. Réponse en euros.",answer:232,
+  why:"2 nuits × 89 € = 178 €. Taxe : 2 personnes × 2 nuits × 1,50 € = 6 €. Petit-déjeuner : 2 personnes × 2 matins × 12 € = 48 €. Total : 232 €."},
+ {type:'num',text:"Une famille (2 adultes et 2 enfants) arrive le 15 et repart le 17 en chambre familiale, sans petit-déjeuner. Calcule le prix du séjour en euros.",answer:246,
+  why:"2 nuits × 120 € = 240 €. Taxe de séjour : seulement les 2 adultes, soit 2 × 2 nuits × 1,50 € = 6 €. Les enfants ne la paient pas. Total : 246 €."}
+];
+const H4="Barre d'abord les chambres occupées ou inadaptées. Pour le prix, compte les nuits pour la chambre et la taxe, les matins pour le petit-déjeuner.";
+
+/* Étape 5 */
+const LIM5=30,LIMF=60,FINAL_PTS=7,FINAL_HINT_PTS=4;
+const W=[
+ {w:"ECOUTE",def:"Qualité qu'un réceptionniste doit absolument posséder : savoir se taire pour comprendre ce que veut le client.",hint:"On la pratique avec ses oreilles : savoir ... le client sans l'interrompre."},
+ {w:"NUITEE",def:"Une nuit passée dans une chambre d'hôtel s'appelle une ...",hint:"Mot de la même famille que « nuit »."},
+ {w:"CHAMBRE",def:"Pièce de l'hôtel où le client dort. Elle porte un numéro.",hint:"On la réserve, on la nettoie, et on donne la clé pour y entrer."},
+ {w:"TARIF",def:"Prix d'une chambre pour une nuit, affiché à la réception.",hint:"Le client demande : quel est le ... de la chambre ?"},
+ {w:"IMAGE",def:"Ce que le client retient de l'hôtel après son passage, bonne ou mauvaise : elle se construit à chaque accueil.",hint:"On parle de « soigner son ... » : celle de l'hôtel dans la tête des clients."},
+ {w:"LITIGE",def:"Désaccord entre un client et l'hôtel, à traiter avec calme et méthode.",hint:"Un client conteste sa facture : c'est le début d'un ..."}
+];
+const FINAL5="CLIENT";
+const HF="Le mot commence par la lettre C.";
+
+/* Étape 6 */
+const M6=[
+ {t:"Objet : résa",err:true,why:"Objet vague et abrégé. Écris par exemple « Confirmation de votre réservation du 14 au 16 novembre »."},
+ {t:"salut Monsieur Durand,",err:true,why:"Formule d'appel familière et sans majuscule. On écrit « Bonjour Monsieur Durand, »."},
+ {t:"Suite à votre demande, nous avons le plaisir de vous confirmer votre réservation du 14 au 16 novembre en chambre double.",err:false},
+ {t:"Le séjour s'élève à 232 euros, petit-déjeuner et taxe de séjour inclus.",err:false},
+ {t:"Vous pouvez arriver vers 14 h, enfin si la chambre est prête.",err:true,why:"Horaire flou et incertain. Annonce une heure ferme : les chambres sont disponibles à partir de 15 h."},
+ {t:"Le départ s'effectue avant 11 h.",err:false},
+ {t:"L'annulation est gratuite jusqu'à 48 h avant votre arrivée.",err:false},
+ {t:"Nous avons pas reçu votre acompte, faudrait le faire vite.",err:true,why:"Négation incomplète (« nous n'avons pas ») et ton d'ordre. Reformule poliment."},
+ {t:"Nous restons à votre disposition pour toute information complémentaire.",err:false},
+ {t:"Cdlt,",err:true,why:"Abréviation à proscrire dans un courrier professionnel : écris « Cordialement, »."},
+ {t:"Léa",err:true,why:"Signature incomplète : il manque le nom, la fonction, l'hôtel et un numéro de téléphone."}
+];
+const NERR6=M6.filter(m=>m.err).length;
+const H6="Vérifie dans l'ordre : l'objet, la formule d'appel, les horaires, la langue, la formule finale, la signature.";
+
+
+/* Étape 7 : les erreurs à la réception */
+const LIM7=90;
+const HS7=[
+ {x:180,y:50,r:24,n:"La casquette",why:"La casquette ne fait pas partie d'une tenue professionnelle à l'accueil."},
+ {x:199,y:90,r:15,n:"Le chewing-gum",why:"On ne mâche pas de chewing-gum devant un client."},
+ {x:180,y:140,r:34,n:"Les bras croisés",why:"Les bras croisés donnent une posture fermée : le client se sent mal accueilli."},
+ {x:102,y:150,r:34,n:"La nourriture et le gobelet",why:"Nourriture et boisson sur le comptoir : mauvaise image pour l'hôtel."},
+ {x:306,y:162,r:32,n:"Les papiers en désordre",why:"Un comptoir en désordre donne une image brouillonne et fait perdre des documents."},
+ {x:251,y:146,r:28,n:"Le téléphone personnel",why:"Le téléphone personnel sur le comptoir : on est disponible pour le client, pas pour son écran."}
+];
+const H7="Regarde la tête, la bouche, les bras, puis le comptoir de gauche à droite.";
+const BODY7=`<rect width="360" height="280" fill="#e3ece9"/><rect y="200" width="360" height="80" fill="#d4d0c3"/>
+<circle cx="48" cy="88" r="15" fill="#e6b992"/><rect x="32" y="104" width="32" height="70" rx="12" fill="#3b6e8f"/>
+<rect x="18" y="44" width="72" height="26" rx="13" fill="#fff"/><text x="54" y="62" font-size="13" text-anchor="middle" fill="#12201c" font-family="sans-serif">Bonjour ?</text><path d="M44 70 l4 9 l7 -9z" fill="#fff"/>
+<rect x="10" y="168" width="340" height="14" rx="3" fill="#12201c"/><rect x="22" y="182" width="316" height="86" fill="#f6f4ee"/>
+<rect x="146" y="100" width="68" height="72" rx="14" fill="#1c322c"/>
+<circle cx="180" cy="74" r="25" fill="#f0c9a4"/>
+<path d="M156 70 q4 -26 24 -26 q22 0 24 26 q-8 -12 -24 -12 q-16 0 -24 12z" fill="#3a2a20"/>
+<circle cx="171" cy="76" r="2.4" fill="#12201c"/><circle cx="189" cy="76" r="2.4" fill="#12201c"/>
+<path d="M172 90 q8 5 16 0" stroke="#12201c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<rect x="154" y="46" width="52" height="14" rx="7" fill="#c4452f"/><rect x="190" y="56" width="32" height="7" rx="3.5" fill="#a83724"/>
+<circle cx="199" cy="90" r="9" fill="#f4a6c0"/><circle cx="196" cy="87" r="2.5" fill="#fbd0df"/>
+<rect x="144" y="126" width="72" height="14" rx="7" fill="#2f5249"/><rect x="150" y="141" width="60" height="14" rx="7" fill="#2f5249"/><circle cx="148" cy="133" r="8" fill="#f0c9a4"/><circle cx="212" cy="148" r="8" fill="#f0c9a4"/>
+<rect x="76" y="136" width="22" height="32" rx="3" fill="#c4452f"/><rect x="74" y="132" width="26" height="6" rx="2" fill="#fff"/><path d="M90 112 L90 132" stroke="#fff" stroke-width="3"/>
+<path d="M104 168 L106 148 L134 148 L132 168z" fill="#e8b84a"/><circle cx="119" cy="158" r="4" fill="#c4452f"/>
+<rect x="238" y="124" width="26" height="44" rx="5" fill="#12201c"/><rect x="241" y="128" width="20" height="34" rx="2" fill="#7fc4ff"/><circle cx="251" cy="138" r="3" fill="#fff"/><circle cx="251" cy="148" r="3" fill="#fff"/><circle cx="262" cy="126" r="5" fill="#c4452f"/>
+<rect x="276" y="150" width="36" height="24" rx="2" fill="#fff" stroke="#c8d0cc" transform="rotate(-14 294 162)"/><rect x="300" y="154" width="36" height="26" rx="2" fill="#fff" stroke="#c8d0cc" transform="rotate(10 318 167)"/>`;
+
+/* Étape 8 : le check-in dans l'ordre */
+const STEPS8=["Saluer le client et l'accueillir avec le sourire.","Retrouver sa réservation à partir de son nom.","Vérifier son identité et lui faire remplir la fiche client.","Lui remettre la clé en indiquant la chambre et l'étage.","Lui souhaiter un bon séjour et lui proposer son aide."];
+const H8="On accueille d'abord et on souhaite un bon séjour en dernier. La clé n'est remise qu'après avoir vérifié l'identité.";
+
+/* Étape 9 : épeler un nom et remplir la fiche */
+const NAME9="MOREAU";
+const SPELL9="M comme Marcel, O comme Oscar, R comme Raoul, E comme Eugène, A comme Anatole, U comme Ursule";
+const DAYS9=["jeudi 19 novembre","vendredi 20 novembre","samedi 21 novembre","dimanche 22 novembre","lundi 23 novembre"];
+const DIALOG9="Bonjour, je voudrais réserver pour ce week-end. Nous serons quatre : mon mari, nos deux enfants et moi. Nous arrivons le vendredi 20 novembre et nous repartons le dimanche 22. Une chambre familiale, s'il vous plaît, avec le petit-déjeuner pour tout le monde. Vous pouvez me rappeler au 06 12 34 56 78.";
+const F9=[
+ {lab:"Nombre de personnes",type:'sel',opts:["1","2","3","4","5","6"],ans:"4"},
+ {lab:"Arrivée",type:'sel',opts:DAYS9,ans:"vendredi 20 novembre"},
+ {lab:"Départ",type:'sel',opts:DAYS9,ans:"dimanche 22 novembre"},
+ {lab:"Type de chambre",type:'sel',opts:["Simple","Double","Familiale"],ans:"Familiale"},
+ {lab:"Petit-déjeuner",type:'sel',opts:["Oui","Non"],ans:"Oui"},
+ {lab:"Téléphone",type:'tel',ans:"0612345678"}
+];
+const H9S="Garde seulement la première lettre de chaque prénom, dans l'ordre.";
+const H9="Relis le texte phrase par phrase et repère chaque information : combien de personnes, quelles dates, quelle chambre, quel numéro.";
+
+/* Étape 10 : le bon service pour le bon client */
+const PROF10=[
+ {c:"Une famille avec un bébé de 8 mois.",a:"Un lit bébé dans la chambre"},
+ {c:"Un client d'affaires qui a une réunion demain à 9 h.",a:"Un réveil à 7 h et un petit-déjeuner dès 6 h 30"},
+ {c:"Un couple qui fête ses 10 ans de mariage.",a:"Une bouteille de champagne dans la chambre"},
+ {c:"Un cycliste qui voyage avec son vélo.",a:"Un local sécurisé pour garer le vélo"},
+ {c:"Une personne en fauteuil roulant.",a:"Une chambre accessible au rez-de-chaussée"}
+];
+const SERV10=PROF10.map(x=>x.a).concat(["Un parking couvert pour la voiture"]);
+const H10="Pour chaque client, cherche son besoin principal. Un service ne convient qu'à un seul client, et l'un d'eux ne sert à personne.";
+
+/* Étape 11 : les avis en ligne */
+const R11=[
+ {c:"Chambre bruyante et réceptionniste froid à l'arrivée. Petit-déjeuner bon. Je ne reviendrai pas. (2 étoiles sur 5)",o:[
+  {t:"Bonjour, merci pour votre retour. Nous sommes désolés pour le bruit et pour votre accueil. Nous transmettons vos remarques à l'équipe. L'équipe du Grand Cergy",p:2,why:"Tu remercies, tu t'excuses sur les vrais problèmes et tu montres que tu agis."},
+  {t:"Merci pour votre avis. Nous sommes ravis que le petit-déjeuner vous ait plu. L'équipe du Grand Cergy",p:1,why:"Tu ne parles que du point positif et tu ignores les deux problèmes du client."},
+  {t:"Bonjour, nous avons bien lu votre avis, mais votre chambre était l'une des plus calmes de l'hôtel et notre réceptionniste est très apprécié des clients. Nous pensons que votre ressenti n'est pas représentatif.",p:0,why:"Tu contredis le client en public : c'est défensif et ça aggrave la situation."},
+  {t:"Si vous n'êtes pas content, allez ailleurs.",p:0,why:"Une réponse agressive est lue par tous les futurs clients."}]},
+ {c:"Super séjour, personnel adorable, chambre très propre. Merci à Léa ! (5 étoiles sur 5)",o:[
+  {t:"Merci beaucoup, nous transmettons vos compliments à Léa. L'équipe du Grand Cergy",p:2,why:"Tu remercies et tu personnalises en citant Léa."},
+  {t:"Merci pour votre message. Nous espérons que vous avez passé un agréable séjour parmi nous.",p:1,why:"Poli, mais impersonnel : tu ne parles ni de Léa ni de ce que le client a aimé."},
+  {t:"Normal, nous sommes le meilleur hôtel de la ville et nos clients sont toujours satisfaits de leur séjour chez nous.",p:0,why:"Tu te vantes au lieu de remercier : mauvais effet."},
+  {t:"Merci. Pensez à nous suivre sur les réseaux et à laisser un avis sur tous les sites dès maintenant.",p:0,why:"Tu transformes un remerciement en demande : le client se sent utilisé."}]},
+ {c:"On m'a fait payer le petit-déjeuner alors qu'il était offert ! C'est une arnaque ! (1 étoile sur 5) (Dans la réservation, le petit-déjeuner n'était pas inclus.)",o:[
+  {t:"Bonjour, le petit-déjeuner n'était pas inclus dans votre réservation. Contactez-nous pour regarder votre dossier. L'équipe du Grand Cergy",p:2,why:"Tu rappelles les faits sans accuser et tu proposes d'en parler directement."},
+  {t:"Nous sommes désolés pour ce malentendu. L'équipe du Grand Cergy",p:1,why:"Poli, mais vague : aucune explication et aucune solution proposée."},
+  {t:"Bonjour, vous avez mal lu votre réservation, le petit-déjeuner n'y figurait pas, c'est écrit noir sur blanc. Nous ne pouvons pas être tenus responsables de votre inattention.",p:0,why:"Accuser le client en public est une faute professionnelle."},
+  {t:"Arnaque ? Nous pourrions porter plainte pour diffamation si vous ne retirez pas votre avis.",p:0,why:"Menacer le client en ligne détruit la réputation de l'hôtel."}]}
+];
+
+/* Étape 12 : le client étranger */
+const R12=[
+ {c:"Good evening, I have a reservation under the name Smith.",o:[
+  {t:"Good evening, sir. Welcome. One moment, please.",p:2,why:"Salutation, bienvenue et demande d'attendre poliment."},
+  {t:"Yes, name Smith, I check now, you wait here please.",p:1,why:"On comprend, mais l'anglais est maladroit et le ton est sec."},
+  {t:"Hello. Very busy tonight, so please wait over there and I will see you when I have finished with all the others.",p:0,why:"Tu fais attendre sans excuse ni politesse."},
+  {t:"Sorry, no English, no reservation here.",p:0,why:"Tu renvoies le client sans essayer de l'aider."}]},
+ {ctx:"Le petit-déjeuner est servi de 7 h à 10 h le matin, au restaurant.",c:"Could you tell me what time breakfast is served?",o:[
+  {t:"From 7 to 10 in the morning, in the restaurant.",p:2,why:"Les horaires et le lieu sont exacts."},
+  {t:"It is served from 7 to 10 in the evening, in the restaurant.",p:0,why:"Attention : c'est le matin, pas le soir."},
+  {t:"It is served from 8 to 11 in the morning, in the restaurant.",p:0,why:"Les horaires sont faux : 7 h à 10 h."},
+  {t:"In the morning.",p:1,why:"C'est exact mais incomplet : le client veut l'heure."}]},
+ {ctx:"L'ascenseur est à gauche, à côté de l'escalier.",c:"Where is the lift, please?",o:[
+  {t:"It's on your left, next to the stairs. May I show you?",p:2,why:"Direction exacte et proposition d'accompagner."},
+  {t:"On your left.",p:1,why:"Exact mais trop sec : fais une phrase complète."},
+  {t:"It's on your right, next to the restaurant. I can show you if you want.",p:0,why:"Poli, mais la direction et le repère sont faux."},
+  {t:"Look yourself, it's easy to find.",p:0,why:"Impoli : il s'agit de renseigner le client."}]},
+ {ctx:"L'hôtel accepte les cartes bancaires.",c:"Can I pay by credit card?",o:[
+  {t:"Of course, sir. We accept credit cards.",p:2,why:"Réponse positive, polie et exacte."},
+  {t:"Yes.",p:1,why:"Exact mais trop court : ajoute « Of course, sir »."},
+  {t:"I am sorry, sir, but we only accept cash here. You can find a cash machine in the street.",p:0,why:"C'est faux : l'hôtel accepte les cartes."},
+  {t:"Maybe tomorrow, I don't know, ask the manager.",p:0,why:"Ça ne répond pas à la question."}]}
+];
+
+const RCFG={
+ s11:{k:10,rounds:R11,title:"Les avis en ligne",intro:"Un client a laissé un avis sur internet. Choisis la meilleure réponse à publier.",lab:"Avis du client",hint:"Une bonne réponse remercie, reste polie, répond au problème et ne se dispute jamais en public.",next:'s12'},
+ s12:{k:11,rounds:R12,title:"Le client étranger",intro:"Un client étranger te parle en anglais. Choisis la meilleure réponse.",lab:"Le client dit",hint:"Une bonne réponse est polie et exacte : relis l'information donnée en français avant de choisir.",next:'enq'}
+};
+const CLUES=[
+ "Sur la caméra du hall, le voleur ne porte ni un manteau rouge ni un manteau jaune.",
+ "Le voleur n'a pas de sac à dos, et son manteau n'est pas bleu.",
+ "La clé n'a pas été cachée au sous-sol (le parking et la buanderie sont au sous-sol).",
+ "Le salon est fermé à clé depuis midi, et personne n'a utilisé l'ascenseur de l'après-midi.",
+ "Le vol n'a pas eu lieu avant 15 h, ni après 17 h 30.",
+ "La réceptionniste surveillait la clé à 15 h 10 et à 17 h 20 : le vol n'a eu lieu à aucun de ces moments."
+];
+const SUSP=[["M. Durand","bleu","une valise"],["Mme Roux","rouge","un sac à main"],["Mme Moreau","vert","un sac à dos"],["M. Petit","noir","une valise"],["M. Martin","jaune","un parapluie"]];
+const ENQ=[
+ {lab:"Qui a pris la clé ?",opts:SUSP.map(s=>s[0]),ans:"M. Petit"},
+ {lab:"Où est-elle cachée ?",opts:["Le salon","L'ascenseur","Le restaurant","La buanderie","Le parking"],ans:"Le restaurant"},
+ {lab:"À quelle heure a-t-elle disparu ?",opts:["14 h 30","15 h 10","16 h 00","17 h 20","18 h 05"],ans:"16 h 00"}
+];
+const H13="Pour chaque question, barre les possibilités une par une avec les indices, jusqu'à n'en garder qu'une.";
+const MAXPTS=PH.length+R2.length*3+R.length*2+Q4.length*2+W.length*3+FINAL_PTS+NERR6+HS7.length+5+(2+F9.length)+PROF10.length+R11.length*2+R12.length*2+ENQ.length*3;
+
+
+/* ---------- Outils ---------- */
+const $app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const clamp=n=>Math.max(0,Math.min(100,n));
+function shuffleNotSorted(n){let o;do{o=shuffle(Array.from({length:n},(_,i)=>i))}while(o.every((x,i)=>x===i));return o}
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z]/g,'');
+const range=n=>Array.from({length:n},(_,i)=>i);
+
+function sig(name,score,time){
+  const base=norm(name)+'|'+score+'|'+time+'|'+SALT;
+  let h1=2166136261>>>0,h2=5381;
+  for(let i=0;i<base.length;i++){
+    const c=base.charCodeAt(i);
+    h1^=c;h1=Math.imul(h1,16777619)>>>0;
+    h2=((h2*33)^c)>>>0;
+  }
+  const s=(h1.toString(36)+h2.toString(36)).toUpperCase().replace(/[^A-Z0-9]/g,'').padEnd(6,'0');
+  return s.slice(0,3)+'-'+s.slice(3,6);
+}
+
+function fresh(){
+  return {
+    v:STATE_V,screen:'intro',name:'',t0:null,tEnd:null,
+    log:[],pts:Array(13).fill(0),digits:Array(13).fill(null),hint:Array(13).fill(false),
+    s1:{order:shuffle(range(PH.length)),i:0,ans:null,score:0},
+    s2:{r:0,pool:shuffle(Object.keys(R2[0].chips)),line:[],wrong:0,ok:false,score:0,msg:''},
+    s3:{r:0,picked:null,score:0,gauge:20,orders:R.map(r=>shuffle(range(r.o.length)))},
+    s4:{i:0,tries:0,status:'idle',score:0,bad:[],orders:Q4.map(q=>q.type==='choice'?shuffle(range(q.options.length)):null)},
+    s5:{phase:'intro',i:0,t0:null,hintUsed:false,val:'',msg:'',wp:W.map(()=>0),found:W.map(()=>false),finalHint:false,finalFound:false,fp:0},
+    s6:{sel:[],checked:false,score:0,hits:0,falses:0,done:false},
+    s7:{phase:'play',t0:null,found:[],misses:0,msg:''},
+    s8:{order:shuffleNotSorted(STEPS8.length),wrong:0,msg:'',phase:'play',solved:false},
+    s9:{phase:'spell',tries:0,sp:0,val:'',vals:F9.map(()=>''),fp:0,ok:[],okSpell:false,msg:''},
+    s10:{phase:'play',opts:shuffle(SERV10),vals:PROF10.map(()=>''),ok:[],msg:''},
+    s11:{r:0,picked:null,score:0,orders:R11.map(r=>shuffle(range(r.o.length)))},
+    s12:{r:0,picked:null,score:0,orders:R12.map(r=>shuffle(range(r.o.length)))},
+    s13:{phase:'play',tries:0,vals:ENQ.map(()=>''),locked:ENQ.map(()=>false),got:ENQ.map(()=>0),msg:''}
+  };
+}
+let S=fresh();
+const elapsed=()=>S.t0?((S.tEnd||Date.now())-S.t0):0;
+const total=()=>S.pts.reduce((a,b)=>a+b,0);
+
+/* ---------- Vues ---------- */
+function carnetHtml(){
+  const ks=[1,3,5,7,9,11].filter(k=>S.digits[k]!==null);
+  if(!ks.length)return '';
+  return `<details class="carnet"><summary>Carnet d'indices (${ks.length} sur 6)</summary><ol>${ks.map(k=>`<li>${esc(CLUES[(k-1)/2])}</li>`).join('')}</ol></details>`;
+}
+function head(){
+  const slots=S.digits.slice(0,12).map((d,k)=>`<span class="slot${d!==null?' on':''}"></span>`).join('');
+  return `<div class="top"><div><div class="brand">Hôtel Le Grand Cergy</div><div class="chrono" id="chrono" aria-label="Temps écoulé">${fmt(elapsed())}</div></div><div class="keytag" role="img" aria-label="Étapes terminées">${slots}</div></div>`+((S.screen==='intro'||S.screen==='fin'||S.screen==='enq')?'':carnetHtml());
+}
+const card=html=>`<main class="card">${html}</main>`;
+const eyebrow=k=>`<p class="eyebrow">Étape ${k+1} sur 12 · ${LABELS[k]}</p>`;
+function hintBlock(k,text){
+  return S.hint[k]
+    ? `<p class="hint"><strong>Indice.</strong> ${esc(text)}</p>`
+    : `<button class="link" data-act="hint" data-v="${k}">Un indice (−1 point)</button>`;
+}
+function done(k,msg,next){
+  const clue=(k%2===1&&k<12)?`<div class="fb ok" role="status"><strong>Nouvel indice débloqué.</strong> ${esc(CLUES[(k-1)/2])}<br><span class="small">Il est aussi dans ton carnet d'indices, en haut de l'écran.</span></div>`:'';
+  const label=next==='fin'?'Voir mon bulletin':next==='enq'?"Passer à l'enquête finale":'Continuer';
+  return card(`${eyebrow(k)}<h2>Étape terminée</h2><p>${msg}</p>${clue}<p class="pts">Points de l'étape : ${S.pts[k]}</p><button class="btn" data-act="goto" data-v="${next}">${label}</button>`);
+}
+
+function vIntro(){
+  return card(`<p class="eyebrow">Hôtel Le Grand Cergy · 14 h 40</p><h1>Panique à l'accueil</h1>
+  <p>Le réceptionniste vient de partir en urgence. Tu le remplaces jusqu'à ce soir.</p>
+  <p>Douze épreuves pour tenir la réception jusqu'à ce soir. Le chrono tourne dès que tu prends ton poste.</p><p>Pendant ce temps, la clé de la chambre 12 a disparu. Une épreuve sur deux te donne un indice pour retrouver qui l'a prise, où elle est cachée et à quelle heure. L'enquête t'attend à la fin.</p>
+  <div class="field"><label for="prenom">Ton prénom, pour ton bulletin de séjour</label><input type="text" id="prenom" maxlength="30" autocomplete="off"></div>
+  <button class="btn" data-act="start" style="width:100%">Prendre mon poste</button>
+  <p class="small" style="margin-top:14px">Rien n'est enregistré : si tu fermes la page, tu recommences.</p>`);
+}
+
+function v1(){
+  const s=S.s1;
+  if(s.i>=PH.length) return done(0,`Tu as bien classé ${s.score} phrases sur ${PH.length}.`,'s2');
+  const p=PH[s.order[s.i]];
+  let b=`${eyebrow(0)}<h2>À dire ou à bannir ?</h2><p>Phrase ${s.i+1} sur ${PH.length}. Un client est devant toi.</p><blockquote class="phrase">« ${esc(p.t)} »</blockquote>`;
+  if(s.ans===null){
+    b+=`<div class="row"><button class="btn" data-act="a1" data-v="true">À dire</button><button class="btn ghost" data-act="a1" data-v="false">À bannir</button></div>`+hintBlock(0,H1);
+  }else{
+    b+=`<div class="fb ${s.ans?'ok':'ko'}" role="status"><strong>${s.ans?'Bien vu.':'Pas tout à fait.'}</strong> ${esc(p.why)}</div><button class="btn" data-act="n1">${s.i+1>=PH.length?"Terminer l'étape":'Phrase suivante'}</button>`;
+  }
+  return card(b);
+}
+
+function v2(){
+  const s=S.s2;
+  if(s.r>=R2.length) return done(1,"Tes deux messages sont prêts : le client est bien reçu dès la première phrase.",'s3');
+  const rd=R2[s.r],used=new Set(s.line);
+  const line=s.line.length
+    ? s.line.map(id=>`<button class="chip placed" data-act="unpick" data-v="${id}" aria-label="Retirer : ${esc(rd.chips[id])}">${esc(rd.chips[id])}</button>`).join('')
+    : `<span class="placeholder">Clique sur les bulles dans l'ordre</span>`;
+  const pool=s.pool.filter(id=>!used.has(id)).map(id=>`<button class="chip" data-act="pick" data-v="${id}"${s.ok?' disabled':''}>${esc(rd.chips[id])}</button>`).join('');
+  let bottom;
+  if(s.ok){
+    bottom=`<div class="fb ok" role="status"><strong>Bien joué.</strong> ${esc(rd.fb)}</div><button class="btn" data-act="n2">${s.r+1>=R2.length?"Terminer l'étape":'Situation suivante'}</button>`;
+  }else{
+    bottom=(s.msg?`<div class="fb ko" role="status">${esc(s.msg)}</div>`:'')+`<div class="row"><button class="btn ghost" data-act="clear">Effacer</button><button class="btn" data-act="check"${s.line.length?'':' disabled'}>Valider</button></div>`+hintBlock(1,H2);
+  }
+  return card(`${eyebrow(1)}<h2>Au téléphone</h2><p class="ctx">Situation ${s.r+1} sur ${R2.length}</p><p>${esc(rd.ctx)}</p><p><strong>Compose ta réponse dans l'ordre en cliquant sur trois bulles.</strong></p><p class="small">Tu peux changer avant de valider : clique sur une bulle placée pour la retirer.</p>
+  <div class="line" aria-live="polite">${line}</div>
+  <div class="pool">${pool}</div>${bottom}`);
+}
+
+function gaugeInfo(g){return g<35?'Très mécontent':g<70?'Moins tendu':'Rassuré'}
+function v3(){
+  const s=S.s3;
+  if(s.r>=R.length) return done(2,`Tu as gagné ${S.pts[2]} point${S.pts[2]>1?'s':''} sur ${R.length*2} avec M. Durand.`,'s4');
+  const rd=R[s.r];
+  const opts=s.orders[s.r].map(i=>{
+    const o=rd.o[i];let cls='opt';
+    if(s.picked!==null&&i===s.picked) cls+=o.p===2?' good':(o.p===0?' bad':'');
+    return `<button class="${cls}" data-act="a3" data-v="${i}"${s.picked!==null?' disabled':''}>${esc(o.t)}</button>`;
+  }).join('');
+  let fb='';
+  if(s.picked!==null){
+    const o=rd.o[s.picked];
+    fb=`<div class="fb ${o.p===2?'ok':'ko'}" role="status"><strong>${o.p===2?'Excellent.':o.p===1?'Pas mal, mais peut mieux faire.':'À éviter.'}</strong> ${esc(o.why)}</div><button class="btn" data-act="n3">${s.r+1>=R.length?"Terminer l'étape":'Suite'}</button>`;
+  }
+  return card(`${eyebrow(2)}<h2>M. Durand n'est pas content</h2>
+  <p class="small">Il arrive après six heures de route. Sa chambre n'est pas prête. Réplique ${s.r+1} sur ${R.length}.</p>
+  <div class="gauge" role="img" aria-label="Humeur du client : ${gaugeInfo(s.gauge)}"><i style="width:${s.gauge}%"></i></div>
+  <div class="gauge-label"><span>Humeur du client</span><span>${gaugeInfo(s.gauge)}</span></div>
+  <blockquote class="client">« ${esc(rd.c)} »</blockquote>
+  <div class="opts">${opts}</div>${fb}`+(s.picked===null?hintBlock(2,H3):''));
+}
+
+function v4(){
+  const s=S.s4;
+  if(s.i>=Q4.length) return done(3,`Tu as gagné ${S.pts[3]} point${S.pts[3]>1?'s':''} sur ${Q4.length*2} au planning.`,'s5');
+  const q=Q4[s.i];
+  const rows=PLAN.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+  const box=`<div class="rules"><strong>Règles de la maison</strong><ul><li>Arrivée à partir de 15 h, départ avant 11 h : une chambre quittée le 14 au matin est disponible pour une arrivée le 14.</li><li>On attribue toujours la plus petite chambre qui convient.</li><li>Une chambre familiale ne se propose que si aucune chambre double n'est disponible.</li><li>Tarifs : double 89 € la nuit, familiale 120 € la nuit, taxe de séjour 1,50 € par adulte et par nuit (gratuite pour les enfants), petit-déjeuner 12 € par personne et par matin.</li></ul></div>
+  <div class="tbl"><table><thead><tr><th>Chambre</th><th>Type</th><th>Étage</th><th>Occupation</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  let body;
+  if(q.type==='choice'){
+    body=s.orders[s.i].map(i=>{
+      let cls='opt';
+      if(s.bad.includes(i)) cls+=' bad';
+      else if(s.status!=='idle'&&i===q.answer) cls+=' good';
+      return `<button class="${cls}" data-act="a4" data-v="${i}"${(s.status!=='idle'||s.bad.includes(i))?' disabled':''}>Chambre ${esc(q.options[i])}</button>`;
+    }).join('');
+    body=`<div class="opts">${body}</div>`;
+  }else{
+    body=`<div class="field"><label for="n4">Ta réponse en euros</label><input type="text" id="n4" inputmode="decimal" autocomplete="off"${s.status!=='idle'?' disabled':''}></div>`+(s.status==='idle'?`<button class="btn" data-act="a4num" style="width:100%">Valider</button>`:'');
+  }
+  let fb='';
+  if(s.status==='ok') fb=`<div class="fb ok" role="status"><strong>${s.tries===0?'Exact.':'Exact, au deuxième essai.'}</strong> ${esc(q.why)}</div>`;
+  else if(s.status==='fail') fb=`<div class="fb ko" role="status"><strong>Pas cette fois.</strong> ${esc(q.why)}</div>`;
+  else if(s.tries===1) fb=`<div class="fb ko" role="status">Ce n'est pas ça. Relis les règles : il te reste un essai.</div>`;
+  const next=s.status!=='idle'?`<button class="btn" data-act="n4" style="margin-top:6px">${s.i+1>=Q4.length?"Terminer l'étape":'Question suivante'}</button>`:'';
+  return card(`${eyebrow(3)}<h2>Le planning</h2>${box}<p class="qn">Question ${s.i+1} sur ${Q4.length}. ${esc(q.text)}</p>${body}${fb}${next}`+(s.status==='idle'?hintBlock(3,H4):''));
+}
+
+function timerInfo(){
+  if(S.screen==='s5'){
+    const s=S.s5;
+    if(s.phase==='ask')return{t0:s.t0,lim:LIM5,act:'timeout5'};
+    if(s.phase==='final')return{t0:s.t0,lim:LIMF,act:'timeoutf'};
+  }
+  if(S.screen==='s7'&&S.s7.phase==='play')return{t0:S.s7.t0,lim:LIM7,act:'timeout7'};
+  return null;
+}
+function limOf(){const t=timerInfo();return t?t.lim:1}
+function left5(){const t=timerInfo();return t?Math.max(0,t.lim-Math.floor((Date.now()-t.t0)/1000)):0}
+function cdHtml(){
+  const l=left5(),lim=limOf();
+  return `<div class="cd-wrap" role="timer" aria-label="Temps restant"><div class="cd-bar"><i id="cdbar" class="${l<=10?'low':''}" style="width:${l/lim*100}%"></i></div><span class="cd" id="cd">${l} s</span></div>`;
+}
+function v5(){
+  const s=S.s5;
+  const maxStep=W.length*3+FINAL_PTS;
+  if(s.phase==='done') return done(4,`Tu as gagné ${S.pts[4]} point${S.pts[4]>1?'s':''} sur ${maxStep} à cette étape.`,'s6');
+  if(s.phase==='intro'){
+    return card(`${eyebrow(4)}<h2>Le mot mystère</h2>
+    <p>Six mots de l'accueil, un par un. Un mot n'apparaît que lorsque le précédent est terminé, avec un chrono de ${LIM5} secondes.</p>
+    <ul class="vlist">
+      <li>Mot trouvé sans indice : <strong>3 points</strong>.</li>
+      <li>Mot trouvé avec l'indice : <strong>1 point</strong>.</li>
+      <li>Temps écoulé : <strong>0 point</strong>, le mot t'est donné et tu continues.</li>
+      <li>À la fin, tu auras la première lettre de chaque mot, dans le désordre. Remets-les dans l'ordre pour trouver le mot mystère : <strong>${FINAL_PTS} points</strong>.</li>
+    </ul>
+    <button class="btn" data-act="start5" style="width:100%">Je suis prêt(e)</button>`);
+  }
+  if(s.phase==='ask'){
+    const w=W[s.i];
+    const hint=s.hintUsed
+      ? `<p class="hint"><strong>Indice.</strong> ${esc(w.hint)} Le mot commence par <strong>${w.w[0]}</strong>.</p>`
+      : `<button class="link" data-act="hint5">Un indice (3 points deviennent 1 point)</button>`;
+    return card(`${eyebrow(4)}<h2>Mot ${s.i+1} sur ${W.length}</h2>${cdHtml()}
+    <blockquote class="phrase">${esc(w.def)}</blockquote>
+    <p class="small">${w.w.length} lettres. Les accents ne comptent pas.</p>
+    <div class="field"><label for="a5">Ta réponse</label><input type="text" id="a5" class="ans" value="${esc(s.val)}" maxlength="14" autocomplete="off" autocapitalize="characters"></div>
+    ${s.msg?`<div class="fb ko" role="status">${esc(s.msg)}</div>`:''}
+    <button class="btn" data-act="ans5" style="width:100%">Valider</button>${hint}`);
+  }
+  if(s.phase==='res'){
+    const w=W[s.i],ok=s.found[s.i],last=s.i+1>=W.length;
+    return card(`${eyebrow(4)}<h2>Mot ${s.i+1} sur ${W.length}</h2>
+    <div class="fb ${ok?'ok':'ko'}" role="status"><strong>${ok?'Trouvé.':'Temps écoulé.'}</strong> Le mot était <strong>${w.w}</strong>. ${ok?(s.wp[s.i]===3?'3 points, sans indice.':'1 point, avec l\'indice.'):'0 point, mais tu continues.'}</div>
+    <button class="btn" data-act="next5" style="width:100%">${last?'Passer au mot mystère':'Mot suivant'}</button>`);
+  }
+  if(s.phase==='final'){
+    const tiles=W.map(w=>`<span class="tile">${w.w[0]}</span>`).join('');
+    const hint=s.finalHint
+      ? `<p class="hint"><strong>Indice.</strong> ${esc(HF)}</p>`
+      : `<button class="link" data-act="hint5f">Un indice (${FINAL_PTS} points deviennent ${FINAL_HINT_PTS})</button>`;
+    return card(`${eyebrow(4)}<h2>Le mot mystère</h2>${cdHtml()}
+    <p>Voici la première lettre de chacun des six mots, dans le désordre. Remets-les dans l'ordre pour former le mot mystère, un mot de 6 lettres.</p><p class="fb ok"><strong>Définition.</strong> Dans l'accueil, le tourisme et le commerce, c'est la personne que l'on accueille, que l'on conseille et à qui l'on vend un service.</p>
+    <div class="tiles" aria-label="Lettres à remettre dans l'ordre">${tiles}</div>
+    <div class="field"><label for="a5">Le mot mystère</label><input type="text" id="a5" class="ans" value="${esc(s.val)}" maxlength="10" autocomplete="off" autocapitalize="characters"></div>
+    ${s.msg?`<div class="fb ko" role="status">${esc(s.msg)}</div>`:''}
+    <button class="btn" data-act="ans5f" style="width:100%">Valider</button>${hint}`);
+  }
+  const got=s.wp.reduce((a,b)=>a+b,0);
+  return card(`${eyebrow(4)}<h2>Bilan de l'étape</h2>
+  <div class="fb ${s.finalFound?'ok':'ko'}" role="status"><strong>${s.finalFound?'Mot mystère trouvé.':'Temps écoulé.'}</strong> Le mot était <strong>${FINAL5}</strong>. ${s.finalFound?s.fp+' points.':'0 point, mais tu continues.'}</div>
+  <p>Les six mots : ${got} point${got>1?'s':''} sur ${W.length*3}. Mot mystère : ${s.fp} sur ${FINAL_PTS}.</p>
+  <button class="btn" data-act="fin5" style="width:100%">Récupérer mon chiffre</button>`);
+}
+
+function v6(){
+  const s=S.s6;
+  if(s.done) return done(5,`Tu as repéré ${s.hits} erreur${s.hits>1?'s':''} sur ${NERR6}.`,'s7');
+  const segs=M6.map((m,i)=>{
+    const sel=s.sel.includes(i);let cls='seg';
+    if(!s.checked){ if(sel) cls+=' sel'; }
+    else if(sel&&m.err) cls+=' hit';
+    else if(sel&&!m.err) cls+=' bad';
+    else if(!sel&&m.err) cls+=' miss';
+    return `<button class="${cls}" data-act="sel6" data-v="${i}" aria-pressed="${sel}"${s.checked?' disabled':''}>${esc(m.t)}</button>`;
+  }).join('');
+  let bottom;
+  if(!s.checked){
+    bottom=`<button class="btn" data-act="check6" style="width:100%"${s.sel.length?'':' disabled'}>Valider mes ${s.sel.length} repérage${s.sel.length>1?'s':''}</button>`+hintBlock(5,H6);
+  }else{
+    const list=M6.filter(m=>m.err).map(m=>`<li>« ${esc(m.t)} » : ${esc(m.why)}</li>`).join('');
+    bottom=`<div class="fb ${s.hits===NERR6&&s.falses===0?'ok':'ko'}" role="status"><strong>${s.hits} erreur${s.hits>1?'s':''} repérée${s.hits>1?'s':''} sur ${NERR6}${s.falses?`, ${s.falses} phrase${s.falses>1?'s':''} correcte${s.falses>1?'s':''} signalée${s.falses>1?'s':''} à tort`:''}.</strong> Chaque phrase à tort retire un point.</div>
+    <p class="small">Les six erreurs :</p><ul class="vlist small">${list}</ul><button class="btn" data-act="n6">Terminer l'étape</button>`;
+  }
+  return card(`${eyebrow(5)}<h2>Le courrier piégé</h2><p>Tu dois envoyer ce mail de confirmation à M. Durand. Il contient exactement ${NERR6} erreurs. Touche chaque phrase fautive.</p><div class="mail">${segs}</div>${bottom}`);
+}
+
+function vCoffre(){
+  return card(`<p class="eyebrow">Dernière épreuve</p><h2>Le coffre de la réception</h2>
+  <p>Entre les six chiffres de ta clé, dans l'ordre des étapes.</p>
+  <div class="field"><label for="code">Code à 6 chiffres</label><input type="text" id="code" class="code-in" inputmode="numeric" maxlength="6" autocomplete="off"></div>
+  <p class="err" id="err" role="status"></p>
+  <button class="btn" data-act="open" style="width:100%">Ouvrir le coffre</button>`);
+}
+
+
+function lg(k,q,a,c,ok,why){S.log.push({k,q:String(q),a:String(a),c:String(c),ok:!!ok,why:why||''});}
+const STEPNAME=k=>k<12?LABELS[k]:'Enquête finale';
+function recapGroups(){
+  const g={};S.log.forEach(e=>{(g[e.k]=g[e.k]||[]).push(e)});return g;
+}
+function recapText(){
+  const b=bulletinText(),g=recapGroups();
+  let o=b.txt+'\n\nRÉCAPITULATIF DE '+b.name.toUpperCase()+'\nScore : '+b.t+' / '+MAXPTS+' | Temps : '+b.time+'\n';
+  Object.keys(g).sort((x,y)=>x-y).forEach(k=>{
+    o+='\n== '+STEPNAME(+k)+' : '+S.pts[k]+' pt(s)'+(S.hint[k]?' (indice utilisé)':'')+' ==\n';
+    g[k].forEach(e=>{
+      o+=(e.ok?'[OK] ':'[ERREUR] ')+e.q+'\n   Ma réponse : '+e.a+'\n';
+      if(!e.ok)o+='   Attendu : '+e.c+'\n';
+      if(!e.ok&&e.why)o+='   Pourquoi : '+e.why+'\n';
+    });
+  });
+  return o;
+}
+function recapHtml(){
+  const b=bulletinText(),g=recapGroups();
+  const nOk=S.log.filter(e=>e.ok).length,nKo=S.log.length-nOk;
+  let rows='',det='';
+  Object.keys(g).sort((x,y)=>x-y).forEach(k=>{
+    const ok=g[k].filter(e=>e.ok).length;
+    rows+=`<tr><td>${esc(STEPNAME(+k))}</td><td>${S.pts[k]}</td><td>${ok} / ${g[k].length}${S.hint[k]?' (indice)':''}</td></tr>`;
+    det+=`<h3>${esc(STEPNAME(+k))} <span>${S.pts[k]} pt(s)</span></h3>`+g[k].map(e=>`<div class="e ${e.ok?'ok':'ko'}"><b>${e.ok?'Juste':'Erreur'}</b> ${esc(e.q)}<br>Ma réponse : <i>${esc(e.a)}</i>${e.ok?'':`<br>Attendu : <i>${esc(e.c)}</i>`}${(!e.ok&&e.why)?`<br><small>${esc(e.why)}</small>`:''}</div>`).join('');
+  });
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Récapitulatif - ${esc(b.name)}</title><style>body{font:15px/1.5 system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#12201c}h1{font-size:24px;margin:0}h3{margin:22px 0 6px;font-size:17px;border-bottom:2px solid #0e7a62}h3 span{float:right;color:#0e7a62}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccd5d1;padding:5px 8px;text-align:left}.code{font:14px monospace;background:#eef3f1;padding:10px;border-radius:8px;word-break:break-all}.e{padding:7px 10px;margin:6px 0;border-left:5px solid;border-radius:4px;background:#f6f8f7}.ok{border-color:#0e7a62}.ko{border-color:#c0392b;background:#fdf1ef}small{color:#555}@media print{body{margin:0}}</style></head><body><h1>Panique à l'accueil : récapitulatif</h1><p><b>${esc(b.name)}</b> | Score ${b.t} / ${MAXPTS} | Temps ${b.time} | ${nOk} réponse(s) juste(s), ${nKo} erreur(s)</p><p class="code">${esc(b.txt)}</p><h2>Résumé par épreuve</h2><table><tr><th>Épreuve</th><th>Points</th><th>Réponses justes</th></tr>${rows}</table><h2>Détail des réponses</h2>${det}</body></html>`;
+}
+function bulletinText(){
+  const t=total(),time=fmt(elapsed()),name=S.name||'Élève';
+  return {t,time,name,txt:`Panique à l'accueil | ${name} | ${t}/${MAXPTS} | ${time} | code ${sig(name,t,time)}`};
+}
+function vFin(){
+  const b=bulletinText();
+  const lvl=b.t>=Math.round(MAXPTS*0.85)?'Réceptionniste confirmé(e)':b.t>=Math.round(MAXPTS*0.6)?'Bon accueil, quelques réflexes à corriger':'À retravailler : relis tes erreurs et rejoue';
+  return card(`<p class="eyebrow">Fin de journée</p><h2>Journée sauvée</h2>
+  <p>Tu as tenu la réception jusqu'à ce soir. Voici ton bulletin.</p>
+  <div class="bulletin"><dl><dt>Réceptionniste</dt><dd>${esc(b.name)}</dd><dt>Score</dt><dd>${b.t} / ${MAXPTS}</dd><dt>Temps</dt><dd>${b.time}</dd><dt>Niveau</dt><dd>${lvl}</dd></dl></div>
+  <p class="small">Enregistre ton fichier récapitulatif (tes réponses, tes erreurs, ton score et ton code), puis dépose-le dans le travail à faire sur Pronote.</p>
+  <button class="btn" data-act="save" id="savebtn" style="width:100%">Enregistrer le fichier</button>
+  <p class="small" id="savemsg" role="status"></p>`);
+}
+
+function vProf(){
+  return card(`<p class="eyebrow">Espace professeur</p><h2>Vérifier des bulletins</h2>
+  <p>Colle un ou plusieurs textes reçus des élèves (une ligne par élève). Le code est recalculé à partir du prénom, du score et du temps.</p>
+  <div class="field"><label for="profin">Textes des élèves</label><textarea id="profin"></textarea></div>
+  <button class="btn" data-act="verify" style="width:100%">Vérifier</button>
+  <ul class="vlist" id="vres"></ul>
+  <p class="small"><a href="#jeu">Retour au jeu</a></p>`);
+}
+
+
+function pts7(){const s=S.s7;return Math.max(0,s.found.length-Math.floor(s.misses/2)-(S.hint[6]?1:0))}
+function scene7(mode){
+  const s=S.s7;
+  const hs=HS7.map((h,i)=>{
+    const f=s.found.includes(i);
+    let mark='';
+    if(f)mark=`<circle cx="${h.x}" cy="${h.y}" r="${h.r}" fill="rgba(31,138,88,.2)" stroke="#1f8a58" stroke-width="3"/>`;
+    else if(mode==='res')mark=`<circle cx="${h.x}" cy="${h.y}" r="${h.r}" fill="rgba(196,69,47,.12)" stroke="#c4452f" stroke-width="3" stroke-dasharray="6 4"/>`;
+    const hit=(mode==='play'&&!f)?`<circle cx="${h.x}" cy="${h.y}" r="${h.r}" fill="rgba(0,0,0,0.001)" data-act="spot7" data-v="${i}" style="cursor:pointer"/>`:'';
+    return mark+hit;
+  }).join('');
+  const bg=mode==='play'?`<rect width="360" height="280" fill="rgba(0,0,0,0.001)" data-act="miss7"/>`:'';
+  return `<svg viewBox="0 0 360 280" role="img" aria-label="Scène d'accueil avec six erreurs à repérer" xmlns="http://www.w3.org/2000/svg">${BODY7}${bg}${hs}</svg>`;
+}
+function v7(){
+  const s=S.s7;
+  if(s.phase==='done')return done(6,`Tu as trouvé ${s.found.length} erreur${s.found.length>1?'s':''} sur ${HS7.length}.`,'s8');
+  if(s.phase==='play'){
+    const list=s.found.map(i=>`<li><strong>${esc(HS7[i].n)}.</strong> ${esc(HS7[i].why)}</li>`).join('');
+    return card(`${eyebrow(6)}<h2>Les 6 erreurs</h2>${cdHtml()}
+    <p>Cette réceptionniste a oublié les bonnes pratiques. Clique sur chaque erreur que tu repères dans l'image.</p>
+    <p class="qn">${s.found.length} sur ${HS7.length} trouvées</p>
+    <div class="scene7">${scene7('play')}</div>
+    ${s.msg?`<div class="fb ko" role="status">${esc(s.msg)}</div>`:''}
+    ${list?`<ul class="vlist small">${list}</ul>`:''}
+    <button class="btn" data-act="end7" style="width:100%">J'ai fini</button>`+hintBlock(6,H7));
+  }
+  const list=HS7.map((h,i)=>`<li><strong>${esc(h.n)}</strong> (${s.found.includes(i)?'trouvée':'manquée'}) : ${esc(h.why)}</li>`).join('');
+  return card(`${eyebrow(6)}<h2>Les 6 erreurs</h2>
+  <div class="scene7">${scene7('res')}</div>
+  <div class="fb ${s.found.length===HS7.length?'ok':'ko'}" role="status"><strong>${s.found.length} erreur${s.found.length>1?'s':''} trouvée${s.found.length>1?'s':''} sur ${HS7.length}.</strong> ${s.misses>=2?`Clics à côté : ${s.misses} (−${Math.floor(s.misses/2)} point${Math.floor(s.misses/2)>1?'s':''}).`:''}</div>
+  <ul class="vlist small">${list}</ul>
+  <p class="pts">Points : ${pts7()} sur ${HS7.length}</p>
+  <button class="btn" data-act="fin7" style="width:100%">Continuer</button>`);
+}
+
+function pts8(){const s=S.s8;if(!s.solved)return 0;return Math.max(0,Math.max(1,5-s.wrong)-(S.hint[7]?1:0))}
+function v8(){
+  const s=S.s8;
+  if(s.phase==='done')return done(7,s.solved?"Tu connais l'ordre d'une arrivée client.":"Tu as vu l'ordre attendu d'une arrivée client.",'s9');
+  if(s.phase==='res'){
+    const list=STEPS8.map(t=>`<li>${esc(t)}</li>`).join('');
+    return card(`${eyebrow(7)}<h2>Le check-in dans l'ordre</h2>
+    <div class="fb ${s.solved?'ok':'ko'}" role="status"><strong>${s.solved?"Bravo, l'ordre est bon.":"Voici l'ordre attendu."}</strong></div>
+    <ol class="vlist">${list}</ol>
+    <p class="pts">Points : ${pts8()} sur 5</p>
+    <button class="btn" data-act="fin8" style="width:100%">Continuer</button>`);
+  }
+  const rows=s.order.map((idx,n)=>`<div class="orow"><span class="num">${n+1}</span><span class="tx">${esc(STEPS8[idx])}</span><button class="mv" data-act="up8" data-v="${n}" aria-label="Monter l'étape ${n+1}"${n===0?' disabled':''}>▲</button><button class="mv" data-act="down8" data-v="${n}" aria-label="Descendre l'étape ${n+1}"${n===s.order.length-1?' disabled':''}>▼</button></div>`).join('');
+  return card(`${eyebrow(7)}<h2>Le check-in dans l'ordre</h2>
+  <p>Un client arrive pour dormir à l'hôtel. Remets les 5 étapes de l'accueil dans l'ordre avec les flèches.</p>
+  <p class="small">Tu peux déplacer chaque étape où tu veux avant de valider.</p>
+  <div class="ord">${rows}</div>
+  ${s.msg?`<div class="fb ko" role="status">${esc(s.msg)}</div>`:''}
+  <button class="btn" data-act="check8" style="width:100%">Valider l'ordre</button>`+hintBlock(7,H8));
+}
+
+function pts9(){const s=S.s9;return Math.max(0,s.sp+s.fp-(S.hint[8]?1:0))}
+function v9(){
+  const s=S.s9;
+  if(s.phase==='done')return done(8,`Tu as gagné ${S.pts[8]} point${S.pts[8]>1?'s':''} sur ${2+F9.length}.`,'s10');
+  if(s.phase==='spell'){
+    return card(`${eyebrow(8)}<h2>La fiche client</h2>
+    <p>Une cliente appelle pour réserver. Elle épelle son nom de famille. Écris-le.</p>
+    <blockquote class="phrase">« ${esc(SPELL9)} »</blockquote>
+    <div class="field"><label for="a9">Son nom</label><input type="text" id="a9" class="ans" value="${esc(s.val)}" maxlength="20" autocomplete="off" autocapitalize="characters"></div>
+    ${s.msg?`<div class="fb ko" role="status">${esc(s.msg)}</div>`:''}
+    <button class="btn" data-act="sp9" style="width:100%">Valider</button>`+hintBlock(8,H9S));
+  }
+  if(s.phase==='spellres'){
+    return card(`${eyebrow(8)}<h2>La fiche client</h2>
+    <div class="fb ${s.okSpell?'ok':'ko'}" role="status"><strong>${s.okSpell?'Bien noté.':'Pas cette fois.'}</strong> Le nom était <strong>${NAME9}</strong>. ${s.sp} point${s.sp>1?'s':''}.</div>
+    <button class="btn" data-act="to9" style="width:100%">Remplir la fiche</button>`);
+  }
+  if(s.phase==='fiche'){
+    const rows=F9.map((f,i)=>{
+      const lab=`<label for="f9_${i}"><strong>${esc(f.lab)}</strong></label>`;
+      const ctl=f.type==='sel'
+        ?`<select id="f9_${i}"><option value="">Choisir</option>${f.opts.map(o=>`<option${s.vals[i]===o?' selected':''}>${esc(o)}</option>`).join('')}</select>`
+        :`<input type="text" id="f9_${i}" inputmode="tel" value="${esc(s.vals[i])}" autocomplete="off">`;
+      return `<div class="prow">${lab}${ctl}</div>`;
+    }).join('');
+    return card(`${eyebrow(8)}<h2>La fiche client</h2>
+    <p>Bien noté : Mme ${NAME9[0]+NAME9.slice(1).toLowerCase()}. Elle continue :</p>
+    <blockquote class="client">« ${esc(DIALOG9)} »</blockquote>
+    <p>Remplis la fiche avec ce que la cliente a dit.</p>
+    ${rows}
+    <button class="btn" data-act="check9" style="width:100%">Valider la fiche</button>`+hintBlock(8,H9));
+  }
+  const rows=F9.map((f,i)=>`<tr><td>${esc(f.lab)}</td><td>${esc(s.vals[i]||'(vide)')}</td><td>${s.ok[i]?'<span class="ok-t">Correct</span>':'<span class="ko-t">Attendu : '+esc(f.type==='tel'?'06 12 34 56 78':f.ans)+'</span>'}</td></tr>`).join('');
+  return card(`${eyebrow(8)}<h2>La fiche client</h2>
+  <div class="fb ${s.fp===F9.length?'ok':'ko'}" role="status"><strong>${s.fp} information${s.fp>1?'s':''} correcte${s.fp>1?'s':''} sur ${F9.length}.</strong></div>
+  <div class="tbl"><table><thead><tr><th>Champ</th><th>Ta réponse</th><th>Résultat</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="pts">Points : ${pts9()} sur ${2+F9.length}</p>
+  <button class="btn" data-act="fin9" style="width:100%">Continuer</button>`);
+}
+
+function pts10(){const s=S.s10;return Math.max(0,s.ok.filter(Boolean).length-(S.hint[9]?1:0))}
+function v10(){
+  const s=S.s10;
+  if(s.phase==='done')return done(9,`Tu as gagné ${S.pts[9]} point${S.pts[9]>1?'s':''} sur ${PROF10.length}.`,'s11');
+  if(s.phase==='play'){
+    const rows=PROF10.map((p,i)=>`<div class="prow"><p>${esc(p.c)}</p><select id="s10_${i}" aria-label="${esc(p.c)}"><option value="">Choisir un service</option>${s.opts.map(o=>`<option${s.vals[i]===o?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`).join('');
+    return card(`${eyebrow(9)}<h2>Le bon service pour le bon client</h2>
+    <p>Pour chaque client, choisis le service que tu lui proposes à l'arrivée.</p>
+    ${rows}
+    <button class="btn" data-act="check10" style="width:100%">Valider</button>`+hintBlock(9,H10));
+  }
+  const rows=PROF10.map((p,i)=>`<tr><td>${esc(p.c)}</td><td>${esc(s.vals[i]||'(vide)')}</td><td>${s.ok[i]?'<span class="ok-t">Correct</span>':'<span class="ko-t">Attendu : '+esc(p.a)+'</span>'}</td></tr>`).join('');
+  return card(`${eyebrow(9)}<h2>Le bon service pour le bon client</h2>
+  <div class="fb ${s.ok.every(Boolean)?'ok':'ko'}" role="status"><strong>${s.ok.filter(Boolean).length} bonne${s.ok.filter(Boolean).length>1?'s':''} association${s.ok.filter(Boolean).length>1?'s':''} sur ${PROF10.length}.</strong> Proposer le bon service au bon client, c'est de la vente-conseil.</div>
+  <div class="tbl"><table><thead><tr><th>Client</th><th>Ton choix</th><th>Résultat</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="pts">Points : ${pts10()} sur ${PROF10.length}</p>
+  <button class="btn" data-act="fin10" style="width:100%">Continuer</button>`);
+}
+
+function vRounds(key){
+  const cfg=RCFG[key],s=S[key],n=cfg.rounds.length;
+  if(s.r>=n)return done(cfg.k,`Tu as gagné ${S.pts[cfg.k]} point${S.pts[cfg.k]>1?'s':''} sur ${n*2}.`,cfg.next);
+  const rd=cfg.rounds[s.r];
+  const opts=s.orders[s.r].map(i=>{
+    const o=rd.o[i];let cls='opt';
+    if(s.picked!==null&&i===s.picked)cls+=o.p===2?' good':(o.p===0?' bad':'');
+    return `<button class="${cls}" data-act="ar" data-v="${key}:${i}"${s.picked!==null?' disabled':''}>${esc(o.t)}</button>`;
+  }).join('');
+  let fb='';
+  if(s.picked!==null){
+    const o=rd.o[s.picked];
+    fb=`<div class="fb ${o.p===2?'ok':'ko'}" role="status"><strong>${o.p===2?'Excellent.':o.p===1?'Pas mal, mais peut mieux faire.':'À éviter.'}</strong> ${esc(o.why)}</div><button class="btn" data-act="nr" data-v="${key}">${s.r+1>=n?"Terminer l'étape":'Suite'}</button>`;
+  }
+  return card(`${eyebrow(cfg.k)}<h2>${cfg.title}</h2><p class="small">${cfg.intro} Question ${s.r+1} sur ${n}.</p>
+  ${rd.ctx?`<p class="ctx">${esc(rd.ctx)}</p>`:''}<p class="ctx">${cfg.lab}</p>
+  <blockquote class="client">« ${esc(rd.c)} »</blockquote><div class="opts">${opts}</div>${fb}`+(s.picked===null?hintBlock(cfg.k,cfg.hint):''));
+}
+
+function ptsEnq(){const s=S.s13;return Math.max(0,s.got.reduce((a,b)=>a+b,0)-(S.hint[12]?1:0))}
+function vEnq(){
+  const s=S.s13;
+  if(s.phase==='res'){
+    const rows=ENQ.map((q,i)=>`<tr><td>${esc(q.lab)}</td><td>${esc(s.vals[i]||'(vide)')}</td><td>${s.locked[i]?`<span class="ok-t">Correct (${s.got[i]} pt${s.got[i]>1?'s':''})</span>`:`<span class="ko-t">Attendu : ${esc(q.ans)}</span>`}</td></tr>`).join('');
+    const n=s.locked.filter(Boolean).length;
+    return card(`<p class="eyebrow">Enquête finale</p><h2>Affaire classée</h2>
+    <div class="fb ${n===ENQ.length?'ok':'ko'}" role="status"><strong>${n} réponse${n>1?'s':''} juste${n>1?'s':''} sur ${ENQ.length}.</strong></div>
+    <div class="tbl"><table><thead><tr><th>Question</th><th>Ta réponse</th><th>Résultat</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="pts">Points : ${ptsEnq()} sur ${ENQ.length*3}</p>
+    <button class="btn" data-act="fin13" style="width:100%">Voir mon bulletin</button>`);
+  }
+  const susp=SUSP.map(x=>`<tr><td>${esc(x[0])}</td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join('');
+  const clues=CLUES.map(c=>`<li>${esc(c)}</li>`).join('');
+  const sels=ENQ.map((q,i)=>`<div class="prow"><label for="e13_${i}"><strong>${esc(q.lab)}</strong></label><select id="e13_${i}"${s.locked[i]?' disabled':''}><option value="">Choisir</option>${q.opts.map(o=>`<option${s.vals[i]===o?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`).join('');
+  return card(`<p class="eyebrow">Enquête finale</p><h2>Qui a pris la clé de la chambre 12 ?</h2>
+  <p>Tes six indices suffisent pour trouver le voleur, l'endroit où la clé est cachée et l'heure du vol.</p>
+  <div class="tbl"><table><thead><tr><th>Suspect</th><th>Manteau</th><th>Bagage</th></tr></thead><tbody>${susp}</tbody></table></div>
+  <p class="qn">Tes indices</p><ol class="vlist">${clues}</ol>
+  ${sels}
+  ${s.msg?`<div class="fb ko" role="status">${esc(s.msg)}</div>`:''}
+  <button class="btn" data-act="check13" style="width:100%">Valider</button>`+hintBlock(12,H13));
+}
+function save13(){
+  if(S.screen!=='enq'||S.s13.phase!=='play')return;
+  ENQ.forEach((q,i)=>{const el=document.getElementById('e13_'+i);if(el&&!S.s13.locked[i])S.s13.vals[i]=el.value;});
+}
+
+function render(){
+  if(location.hash==='#prof'){
+    $app.innerHTML=vProf();
+    return;
+  }
+  const v={intro:vIntro,s1:v1,s2:v2,s3:v3,s4:v4,s5:v5,s6:v6,s7:v7,s8:v8,s9:v9,s10:v10,s11:()=>vRounds('s11'),s12:()=>vRounds('s12'),enq:vEnq,coffre:vCoffre,fin:vFin}[S.screen]();
+  $app.innerHTML=head()+v+`<p class="foot">${S.screen==='intro'?'<a href="#prof">Espace professeur</a>':'Panique à l\'accueil'}</p>`;
+  window.scrollTo(0,0);
+}
+
+/* ---------- Actions ---------- */
+function save5(){
+  if(S.screen!=='s5')return;
+  const el=document.getElementById('a5');
+  if(el)S.s5.val=el.value;
+}
+function endWord(found){
+  const s5=S.s5;
+  lg(4,'Mot '+(s5.i+1)+' : '+W[s5.i].def,found?W[s5.i].w:'Non trouvé dans le temps',W[s5.i].w,found,s5.hintUsed?'Indice utilisé pour ce mot.':'');
+  s5.found[s5.i]=found;s5.wp[s5.i]=found?(s5.hintUsed?1:3):0;s5.phase='res';s5.msg='';
+}
+function endFinal(found){
+  const s5=S.s5;
+  lg(4,'Mot mystère final (les premières lettres des mots)',found?FINAL5:'Non trouvé dans le temps',FINAL5,found,s5.finalHint?'Indice utilisé.':'');
+  s5.finalFound=found;s5.fp=found?(s5.finalHint?FINAL_HINT_PTS:FINAL_PTS):0;s5.phase='finalres';s5.msg='';
+}
+function save9(){
+  if(S.screen!=='s9')return;
+  const s=S.s9;
+  if(s.phase==='spell'){const el=document.getElementById('a9');if(el)s.val=el.value;}
+  if(s.phase==='fiche')F9.forEach((f,i)=>{const el=document.getElementById('f9_'+i);if(el)s.vals[i]=el.value;});
+}
+function save10(){
+  if(S.screen!=='s10'||S.s10.phase!=='play')return;
+  PROF10.forEach((p,i)=>{const el=document.getElementById('s10_'+i);if(el)S.s10.vals[i]=el.value;});
+}
+function act(a,v){
+  save5();save9();save10();save13();
+  const s1=S.s1,s2=S.s2,s3=S.s3,s4=S.s4,s5=S.s5,s6=S.s6;
+  switch(a){
+    case 'start':{
+      const el=document.getElementById('prenom');
+      const name=((el&&el.value)||'').replace(/\|/g,'').trim().slice(0,30);
+      S=fresh();S.name=name;S.t0=Date.now();S.screen='s1';break;
+    }
+    case 'hint':S.hint[+v]=true;break;
+    /* 1 */
+    case 'a1':{
+      if(s1.ans!==null)return;
+      const ok=(v==='true')===PH[s1.order[s1.i]].ok;
+      lg(0,PH[s1.order[s1.i]].t,v==='true'?'Je la juge correcte':'Je la juge à corriger',PH[s1.order[s1.i]].ok?'Phrase correcte':'Phrase à corriger',ok,PH[s1.order[s1.i]].why);
+      s1.ans=ok;if(ok)s1.score++;break;
+    }
+    case 'n1':
+      s1.i++;s1.ans=null;
+      if(s1.i>=PH.length){S.pts[0]=Math.max(0,s1.score-(S.hint[0]?1:0));S.digits[0]=DIGITS[0];}
+      break;
+    /* 2 */
+    case 'pick':if(!s2.ok&&!s2.line.includes(v))s2.line.push(v);s2.msg='';break;
+    case 'unpick':if(!s2.ok){s2.line=s2.line.filter(x=>x!==v);s2.msg='';}break;
+    case 'clear':s2.line=[];s2.msg='';break;
+    case 'check':
+      lg(1,R2[s2.r].ctx,s2.line.map(x=>R2[s2.r].chips[x]).join(' / ')||'(vide)',R2[s2.r].answer.map(x=>R2[s2.r].chips[x]).join(' / '),s2.line.join()===R2[s2.r].answer.join(),R2[s2.r].fb);
+      if(s2.line.join()===R2[s2.r].answer.join()){
+        s2.ok=true;s2.score+=Math.max(1,3-s2.wrong);
+      }else{
+        s2.wrong++;s2.msg="Ce n'est pas encore ça. Lis ta phrase à voix haute et essaie un autre ordre.";
+      }
+      break;
+    case 'n2':
+      s2.r++;s2.line=[];s2.wrong=0;s2.ok=false;s2.msg='';
+      if(s2.r>=R2.length){S.pts[1]=Math.max(0,s2.score-(S.hint[1]?1:0));S.digits[1]=DIGITS[1];}
+      else s2.pool=shuffle(Object.keys(R2[s2.r].chips));
+      break;
+    /* 3 */
+    case 'a3':{
+      if(s3.picked!==null)return;
+      s3.picked=+v;const o=R[s3.r].o[+v];
+      lg(2,R[s3.r].c,o.t,R[s3.r].o.find(x=>x.p===2).t,o.p===2,o.why);
+      s3.score+=o.p;s3.gauge=clamp(s3.gauge+(o.p===2?25:o.p===1?8:-15));break;
+    }
+    case 'n3':
+      s3.r++;s3.picked=null;
+      if(s3.r>=R.length){S.pts[2]=Math.max(0,s3.score-(S.hint[2]?1:0));S.digits[2]=DIGITS[2];}
+      break;
+    /* 4 */
+    case 'a4':{
+      if(s4.status!=='idle')return;
+      const q=Q4[s4.i];
+      lg(3,q.text,q.options[+v],q.options[q.answer],+v===q.answer,q.why);
+      if(+v===q.answer){s4.status='ok';s4.score+=s4.tries===0?2:1;}
+      else{s4.tries++;s4.bad.push(+v);if(s4.tries>=2)s4.status='fail';}
+      break;
+    }
+    case 'a4num':{
+      if(s4.status!=='idle')return;
+      const el=document.getElementById('n4');
+      const val=parseFloat(String((el&&el.value)||'').replace(',','.').replace(/[^0-9.]/g,''));
+      lg(3,Q4[s4.i].text,isNaN(val)?'(vide)':val+' €',Q4[s4.i].answer+' €',!isNaN(val)&&Math.abs(val-Q4[s4.i].answer)<0.005,Q4[s4.i].why);
+      if(!isNaN(val)&&Math.abs(val-Q4[s4.i].answer)<0.005){s4.status='ok';s4.score+=s4.tries===0?2:1;}
+      else{s4.tries++;if(s4.tries>=2)s4.status='fail';}
+      break;
+    }
+    case 'n4':
+      s4.i++;s4.tries=0;s4.status='idle';s4.bad=[];
+      if(s4.i>=Q4.length){S.pts[3]=Math.max(0,s4.score-(S.hint[3]?1:0));S.digits[3]=DIGITS[3];}
+      break;
+    /* 5 */
+    case 'start5':s5.phase='ask';s5.i=0;s5.t0=Date.now();s5.hintUsed=false;s5.val='';s5.msg='';break;
+    case 'hint5':s5.hintUsed=true;break;
+    case 'ans5':{
+      if(s5.phase!=='ask')return;
+      if(left5()<=0){endWord(false);break;}
+      const val=norm(s5.val),w=W[s5.i];
+      if(val===w.w||val===w.w+'S')endWord(true);
+      else s5.msg=val===''?'Écris ta réponse avant de valider.':"Ce n'est pas ça. Tu as encore du temps.";
+      break;
+    }
+    case 'timeout5':if(s5.phase==='ask')endWord(false);else return;break;
+    case 'next5':
+      s5.i++;s5.val='';s5.msg='';s5.hintUsed=false;s5.t0=Date.now();
+      if(s5.i>=W.length){s5.phase='final';s5.finalHint=false;}else s5.phase='ask';
+      break;
+    case 'hint5f':s5.finalHint=true;break;
+    case 'ans5f':
+      if(s5.phase!=='final')return;
+      if(left5()<=0){endFinal(false);break;}
+      if(norm(s5.val)===FINAL5)endFinal(true);
+      else s5.msg=norm(s5.val)===''?'Écris ta réponse avant de valider.':"Ce n'est pas le bon mot. Réarrange les lettres affichées.";
+      break;
+    case 'timeoutf':if(s5.phase==='final')endFinal(false);else return;break;
+    case 'fin5':
+      S.pts[4]=s5.wp.reduce((a,b)=>a+b,0)+s5.fp;S.digits[4]=DIGITS[4];s5.phase='done';break;
+    /* 6 */
+    case 'sel6':{
+      if(s6.checked)return;
+      const i=+v;
+      s6.sel=s6.sel.includes(i)?s6.sel.filter(x=>x!==i):s6.sel.concat(i);break;
+    }
+    case 'check6':
+      s6.checked=true;
+      lg(5,'Repérer les erreurs du courrier ('+NERR6+' à trouver)',s6.sel.map(i=>M6[i].t).join(' / ')||'(rien sélectionné)',M6.filter(m=>m.err).map(m=>m.t).join(' / '),s6.sel.filter(i=>M6[i].err).length===NERR6&&s6.sel.length===NERR6,s6.sel.filter(i=>M6[i].err).length+' erreur(s) trouvée(s), '+(s6.sel.length-s6.sel.filter(i=>M6[i].err).length)+' fausse(s) alerte(s).');
+      s6.hits=s6.sel.filter(i=>M6[i].err).length;
+      s6.falses=s6.sel.length-s6.hits;
+      s6.score=Math.max(0,s6.hits-s6.falses);
+      break;
+    case 'n6':
+      s6.done=true;S.pts[5]=Math.max(0,s6.score-(S.hint[5]?1:0));S.digits[5]=DIGITS[5];break;
+    /* navigation */
+    case 'goto':
+      if(v==='fin')S.tEnd=Date.now();
+      if(v==='s7'){S.s7.phase='play';S.s7.t0=Date.now();}
+      S.screen=v;break;
+    /* 7 */
+    case 'spot7':{
+      const s7=S.s7;if(s7.phase!=='play')return;
+      const i=+v;if(!s7.found.includes(i))s7.found.push(i);
+      s7.msg='';if(s7.found.length>=HS7.length)s7.phase='res';
+      break;
+    }
+    case 'miss7':{const s7=S.s7;if(s7.phase!=='play')return;s7.misses++;s7.msg="Pas d'erreur à cet endroit.";break;}
+    case 'end7':case 'timeout7':if(S.s7.phase==='play')S.s7.phase='res';else return;break;
+    case 'fin7':lg(6,'Repérer les erreurs de la réception ('+HS7.length+' à trouver)',S.s7.found.map(i=>HS7[i].n).join(', ')||'(aucune)',HS7.map(h=>h.n).join(', '),S.s7.found.length===HS7.length,S.s7.misses+' clic(s) à côté.');S.pts[6]=pts7();S.digits[6]=1;S.s7.phase='done';break;
+    /* 8 */
+    case 'up8':{const o=S.s8.order,n=+v;if(n>0){const t=o[n-1];o[n-1]=o[n];o[n]=t;}S.s8.msg='';break;}
+    case 'down8':{const o=S.s8.order,n=+v;if(n<o.length-1){const t=o[n+1];o[n+1]=o[n];o[n]=t;}S.s8.msg='';break;}
+    case 'check8':{
+      const s8=S.s8;
+      const right=s8.order.filter((x,n)=>x===n).length;
+      lg(7,'Remettre les étapes du check-in dans l\'ordre',s8.order.map(x=>STEPS8[x]).join(' / '),STEPS8.join(' / '),right===STEPS8.length,right+' étape(s) à la bonne place sur '+STEPS8.length+'.');
+      if(right===STEPS8.length){s8.solved=true;s8.phase='res';}
+      else{
+        s8.wrong++;
+        if(s8.wrong>=4){s8.solved=false;s8.phase='res';}
+        else s8.msg=`${right} étape${right>1?'s sont':' est'} à la bonne place sur ${STEPS8.length}.`;
+      }
+      break;
+    }
+    case 'fin8':S.pts[7]=pts8();S.digits[7]=1;S.s8.phase='done';break;
+    /* 9 */
+    case 'sp9':{
+      const s9=S.s9;if(s9.phase!=='spell')return;
+      lg(8,'Noter le nom épelé au téléphone',s9.val||'(vide)',NAME9,norm(s9.val)===NAME9,'');
+      if(norm(s9.val)===NAME9){s9.sp=s9.tries===0?2:1;s9.okSpell=true;s9.phase='spellres';}
+      else{
+        s9.tries++;
+        if(s9.tries>=2){s9.sp=0;s9.okSpell=false;s9.phase='spellres';}
+        else s9.msg="Ce n'est pas le bon nom. Il te reste un essai.";
+      }
+      if(s9.phase!=='spell'){s9.val='';s9.msg='';}
+      break;
+    }
+    case 'to9':S.s9.phase='fiche';S.s9.msg='';break;
+    case 'check9':{
+      const s9=S.s9;if(s9.phase!=='fiche')return;
+      F9.forEach((f,i)=>{const el=document.getElementById('f9_'+i);s9.vals[i]=el?el.value:'';});
+      s9.ok=F9.map((f,i)=>f.type==='tel'?s9.vals[i].replace(/\D/g,'')===f.ans:s9.vals[i]===f.ans);
+      F9.forEach((f,i)=>lg(8,'Fiche client : '+f.lab,s9.vals[i]||'(vide)',f.ans,s9.ok[i],''));
+      s9.fp=s9.ok.filter(Boolean).length;s9.phase='res';break;
+    }
+    case 'fin9':S.pts[8]=pts9();S.digits[8]=1;S.s9.phase='done';break;
+    /* 10 */
+    case 'check10':{
+      const s10=S.s10;if(s10.phase!=='play')return;
+      PROF10.forEach((p,i)=>{const el=document.getElementById('s10_'+i);s10.vals[i]=el?el.value:'';});
+      s10.ok=PROF10.map((p,i)=>s10.vals[i]===p.a);
+      PROF10.forEach((p,i)=>lg(9,p.c,s10.vals[i]||'(vide)',p.a,s10.ok[i],''));
+      s10.phase='res';break;
+    }
+    case 'fin10':S.pts[9]=pts10();S.digits[9]=1;S.s10.phase='done';break;
+    /* enquête */
+    case 'check13':{
+      const s=S.s13;if(s.phase!=='play')return;
+      ENQ.forEach((q,i)=>{const el=document.getElementById('e13_'+i);if(el&&!s.locked[i])s.vals[i]=el.value;});
+      ENQ.forEach((q,i)=>{if(!s.locked[i])lg(12,q.lab+' (essai '+(s.tries+1)+')',s.vals[i]||'(vide)',q.ans,s.vals[i]===q.ans,'');});
+      ENQ.forEach((q,i)=>{if(!s.locked[i]&&s.vals[i]===q.ans){s.locked[i]=true;s.got[i]=s.tries===0?3:1;}});
+      const n=s.locked.filter(Boolean).length;
+      if(n===ENQ.length)s.phase='res';
+      else{s.tries++;if(s.tries>=2)s.phase='res';else s.msg=`${n} réponse${n>1?'s':''} juste${n>1?'s':''} sur ${ENQ.length}. Relis tes indices pour les autres.`;}
+      break;
+    }
+    case 'fin13':S.pts[12]=ptsEnq();S.digits[12]=1;S.s13.phase='done';S.tEnd=Date.now();S.screen='fin';break;
+    /* 11 et 12 */
+    case 'ar':{
+      const parts=v.split(':'),s=S[parts[0]];if(s.picked!==null)return;
+      {const rd=RCFG[parts[0]].rounds[s.r],o=rd.o[+parts[1]];lg(RCFG[parts[0]].k,rd.c,o.t,rd.o.find(x=>x.p===2).t,o.p===2,o.why);}
+      s.picked=+parts[1];s.score+=RCFG[parts[0]].rounds[s.r].o[+parts[1]].p;break;
+    }
+    case 'nr':{
+      const s=S[v],cfg=RCFG[v];s.r++;s.picked=null;
+      if(s.r>=cfg.rounds.length){S.pts[cfg.k]=Math.max(0,s.score-(S.hint[cfg.k]?1:0));S.digits[cfg.k]=1;}
+      break;
+    }
+    case 'replay':S=fresh();break;
+    case 'open':{
+      const el=document.getElementById('code'),err=document.getElementById('err');
+      if(el&&el.value.trim()===CODE){S.tEnd=Date.now();S.screen='fin';break;}
+      if(err)err.textContent="Ce n'est pas le bon code. Vérifie les chiffres de ta clé, dans l'ordre des étapes.";
+      return;
+    }
+    case 'save':{
+      const msg=document.getElementById('savemsg'),name=((S.name||'eleve').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]/g,'')||'eleve');
+      const html=recapHtml();
+      (async()=>{
+        try{
+          const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+          if(!d){
+            try{
+              const url=URL.createObjectURL(new Blob([html],{type:'text/html'})),a=document.createElement('a');
+              a.href=url;a.download='Panique-accueil-'+name+'.html';document.body.appendChild(a);a.click();a.remove();
+              setTimeout(()=>URL.revokeObjectURL(url),4000);
+              msg.textContent="Fichier enregistré dans tes téléchargements. Dépose-le sur Pronote.";
+            }catch(e2){msg.textContent="Enregistrement impossible. Réessaie, ou fais une capture d'écran de ton bulletin.";}
+            return;
+          }
+          await d.save({filename:'Panique-accueil-'+name+'.html',data:new Blob([html],{type:'text/html'})});
+          msg.textContent="Fichier enregistré. Dépose-le sur Pronote.";
+        }catch(e){msg.textContent="Enregistrement non effectué. Clique de nouveau sur le bouton.";}
+      })();
+      return;
+    }
+    case 'copyrecap':{
+      const btn=document.getElementById('recbtn'),txt=recapText();
+      try{navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Récapitulatif copié'},()=>{btn.textContent='Copie impossible'});}catch(e){btn.textContent='Copie impossible';}
+      return;
+    }
+    case 'copy':{
+      const btn=document.getElementById('copybtn'),txt=document.getElementById('copytext').textContent;
+      try{
+        navigator.clipboard.writeText(txt).then(()=>{btn.textContent='Texte copié'},()=>{btn.textContent='Sélectionne le texte ci-dessus'});
+      }catch(e){btn.textContent='Sélectionne le texte ci-dessus';}
+      return;
+    }
+    case 'verify':{
+      const lines=(document.getElementById('profin').value||'').split('\n').map(l=>l.trim()).filter(Boolean);
+      const out=lines.map(l=>{
+        const p=l.split('|').map(x=>x.trim());
+        if(p.length<5)return `<li><strong>Illisible</strong> : ${esc(l)}</li>`;
+        const name=p[1],score=parseInt(p[2],10),time=p[3],code=p[4].replace(/^code\s*/i,'').toUpperCase();
+        if(isNaN(score))return `<li><strong>Illisible</strong> : ${esc(l)}</li>`;
+        const ok=sig(name,score,time)===code;
+        return ok?`<li><strong>Valide</strong> : ${esc(name)}, ${esc(p[2])} en ${esc(time)}.</li>`:`<li><strong>Invalide</strong> : ${esc(name)} (texte modifié ou code inventé).</li>`;
+      });
+      document.getElementById('vres').innerHTML=out.length?out.join(''):'<li>Aucun texte collé.</li>';
+      return;
+    }
+    default:return;
+  }
+  render();
+}
+
+$app.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');
+  if(b&&!b.disabled)act(b.dataset.act,b.dataset.v);
+});
+$app.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  if(e.target.id==='prenom')act('start');
+  if(e.target.id==='code')act('open');
+  if(e.target.id==='n4')act('a4num');
+});
+window.addEventListener('hashchange',render);
+setInterval(()=>{
+  const c=document.getElementById('chrono');
+  if(c&&S.t0&&!S.tEnd)c.textContent=fmt(elapsed());
+  if(location.hash==='#prof')return;
+  const t=timerInfo();
+  if(!t)return;
+  const l=left5(),lim=t.lim;
+  const cd=document.getElementById('cd'),bar=document.getElementById('cdbar');
+  if(cd)cd.textContent=l+' s';
+  if(bar){bar.style.width=(l/lim*100)+'%';bar.className=l<=10?'low':'';}
+  if(l<=0)act(t.act);
+},1000);
+
+function boot(d){
+  if(d&&d.v===STATE_V&&Array.isArray(d.log)&&d.screen&&d.s1&&d.s6&&d.s5&&d.s5.phase&&d.s12&&d.s13&&Array.isArray(d.digits)&&d.digits.length===13)S=d;
+  render();
+}
+if(window.claude&&window.claude.hot){
+  window.claude.hot.snapshot(()=>S);
+  window.claude.hot.ready?window.claude.hot.ready(boot):boot(window.claude.hot.data);
+}else{
+  boot();
+}
+</script>
+</body>
+</html>

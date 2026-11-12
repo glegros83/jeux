@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panne à Springfield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Idée : une table de jeu claire en fond, des cartes de verre dépoli, un accent rouge pion et un filet de laiton. */
+:root{
+  --bg:#e8eeec;
+  --surface:rgba(255,255,255,.88);
+  --ink:#12201c;
+  --muted:#58685f;
+  --accent:#1d5fa8;
+  --accent-dark:#134880;
+  --gold:#b58a2e;
+  --ok:#1f8a58;
+  --ko:#c4452f;
+  --line:#d3ddda;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+a{color:var(--accent-dark)}
+.scene{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.scene svg{width:100%;height:100%;display:block}
+.scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(236,242,240,.10) 0%,rgba(236,242,240,.5) 55%,rgba(236,242,240,.85) 100%)}
+.wrap{position:relative;z-index:1;max-width:580px;margin:0 auto;padding:18px 16px 56px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px 12px;flex-wrap:wrap}
+.top>div:first-child{display:contents}
+.top .brand{flex:1 1 100%}
+.brand{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.22em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.brand::before{content:"";width:22px;height:2px;background:var(--gold);display:block}
+.chrono{display:inline-flex;align-items:center;gap:8px;margin:0;padding:4px 12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;font-variant-numeric:tabular-nums;font-size:16px;font-weight:700;letter-spacing:.04em}
+.chrono::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.keytag{display:flex;align-items:center;gap:5px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;backdrop-filter:blur(10px)}
+.slot{width:13px;height:13px;border-radius:50%;border:1.5px solid #aebdb8;background:transparent}
+.slot.on{background:var(--accent);border-color:var(--accent)}
+.card{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);border-radius:22px;padding:26px 22px;box-shadow:0 24px 60px rgba(18,32,28,.14)}
+.eyebrow{margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-dark)}
+h1,h2{font-family:var(--display);font-weight:700;line-height:1.08;margin:0 0 14px;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:44px}
+h2{font-size:28px}
+p{margin:0 0 12px}
+.phrase{font-family:var(--display);font-weight:600;font-size:25px;line-height:1.28;margin:14px 0 22px;padding:0 0 0 16px;border-left:3px solid var(--gold);text-wrap:balance}
+.btn{font:700 16px var(--body);min-height:50px;border-radius:999px;border:2px solid var(--accent);background:var(--accent);color:#fff;padding:0 24px;cursor:pointer;transition:background .15s,transform .15s}
+.btn:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.btn:focus-visible,.chip:focus-visible,.link:focus-visible,.opt:focus-visible,.seg:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 140px}
+.link{background:none;border:0;padding:14px 0 0;font:600 15px var(--body);color:var(--accent-dark);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.hint{margin:14px 0 0;padding:12px 14px;background:#fff;border:1px dashed var(--gold);border-radius:12px;font-size:15px}
+.fb{border-left:4px solid;padding:12px 14px;margin:14px 0;background:#fff;border-radius:0 12px 12px 0;font-size:16px}
+.fb.ok{border-color:var(--ok)}
+.fb.ko{border-color:var(--ko)}
+.field{display:flex;flex-direction:column;gap:6px;margin:18px 0}
+.field label{font-weight:600;font-size:15px}
+input[type=text],textarea{font:400 18px var(--body);min-height:50px;padding:8px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:140px;font-size:15px}
+.small{font-size:14px;color:var(--muted)}
+.line{min-height:66px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border:1.5px dashed #aebdb8;border-radius:14px;background:#fff;margin:12px 0}
+.placeholder{font-size:15px;color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+.chip{font:600 16px var(--body);min-height:44px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-align:left;transition:border-color .15s}
+.chip:hover{border-color:var(--accent)}
+.chip.placed{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip:disabled{opacity:.5;cursor:default}
+.ctx{font-size:14px;margin:0 0 4px;color:var(--muted)}
+.client{font-family:var(--display);font-weight:500;font-size:23px;line-height:1.3;margin:14px 0 18px;padding:0 0 0 16px;border-left:3px solid var(--gold)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:500 16px var(--body);text-align:left;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;line-height:1.45;transition:border-color .15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.good{border-color:var(--ok);background:#e6f4ec}
+.opt.bad{border-color:var(--ko);background:#fbe9e5}
+.opt:disabled{cursor:default}
+.gauge-label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-top:6px;color:var(--muted)}
+.gauge{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.gauge i{display:block;height:100%;background:linear-gradient(90deg,var(--ko),var(--gold),var(--ok));background-size:600px 100%;transition:width .4s}
+.digit{width:88px;height:108px;display:grid;place-items:center;margin:8px 0 14px;background:var(--accent);color:#fff;border-radius:18px;font-family:var(--display);font-size:64px;font-weight:700}
+.pts{font-weight:700;color:var(--accent-dark)}
+.code-in{font:700 30px var(--display);letter-spacing:.3em;text-align:center;max-width:320px}
+.err{min-height:24px;color:var(--ko);font-weight:600;margin:0 0 8px}
+.bulletin{border:1.5px solid var(--line);border-radius:16px;padding:18px;margin:14px 0;background:#fff}
+.bulletin dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}
+.bulletin dt{font-weight:600;color:var(--muted)}
+.bulletin dd{margin:0;font-variant-numeric:tabular-nums;font-weight:600}
+.copytext{font-size:14px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;user-select:all;word-break:break-word}
+.rules{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;margin:0 0 12px}
+.rules ul{margin:6px 0 0;padding-left:18px}
+.tbl{overflow-x:auto;margin:0 0 16px;border-radius:14px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}
+th,td{padding:8px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--ink);color:#fff;font-weight:600}
+tr:last-child td{border-bottom:0}
+.qn{font-weight:700;margin:6px 0 10px}
+.wrow{margin:0 0 16px}
+.wdef{margin:0 0 6px;font-size:15px}
+.wrow input{max-width:280px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.wrow.ok input{border-color:var(--ok);background:#e6f4ec}
+.wmeta{font-size:13px;color:var(--muted);margin-left:8px}
+.first{font-family:var(--display);color:var(--accent-dark);font-weight:700}
+.mail{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;display:flex;flex-direction:column;gap:4px}
+.seg{font:400 15.5px var(--body);text-align:left;background:transparent;border:2px solid transparent;border-radius:10px;padding:7px 9px;color:var(--ink);cursor:pointer;line-height:1.45}
+.seg:hover{border-color:var(--line)}
+.seg.sel{border-color:var(--gold);background:#fbf3df}
+.seg.hit{border-color:var(--ok);background:#e6f4ec}
+.seg.bad{border-color:var(--ko);background:#fbe9e5;text-decoration:line-through}
+.seg.miss{border:2px dashed var(--ko);background:#fff}
+.seg:disabled{cursor:default}
+.foot{text-align:center;font-size:13px;color:var(--muted)}
+.vlist{padding-left:18px;margin:12px 0}
+.vlist li{margin:0 0 6px}
+.cd-wrap{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.cd-bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.cd-bar i{display:block;height:100%;background:var(--accent);transition:width 1s linear}
+.cd-bar i.low{background:var(--ko)}
+.cd{font-variant-numeric:tabular-nums;font-weight:700;min-width:48px;text-align:right}
+.ans{max-width:300px;text-transform:uppercase;letter-spacing:.15em;font-weight:700}
+.tiles{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+.tile{width:46px;height:56px;display:grid;place-items:center;background:var(--ink);color:#fff;border-radius:12px;font-family:var(--display);font-size:28px;font-weight:700}
+.scene7{margin:8px 0 12px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff}
+.scene7 svg{display:block;width:100%;height:auto}
+.line.stack{flex-direction:column;align-items:stretch}
+.line.stack .chip{width:100%}
+select{font:400 16px var(--body);min-height:48px;padding:8px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.prow{margin:0 0 14px;display:flex;flex-direction:column;gap:6px}
+.prow p{margin:0;font-weight:600}
+.ok-t{color:var(--ok);font-weight:700}
+.ko-t{color:var(--ko);font-weight:700}
+.carnet{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:15px;backdrop-filter:blur(10px)}
+.carnet summary{cursor:pointer;font-weight:700}
+.carnet ol{margin:8px 0 0;padding-left:20px}
+.carnet li{margin:0 0 6px}
+.ord{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.orow{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px 8px 8px 12px}
+.orow .num{font-family:var(--display);font-weight:700;color:var(--accent-dark);min-width:18px}
+.orow .tx{flex:1;font-size:16px;line-height:1.4}
+.mv{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-size:16px;cursor:pointer}
+.mv:disabled{opacity:.25;cursor:default}
+.mv:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.gauge i,.btn,.chip,.opt,.cd-bar i{transition:none}}
+@media (max-width:400px){h1{font-size:36px}.card{padding:22px 18px}}
+
+.tbl.nosel,.nosel{user-select:none;-webkit-user-select:none}
+.map{margin:8px 0 14px;border-radius:14px;border:1px solid var(--line);background:#fff;overflow:hidden}
+.map svg{display:block;width:100%;height:auto}
+.tbl select{min-height:40px;padding:4px 8px;font-size:15px;min-width:104px}
+.tbl td.n{white-space:nowrap}
+.items{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.it{border-left:4px solid;padding:9px 12px;background:#fff;border-radius:0 12px 12px 0;font-size:15px}
+.it.ok{border-color:var(--ok)}
+.it.ko{border-color:var(--ko)}
+.it.man{border-color:var(--gold)}
+.it small{display:block;color:var(--muted);margin-top:2px}
+.stmts{display:flex;flex-direction:column;gap:12px;margin:10px 0}
+.stmt{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.stmt p{margin:0 0 6px;font-size:15.5px}
+.facts{display:grid;grid-template-columns:1fr auto;gap:2px 14px;margin:8px 0 12px;font-size:15px}
+.facts b{font-variant-numeric:tabular-nums}
+.sub{font-weight:700;margin:16px 0 4px}
+.rad{border:0;padding:0;margin:14px 0}
+.rad legend{font-weight:600;font-size:15px;margin:0 0 8px;padding:0}
+.radl{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px;cursor:pointer;font-size:15.5px;line-height:1.4}
+.radl:has(input:checked){border-color:var(--accent);background:#e8f0fa}
+.radl input{margin-top:3px;accent-color:var(--accent);width:18px;height:18px;flex:none}
+.rap{position:sticky;bottom:10px;z-index:5;background:#fff;border:2px solid var(--accent);box-shadow:0 8px 24px rgba(18,32,28,.22);max-height:70vh;overflow:auto;border-radius:16px;padding:6px 14px}
+.rap summary{color:var(--accent-dark);font-size:16px;padding:8px 0;text-align:center}
+.mini{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.85);border:1px solid var(--line)}.mini-svg{width:130px;flex:none}.mini-svg svg{display:block;width:100%;height:auto}.mini-t{font-weight:600;font-size:14px}
+</style>
+</head>
+<body>
+<div class="scene"><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcecf7"/><stop offset="1" stop-color="#f3f1e6"/></linearGradient></defs>
+<rect width="1200" height="800" fill="url(#sky)"/>
+<circle cx="980" cy="150" r="70" fill="#f6dd8a" opacity=".8"/>
+<path d="M0 560 Q200 470 420 540 T820 520 T1200 500 V800 H0Z" fill="#c9dfc5"/>
+<path d="M0 640 Q300 580 600 630 T1200 600 V800 H0Z" fill="#b6d1b0"/>
+<g fill="#9db5c9" opacity=".9"><rect x="120" y="440" width="120" height="130"/><polygon points="110,440 180,390 250,440"/><rect x="270" y="470" width="90" height="100"/><polygon points="262,470 315,430 368,470"/></g>
+<g fill="#8aa0b4"><rect x="470" y="430" width="200" height="140"/><rect x="490" y="400" width="26" height="40"/><rect x="540" y="380" width="26" height="60"/><rect x="590" y="410" width="26" height="30"/></g>
+<g fill="#cfd8de"><circle cx="503" cy="380" r="16"/><circle cx="520" cy="360" r="20"/><circle cx="553" cy="340" r="18"/></g>
+<g fill="#a9b9c9"><rect x="760" y="440" width="170" height="130"/><polygon points="750,440 845,395 940,440"/><rect x="780" y="460" width="14" height="110" fill="#e9eef3"/><rect x="812" y="460" width="14" height="110" fill="#e9eef3"/><rect x="844" y="460" width="14" height="110" fill="#e9eef3"/><rect x="876" y="460" width="14" height="110" fill="#e9eef3"/></g>
+<g fill="#9db5c9" opacity=".9"><rect x="990" y="470" width="110" height="100"/><polygon points="982,470 1045,425 1108,470"/></g>
+</svg></div>
+<div class="wrap" id="app"></div>
+<script>
+/* ---------- Constantes ---------- */
+const SALT="springfield-2026",STATE_V=1;
+const EPN=["Ménages et familles","Biens et services","Marchand ou non","La taille des entreprises","Les administrations","La banque","La garantie des dépôts","Le reste du monde","Les trois marchés","Le circuit","La crise"];
+const EPLIM=[150,180,180,300,210,180,210,240,150,300,240];
+const NEP=EPN.length;
+const EPMAX=[5,6,7,8,7,6,5,8,6,10,8];
+const MAXPTS=EPMAX.reduce((a,b)=>a+b,0);
+const LIT=[[4],[2],[1],[3],[5],[7],[8],[9,10],[6],[],[]];
+const AGENT_OF=["Ménages","Ménages","Entreprises","Entreprises","Administrations","Banque","Banque","Reste du monde","Marchés","Circuit","Circuit"];
+
+/* ---------- Outils ---------- */
+const $app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z]/g,'');
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const nf=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const eur=n=>nf(n)+' €';
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function rngOf(str){let h=2166136261;for(const ch of str){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}let a=h>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rr=(r,a,b,step)=>a+step*Math.floor(r()*((b-a)/step+1));
+const shr=(r,arr)=>{arr=arr.slice();for(let i=arr.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr};
+function parseNum(s){s=String(s==null?'':s).replace(/[\s  €%]/g,'').replace(',','.');return /^-?\d+(\.\d+)?$/.test(s)?parseFloat(s):NaN}
+function sig(name,score,time){
+  const base=norm(name)+'|'+score+'|'+time+'|'+SALT;
+  let h1=2166136261>>>0,h2=5381;
+  for(let i=0;i<base.length;i++){const c=base.charCodeAt(i);h1^=c;h1=Math.imul(h1,16777619)>>>0;h2=((h2*33)^c)>>>0;}
+  const s=(h1.toString(36)+h2.toString(36)).toUpperCase().replace(/[^A-Z0-9]/g,'').padEnd(6,'0');
+  return s.slice(0,3)+'-'+s.slice(3,6);
+}
+
+/* ---------- Contenu ---------- */
+const OPT1=['Un ménage et une famille','Un ménage, mais pas une famille','Une famille, mais pas un ménage'];
+const POOL1=[
+ {t:"Homer, Marge, Bart, Lisa et Maggie habitent ensemble dans la même maison.",a:0,w:"Un couple et ses enfants sous le même toit : c'est à la fois un ménage et une famille."},
+ {t:"Trois étudiants partagent un appartement (colocation).",a:1,w:"Ils vivent dans le même logement (ménage) mais ne forment pas une famille."},
+ {t:"Une mère vit avec sa fille de 9 ans dans un appartement.",a:0,w:"Une personne et son enfant : c'est une famille monoparentale, et un ménage."},
+ {t:"Une personne vit seule dans un studio.",a:1,w:"Une personne seule est un ménage, mais pas une famille."},
+ {t:"Un couple vit avec son fils de 25 ans qui n'est pas parti de la maison.",a:0,w:"Un enfant reste un enfant quel que soit son âge : ménage et famille."}
+];
+const OPT2=['Bien durable','Bien non durable','Service'];
+const POOL2=[
+ {t:"Homer utilise la voiture familiale.",a:0,w:"Une voiture sert longtemps : bien durable."},
+ {t:"Marge et Homer dînent au restaurant.",a:2,w:"Un repas servi est une activité immatérielle : service."},
+ {t:"Bart achète un Squishee au Kwik-E-Mart.",a:1,w:"Il est consommé tout de suite : bien non durable."},
+ {t:"Lisa prend un cours de saxophone.",a:2,w:"Le cours est une activité : service."},
+ {t:"Maggie est gardée à la crèche.",a:2,w:"La garde est un service."},
+ {t:"Les Simpson achètent des billets d'avion.",a:2,w:"Un transport est un service."},
+ {t:"La famille achète un téléviseur.",a:0,w:"Un téléviseur sert longtemps : bien durable."},
+ {t:"Marge achète une baguette de pain.",a:1,w:"Le pain est détruit à la première utilisation : bien non durable."},
+ {t:"Les Simpson achètent une machine à laver.",a:0,w:"Elle sert longtemps : bien durable."},
+ {t:"Homer va chez le coiffeur.",a:2,w:"La coupe est un service."}
+];
+const OPT3=['Marchande','Non marchande'];
+const POOL3=[
+ {t:"Krusty Burger vend des menus à ses clients.",a:0,w:"Les produits sont vendus pour faire un profit."},
+ {t:"La mairie délivre une carte d'identité.",a:1,w:"Service public financé par les impôts."},
+ {t:"Un studio produit une série animée vendue aux chaînes de télévision.",a:0,w:"La série est vendue : activité marchande."},
+ {t:"L'école publique accueille les enfants de Springfield.",a:1,w:"Service public, financé par les impôts."},
+ {t:"Une clinique vétérinaire privée facture ses soins.",a:0,w:"Les soins sont payés par les clients : marchande."},
+ {t:"Le centre hospitalier public prend en charge les urgences.",a:1,w:"Service public financé par les prélèvements obligatoires."}
+];
+const Q3=['Les produits sont vendus pour réaliser un profit','Les produits sont financés par les impôts et distribués gratuitement','Les produits sont toujours fabriqués à l\'étranger'];
+const ACR=[['TPE','Très petite entreprise'],['PME','Petite et moyenne entreprise'],['ETI','Entreprise de taille intermédiaire'],['GE','Grande entreprise']];
+const SIZES=['TPE','PME','ETI','GE'];
+const NAMES4=[["Clinique vétérinaire de Springfield","Épicerie Kwik-E-Mart","Atelier de réparation Duff"],["Imprimerie Springfield Print","Transports Burns Logistique","Brasserie de la Place"],["Krusty Burger France","Groupe Springfield Énergie","Cinémas Springfield"],["Globex Media","Burns Industries","Groupe Duff International"]];
+const OPT5=['Administration centrale (État)','Collectivité territoriale','Sécurité sociale'];
+const POOL5=[
+ {t:"Le ministère de l'Éducation nationale",a:0,w:"Un ministère fait partie de l'État."},
+ {t:"La mairie de Springfield",a:1,w:"Une mairie est une collectivité territoriale."},
+ {t:"Le conseil régional",a:1,w:"La région est une collectivité territoriale."},
+ {t:"L'Assurance maladie",a:2,w:"Elle fait partie de la Sécurité sociale."},
+ {t:"La caisse de retraite",a:2,w:"Elle fait partie de la Sécurité sociale."},
+ {t:"Le ministère de la Justice",a:0,w:"Un ministère fait partie de l'État."},
+ {t:"Le conseil départemental",a:1,w:"Le département est une collectivité territoriale."},
+ {t:"La Caisse d'allocations familiales",a:2,w:"Elle fait partie de la Sécurité sociale."}
+];
+const Q5=['Par les prélèvements obligatoires : impôts et cotisations sociales','Par la vente de leurs services aux clients, à un prix qui couvre les coûts','Par les dons et le mécénat des entreprises privées'];
+const OPT6=['Collecter l\'épargne','Accorder un crédit','Fournir un moyen de paiement'];
+const E6=[
+ {t:"Marge dépose 200 € sur un livret pour les études de Lisa.",a:0,w:"La banque reçoit l'épargne de ses clients."},
+ {t:"Homer paie le plein d'essence avec sa carte bancaire.",a:2,w:"La carte est un moyen de paiement fourni par la banque."},
+ {t:"Les Simpson empruntent de l'argent pour acheter une voiture.",a:1,w:"La banque prête de l'argent : c'est un crédit."},
+ {t:"Le Kwik-E-Mart emprunte pour acheter une nouvelle machine à Squishee.",a:1,w:"Prêt à une entreprise : c'est un crédit."}
+];
+const Q6=['Grâce aux intérêts des crédits, aux frais bancaires et aux commissions','Grâce aux impôts payés chaque année par les ménages et les entreprises','Grâce à l\'argent donné par l\'État à chaque banque'];
+const OPT8a=['Exportation','Importation'],OPT8b=['Bien','Service'];
+const POOL8=[
+ {t:"Un touriste japonais visite Paris et paie sa nuit d'hôtel.",a:0,b:1,w:"Un étranger paie un service en France : exportation de service."},
+ {t:"Un magasin français achète des smartphones fabriqués en Chine.",a:1,b:0,w:"La France achète à l'étranger un objet : importation de bien."},
+ {t:"Une entreprise de Cergy vend des machines à une usine allemande.",a:0,b:0,w:"La France vend à l'étranger un objet : exportation de bien."},
+ {t:"Une famille française achète des baskets fabriquées au Vietnam.",a:1,b:0,w:"Achat à l'étranger d'un objet : importation de bien."},
+ {t:"Un voyageur américain achète du parfum fabriqué en France.",a:0,b:0,w:"Un étranger achète un produit français : exportation de bien."},
+ {t:"Une entreprise française paie un cabinet de conseil britannique.",a:1,b:1,w:"Achat à l'étranger d'une prestation : importation de service."},
+ {t:"Un étudiant étranger paie des cours de français à Cergy.",a:0,b:1,w:"Un étranger paie un service en France : exportation de service."}
+];
+const OPT9=['Marché des biens et services','Marché du travail','Marché des capitaux'];
+const E9=[
+ {t:"Bart achète un Squishee au Kwik-E-Mart.",a:0,w:"Un achat de produit : marché des biens et services."},
+ {t:"Une entreprise de Springfield recrute une nouvelle employée.",a:1,w:"Un recrutement : marché du travail."},
+ {t:"Marge place 200 € sur un livret d'épargne.",a:2,w:"L'épargne rencontre les crédits : marché des capitaux."},
+ {t:"Les Simpson achètent des billets d'avion pour la Chine.",a:0,w:"Achat d'un service : marché des biens et services."},
+ {t:"Une entreprise emprunte à la banque pour acheter une machine.",a:2,w:"Un crédit : marché des capitaux."},
+ {t:"Un cuisinier est embauché dans un restaurant.",a:1,w:"Une embauche : marché du travail."}
+];
+const FLOWS=[
+ {n:4,t:"Salaires",who:"Entreprises → Ménages",k:"Flux monétaire"},
+ {n:9,t:"Exportations (biens et services vendus à l'étranger)",who:"Entreprises → Reste du monde",k:"Flux réel"},
+ {n:8,t:"Crédits accordés",who:"Banque → Ménages et entreprises",k:"Flux monétaire"},
+ {n:3,t:"Travail (heures de travail des salariés)",who:"Ménages → Entreprises",k:"Flux réel"},
+ {n:5,t:"Impôts et cotisations",who:"Ménages et entreprises → Administrations",k:"Flux monétaire"},
+ {n:6,t:"Services publics (école, santé, police…)",who:"Administrations → Ménages et entreprises",k:"Flux réel"},
+ {n:2,t:"Paiement des achats des ménages",who:"Ménages → Entreprises",k:"Flux monétaire"},
+ {n:10,t:"Importations",who:"Reste du monde → Entreprises",k:"Flux réel"},
+ {n:7,t:"Épargne déposée",who:"Ménages et entreprises → Banque",k:"Flux monétaire"},
+ {n:1,t:"Biens et services vendus aux ménages",who:"Entreprises → Ménages",k:"Flux réel"}
+];
+const CRISIS=[
+ {t:"Les salaires versés à la famille Simpson s'arrêtent.",a:true},
+ {t:"Les ménages achètent moins : les entreprises vendent moins.",a:true},
+ {t:"L'État reçoit moins d'impôts et de cotisations.",a:true},
+ {t:"La famille peut moins épargner à la banque.",a:true},
+ {t:"Les entreprises reçoivent plus d'argent des ménages.",a:false},
+ {t:"La famille continue de recevoir son salaire.",a:false},
+ {t:"La banque accorde plus de crédits à la famille.",a:false},
+ {t:"Les importations augmentent car la famille dépense plus.",a:false}
+];
+const KW=['salaire','achat','consomm','impôt','impot','épargne','epargne','entreprise','vend','chômage','revenu'];
+
+/* ---------- Données propres à chaque élève ---------- */
+function makeData(seedStr){
+  const r=rngOf(norm(seedStr)||'ELEVE');
+  const D={};
+  D.p1=shr(r,POOL1).slice(0,4);
+  const by=[[],[],[]];POOL2.forEach(x=>by[x.a].push(x));
+  D.p2=shr(r,[].concat(...by.map(a=>shr(r,a).slice(0,2))));
+  D.p3=shr(r,POOL3);
+  D.p5=shr(r,POOL5).slice(0,6);
+  D.p8=shr(r,POOL8).slice(0,4);
+  D.p9=shr(r,E9);
+  // tailles d'entreprises : une de chaque catégorie, mélangées
+  const eff=[rr(r,3,9,1),rr(r,20,240,5),rr(r,300,4500,50),rr(r,5200,60000,200)];
+  const ca=[rr(r,3,19,1)/10,rr(r,4,45,1),rr(r,100,1400,25),rr(r,2000,40000,500)]; // M€
+  D.sz=shr(r,[0,1,2,3]).map(c=>({c,name:NAMES4[c][Math.floor(r()*3)],eff:eff[c],ca:ca[c]}));
+  // garantie
+  D.g=[rr(r,20000,90000,5000),rr(r,110000,200000,10000)];
+  D.g3=[rr(r,50000,70000,5000),rr(r,60000,80000,5000)];
+  D.g4=[rr(r,70000,90000,5000),rr(r,60000,80000,5000)];
+  // étiquettes du circuit (5 sur 9, sans « Salaires », donné en exemple)
+  D.fl=shr(r,FLOWS.filter(f=>f.n!==4)).slice(0,5);
+  return D;
+}
+const caTxt=m=>m>=1000?(m/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' Md€':m.toLocaleString('fr-FR',{maximumFractionDigits:1})+' M€';
+
+/* ---------- État ---------- */
+function fresh(){return {ord:{},v:STATE_V,screen:'intro',name:'',t0:null,tEnd:null,ep:0,phase:'play',epT0:null,D:null,form:{},items:[],pts:Array(NEP).fill(0),raw:Array(NEP).fill(0),att:Array(NEP).fill(1),times:Array(NEP).fill(0),log:[],done:Array(NEP).fill(false)}}
+let S=fresh();
+const elapsed=()=>S.t0?((S.tEnd||Date.now())-S.t0):0;
+const total=()=>S.pts.reduce((a,b)=>a+b,0);
+const val=id=>S.form[id]==null?'':S.form[id];
+const okEp=k=>S.done[k]&&S.raw[k]>=0.6*EPMAX[k];
+const litSet=()=>{const s=new Set();LIT.forEach((l,k)=>{if(okEp(k))l.forEach(n=>s.add(n))});return s};
+
+/* ---------- Circuit ---------- */
+const ARROWS=[
+ {n:3,a:[150,185,450,185]},{n:1,a:[450,205,150,205]},{n:2,a:[150,235,450,235]},{n:4,a:[450,255,150,255]},
+ {n:5,a:[60,165,235,58]},{n:5,a:[540,165,365,58]},{n:6,a:[235,72,115,165]},{n:6,a:[365,72,485,165]},
+ {n:7,a:[115,275,235,362]},{n:7,a:[455,275,365,362]},{n:8,a:[235,378,60,275]},{n:8,a:[365,378,480,275]},
+ {n:9,a:[525,275,525,350]},{n:10,a:[560,350,560,275]}
+];
+const NODES=[{x:20,y:165,w:130,h:110,t:['Ménages']},{x:450,y:165,w:130,h:110,t:['Entreprises']},{x:215,y:10,w:170,h:70,t:['Administrations','publiques']},{x:235,y:350,w:130,h:70,t:['Institutions','financières']},{x:450,y:350,w:130,h:70,t:['Reste du monde']}];
+function circuitSvg(o){
+  o=o||{};const lit=o.lit||new Set(),lost=o.lost||new Set(),badges=!!o.badges,mini=!!o.mini,plain=!!o.plain;
+  let s=`<svg viewBox="0 0 600 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Circuit économique">`;
+  s+=`<defs>${[['g','#9aa8a2'],['l','#1d5fa8'],['r','#c0392b'],['d','#12201c']].map(m=>`<marker id="mk${m[0]}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="${mini?6:7}" markerHeight="${mini?6:7}" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${m[1]}"/></marker>`).join('')}</defs>`;
+  NODES.forEach(n=>{s+=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="14" fill="#fff" stroke="#12201c" stroke-width="2.5"/>`;n.t.forEach((l,i)=>{s+=`<text x="${n.x+n.w/2}" y="${n.y+n.h/2+(i-(n.t.length-1)/2)*24+7}" font-size="${mini?22:19}" font-weight="700" text-anchor="middle" fill="#12201c">${l}</text>`})});
+  ARROWS.forEach(ar=>{
+    const st=plain?'d':lost.has(ar.n)?'r':lit.has(ar.n)?'l':'g',col={g:'#9aa8a2',l:'#1d5fa8',r:'#c0392b',d:'#12201c'}[st];
+    const [x1,y1,x2,y2]=ar.a;
+    s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${mini?5:3.5}" ${st==='r'?'stroke-dasharray="9 7"':''} marker-end="url(#mk${st})"/>`;
+    if(badges){const mx=(x1+x2)/2,my=(y1+y2)/2;s+=`<circle cx="${mx}" cy="${my}" r="15" fill="#fff" stroke="#12201c" stroke-width="2"/><text x="${mx}" y="${my+6}" font-size="17" font-weight="700" text-anchor="middle" fill="#12201c">${ar.n}</text>`}
+  });
+  return s+`</svg>`;
+}
+
+/* ---------- Composants ---------- */
+const card=h=>`<section class="card">${h}</section>`;
+function head(){
+  const slots=EPN.map((_,i)=>`<span class="slot ${S.done[i]?'on':''}"></span>`).join('');
+  const nl=litSet().size;
+  return `<div class="top"><div><div class="brand">Panne à Springfield</div></div><div class="chrono" id="chrono">${fmt(elapsed())}</div><div class="keytag" aria-label="Progression">${slots}</div></div>
+  <div class="mini" aria-label="Circuit de Springfield"><div class="mini-svg">${circuitSvg({lit:litSet(),mini:true})}</div><div class="mini-t">${nl} flux rétablis sur 10</div></div>`;
+}
+function rappel(){
+  return `<details class="carnet rap"><summary>Besoin d'aide ? Ouvre le rappel de cours</summary><ul style="margin:8px 0 0;padding-left:18px">
+  <li>Ménage : les personnes qui vivent dans le même logement. Famille : un couple et ses enfants (ou un parent seul et ses enfants).</li>
+  <li>Bien durable : sert longtemps (voiture). Bien non durable : détruit à la première utilisation (pain). Service : activité (coiffeur).</li>
+  <li>Activité marchande : vendue pour faire un profit. Non marchande : financée par les impôts et les cotisations.</li>
+  <li>Taille : TPE (moins de 10 salariés, CA jusqu'à 2 M€), PME (moins de 250 salariés, CA jusqu'à 50 M€), ETI (250 à 4 999 salariés, CA jusqu'à 1,5 Md€), GE (5 000 salariés et plus).</li>
+  <li>Administrations : État, collectivités territoriales, Sécurité sociale.</li>
+  <li>Banque : elle collecte l'épargne, accorde des crédits, fournit des moyens de paiement.</li>
+  <li>Garantie des dépôts : 100 000 € par client et par banque.</li>
+  <li>Exportation : vendre à l'étranger. Importation : acheter à l'étranger.</li>
+  <li>Flux réel : bien, service ou travail. Flux monétaire : argent. Trois marchés : biens et services, travail, capitaux.</li></ul></details>`;
+}
+const fSel=(id,lab,opts)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><select id="${id}" data-f="1">${['—'].concat(opts).map(o=>`<option value="${esc(o)}" ${val(id)===o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
+const fInp=(id,lab,ph)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><input type="text" inputmode="decimal" autocomplete="off" id="${id}" data-f="1" placeholder="${ph||''}" value="${esc(val(id))}"></div>`;
+const fTa=(id,lab,rows)=>`<div class="field" style="margin:10px 0"><label for="${id}">${lab}</label><textarea id="${id}" data-f="1" rows="${rows||4}">${esc(val(id))}</textarea></div>`;
+const qSel=(id,lab,arr)=>{const o=S.ord[id]||(S.ord[id]=shuffle(arr.map((_,i)=>i)));return `<fieldset class="rad"><legend>${lab}</legend>${o.map(i=>`<label class="radl"><input type="radio" name="${id}" value="${esc(arr[i])}" ${val(id)===arr[i]?'checked':''}><span>${esc(arr[i])}</span></label>`).join('')}</fieldset>`};
+const table=(heads,rows)=>`<div class="tbl nosel"><table><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i===0?'n':''}">${c}</td>`).join('')}</tr>`).join('')}</table></div>`;
+const caseBlock=(pre,list,opts)=>`<div class="stmts">${list.map((x,i)=>`<div class="stmt"><p>${esc(x.t)}</p><select id="${pre}${i}" data-f="1" aria-label="${esc(x.t)}">${['—'].concat(opts).map(o=>`<option ${val(pre+i)===o?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`).join('')}</div>`;
+const caseItems=(pre,list,opts)=>list.map((x,i)=>selItem(x.t,pre+i,opts[x.a],x.w));
+
+/* ---------- Correction ---------- */
+const sNum=id=>{const v=parseNum(val(id));return isNaN(v)?NaN:v};
+function numItem(lab,id,cands,f,note,tol){
+  const raw=val(id),v=parseNum(raw),t=tol==null?0.5:tol;
+  const ok=!isNaN(v)&&cands.some(c=>Math.abs(v-c)<=t);
+  return {q:lab,a:raw.trim()||'(vide)',c:f(cands[0]),ok,why:note,pts:ok?1:0};
+}
+function selItem(lab,id,exp,note){const a=val(id),ok=a===exp;return {q:lab,a:a&&a!=='—'?a:'(vide)',c:exp,ok,why:note,pts:ok?1:0}}
+const manItem=(lab,id,filled)=>({q:lab,a:(val(id)||'(vide)').trim()||'(vide)',c:'À corriger par le professeur',ok:null,man:true,filled,why:filled?'':'Réponse trop courte.',pts:0});
+
+/* ---------- Épreuves ---------- */
+const EPV=[];
+EPV[0]={intro:`Pour chaque situation, dis ce que forment les personnes : un ménage, une famille, ou les deux.`,
+ play(){const D=S.D;return caseBlock('a',D.p1,OPT1)+qSel('abe',"Abe, le père d'Homer, vit en maison de retraite. Le ménage Simpson (ceux qui vivent dans la maison) et la famille Simpson (avec Abe) sont-ils identiques ?",['Oui, ils sont toujours identiques','Non : la famille est plus large que le ménage','Non : le ménage est plus large que la famille'])},
+ check(){const D=S.D;return [...caseItems('a',D.p1,OPT1),selItem("Abe : ménage et famille identiques ?",'abe','Non : la famille est plus large que le ménage',"Abe fait partie de la famille, mais il ne vit pas dans la maison : il n'est pas dans le ménage.")]}};
+EPV[1]={intro:`Pour chaque situation, dis si le produit est un bien durable, un bien non durable ou un service.`,
+ play(){return caseBlock('b',S.D.p2,OPT2)},check(){return caseItems('b',S.D.p2,OPT2)}};
+EPV[2]={intro:`Pour chaque activité, dis si elle est marchande ou non marchande. Puis réponds à la question.`,
+ play(){return caseBlock('c',S.D.p3.slice(0,6),OPT3)+qSel('q3',"Qu'est-ce qui caractérise une activité marchande ?",Q3)},
+ check(){return [...caseItems('c',S.D.p3.slice(0,6),OPT3),selItem('Activité marchande','q3',Q3[0],"Une activité marchande vend ses produits pour réaliser un profit.")]}};
+EPV[3]={intro:`Associe chaque sigle à sa signification, puis donne la catégorie de chaque entreprise (chiffres fictifs). Le rappel de cours donne les seuils.`,
+ play(){const D=S.D;
+  return ACR.map((x,i)=>fSel('ac'+i,x[0]+' signifie…',ACR.map(y=>y[1]))).join('')+
+  table(['Entreprise','Salariés','Chiffre d\'affaires'],D.sz.map(z=>[esc(z.name),nf(z.eff),caTxt(z.ca)]))+D.sz.map((z,i)=>fSel('sz'+i,esc(z.name)+' : catégorie',SIZES)).join('')},
+ check(){const D=S.D;return [...ACR.map((x,i)=>selItem(x[0],'ac'+i,x[1],'')),...D.sz.map((z,i)=>selItem(z.name,'sz'+i,SIZES[z.c],`${nf(z.eff)} salariés et ${caTxt(z.ca)} : ${SIZES[z.c]}.`))]}};
+EPV[4]={intro:`Pour chaque organisme, dis à quel type d'administration il appartient. Puis réponds à la question.`,
+ play(){return caseBlock('d',S.D.p5,OPT5)+qSel('q5','Comment les administrations financent-elles leurs services non marchands ?',Q5)},
+ check(){return [...caseItems('d',S.D.p5,OPT5),selItem('Financement','q5',Q5[0],"Les impôts et les cotisations sociales sont des prélèvements obligatoires.")]}};
+EPV[5]={intro:`Pour chaque situation, dis quel rôle joue la banque. Puis réponds aux deux questions.`,
+ play(){return caseBlock('e',E6,OPT6)+qSel('q6',"Comment la banque gagne-t-elle de l'argent ?",Q6)+fSel('q6b','Son activité est…',OPT3)},
+ check(){return [...caseItems('e',E6,OPT6),selItem('Comment la banque gagne de l\'argent','q6',Q6[0],'Elle gagne des intérêts sur les crédits, des frais et des commissions.'),selItem('Activité de la banque','q6b','Marchande','Elle vend des services pour réaliser un profit.')]}};
+EPV[6]={intro:`Les dépôts sont garantis jusqu'à 100 000 € par client et par banque. Pour chaque cas, écris la somme garantie.`,
+ play(){const D=S.D;return `<p>Si la banque fait faillite…</p>`+fInp('g1',`Marge a ${eur(D.g[0])} sur son compte. Somme garantie ?`,'en €')+fInp('g2',`Un autre client a ${eur(D.g[1])} sur son compte. Somme garantie ?`,'en €')+fInp('g3',`Un client a ${eur(D.g3[0])} sur un compte courant et ${eur(D.g3[1])} sur un livret, dans la même banque. Somme garantie ?`,'en €')+fInp('g4',`Un client a ${eur(D.g4[0])} dans une banque et ${eur(D.g4[1])} dans une autre banque. Somme garantie au total ?`,'en €')+qSel('q7',"Qui assure cette garantie ?",["Un fonds de garantie financé par les banques","Les clients des autres banques, au cas par cas","Le maire de la ville, avec le budget de la mairie"])},
+ check(){const D=S.D,s3=D.g3[0]+D.g3[1],s4=D.g4[0]+D.g4[1];return [
+  numItem('Compte de Marge','g1',[D.g[0]],eur,`${eur(D.g[0])} est sous 100 000 € : tout est garanti.`),
+  numItem('Compte au-dessus du plafond','g2',[100000],eur,`Le plafond est 100 000 € : le reste n'est pas garanti.`),
+  numItem('Deux comptes, même banque','g3',[100000],eur,`${eur(D.g3[0])} + ${eur(D.g3[1])} = ${eur(s3)} dans la même banque : plafond de 100 000 €.`),
+  numItem('Deux banques','g4',[s4],eur,`Le plafond est par banque : ${eur(D.g4[0])} + ${eur(D.g4[1])} = ${eur(s4)}, tout est garanti.`),
+  selItem('Qui assure la garantie','q7','Un fonds de garantie financé par les banques','Le FGDR est financé par les banques.')]}};
+EPV[7]={intro:`Pour chaque situation, dis s'il s'agit d'une exportation ou d'une importation, et si c'est un bien ou un service.`,
+ play(){return `<div class="stmts">${S.D.p8.map((x,i)=>`<div class="stmt"><p>${esc(x.t)}</p>${fSel('f'+i,'Export ou import ?',OPT8a)}${fSel('h'+i,'Bien ou service ?',OPT8b)}</div>`).join('')}</div>`},
+ check(){const it=[];S.D.p8.forEach((x,i)=>{it.push(selItem(x.t+' (export ou import)','f'+i,OPT8a[x.a],x.w));it.push(selItem(x.t+' (bien ou service)','h'+i,OPT8b[x.b],''))});return it}};
+EPV[8]={intro:`Pour chaque échange, dis sur quel marché il se passe.`,
+ play(){return caseBlock('m',S.D.p9,OPT9)},check(){return caseItems('m',S.D.p9,OPT9)}};
+EPV[9]={intro:`Voici le circuit économique. Chaque flèche a un numéro. Pour chaque étiquette, retrouve le numéro de la flèche et dis si le flux est réel ou monétaire. Exemple : « Salaires » = flèche 4, flux monétaire.`,
+ play(){const D=S.D;
+  return `<div class="map">${circuitSvg({badges:true,plain:true})}</div><p class="small">Un numéro peut être sur deux flèches (par exemple 5, 6, 7 et 8).</p>`+
+  D.fl.map((f,i)=>`<div class="stmt" style="margin:10px 0"><p><b>${esc(f.t)}</b></p>${fSel('nf'+i,'Numéro de la flèche',['1','2','3','4','5','6','7','8','9','10'])}${fSel('kf'+i,'Flux réel ou monétaire ?',['Flux réel','Flux monétaire'])}</div>`).join('')},
+ check(){const it=[];S.D.fl.forEach((f,i)=>{it.push(selItem(f.t+' : numéro','nf'+i,String(f.n),`${f.t} : flèche ${f.n} (${f.who}).`));it.push(selItem(f.t+' : réel ou monétaire','kf'+i,f.k,f.k==='Flux réel'?'Un bien, un service ou du travail : flux réel.':"De l'argent qui circule : flux monétaire."))});return it},
+ res(){return `<div class="map">${circuitSvg({badges:true,plain:true})}</div>`}};
+EPV[10]={intro:`Homer est licencié de la centrale. Coche toutes les conséquences vraies pour l'économie de Springfield. Puis explique la chaîne de conséquences.`,
+ play(){const ord=S.ord.cr||(S.ord.cr=shuffle(CRISIS.map((_,i)=>i)));
+  return `<div class="stmts">${ord.map(i=>`<label class="radl"><input type="checkbox" name="cr${i}" ${val('cr'+i)==='1'?'checked':''}><span>${esc(CRISIS[i].t)}</span></label>`).join('')}</div>`+fTa('chain',"Explique en 2 phrases ce qui se passe : par quels agents la panne se propage-t-elle ?",4)},
+ check(){const it=CRISIS.map((c,i)=>{const on=val('cr'+i)==='1',ok=on===c.a;return {q:c.t,a:on?'Coché':'Non coché',c:c.a?'À cocher':'À ne pas cocher',ok,why:c.a?'Cette conséquence est vraie.':'Cette conséquence est fausse.',pts:ok?1:0}});
+  const t=val('chain').toLowerCase(),n=KW.filter(k=>t.includes(k)).length;it.push(manItem('Chaîne de conséquences','chain',t.trim().length>=40&&n>=2));return it},
+ res(){const lost=new Set([2,3,4,5,7]);return `<div class="map">${circuitSvg({lit:litSet(),lost,mini:false})}</div><p class="small">En rouge : les flux qui s'arrêtent ou diminuent quand le salaire disparaît.</p>`}};
+
+/* ---------- Vues ---------- */
+function vIntro(){
+  return card(`<p class="eyebrow">Cas d'entraînement · environ 40 minutes</p><h1>Panne à Springfield</h1>
+  <p>L'économie de Springfield est en panne : plus de salaires, plus de crédits, plus d'échanges. Le maire te nomme économiste. Ta mission : remettre la ville en marche.</p>
+  <p>Il y a 11 épreuves. Chaque épreuve réussie rétablit une flèche du circuit économique, en haut de l'écran. À la fin, tu verras la ville repartir, ou pas.</p>
+  <div class="rules"><strong>Les règles</strong><ul><li>Une épreuve à la fois, avec un chrono.</li><li>Pas de retour en arrière. Si le chrono finit, ta réponse est envoyée.</li><li>Si tu rates beaucoup une épreuve, tu peux la réparer une fois (points divisés par 2).</li><li>Tu joues une seule fois, seul(e).</li></ul></div>
+  <div class="field"><label for="prenom">Ton prénom et l'initiale de ton nom (exemple : Léa M.)</label><input type="text" id="prenom" maxlength="30" autocomplete="off"></div>
+  <button class="btn" data-act="start" style="width:100%">Commencer</button>
+  <p class="small" style="margin-top:12px">Rien n'est enregistré : si tu fermes la page, tu recommences.</p>
+  <p class="foot"><a href="#prof">Espace professeur</a></p>`);
+}
+function epHead(k,intro){
+  const left=EPLIM[k]-Math.floor((Date.now()-S.epT0)/1000);
+  const cd=S.phase==='play'?`<div class="cd-wrap"><div class="cd-bar"><i id="cdbar" style="width:${Math.max(0,left)/EPLIM[k]*100}%"></i></div><span class="cd" id="cd">${Math.max(0,left)} s</span></div>`:'';
+  return `<p class="eyebrow">Épreuve ${k+1} sur ${NEP} · ${AGENT_OF[k]}${S.att[k]===2&&S.phase==='play'?' · réparation':''}</p><h2>${EPN[k]}</h2>${S.phase==='play'?cd+`<p>${intro}</p>`:''}`;
+}
+function vEp(){
+  const k=S.ep,E=EPV[k];
+  if(S.phase==='play')return head()+card(epHead(k,E.intro)+E.play()+`<button class="btn" data-act="submit" style="width:100%;margin-top:6px">Valider mes réponses</button>`)+rappel();
+  const max=EPMAX[k],good=okEp(k);
+  const list=S.items.map(i=>i.man?`<div class="it man"><b>${esc(i.q)}</b> : à corriger par le professeur.${i.filled?'':'<small>Réponse trop courte.</small>'}</div>`:`<div class="it ${i.ok?'ok':'ko'}"><b>${esc(i.q)}</b> : ${i.ok?'juste':'à revoir'}${i.ok?'':`<small>Ta réponse : ${esc(i.a)} · Attendu : ${esc(i.c)}</small>`}${i.why&&!i.ok?`<small>${esc(i.why)}</small>`:''}</div>`).join('');
+  const last=k===NEP-1,canFix=!good&&S.att[k]===1&&k<NEP-1;
+  const lit=LIT[k].length?(good?`<p class="small"><b>Flux rétabli.</b> Une flèche du circuit s'allume.</p>`:`<p class="small"><b>Fuite.</b> La flèche reste éteinte : il faut au moins 60 % de réussite.</p>`):'';
+  return head()+card(`<p class="eyebrow">Épreuve ${k+1} sur ${NEP}</p><h2>${EPN[k]} : ${S.pts[k]} sur ${max}</h2>${E.res?E.res():''}${lit}<div class="items">${list}</div>${canFix?`<button class="btn ghost" data-act="retry" style="width:100%;margin-bottom:10px">Réparer cette épreuve (une seule fois, points divisés par 2)</button>`:''}<button class="btn" data-act="next" style="width:100%">${last?'Voir mon bulletin':'Épreuve suivante'}</button>`)+rappel();
+}
+
+/* ---------- Bulletin et récapitulatif ---------- */
+function bulletinText(){const t=total(),time=fmt(elapsed()),name=S.name||'Élève';return {t,time,name,txt:`Panne à Springfield | ${name} | ${t}/${MAXPTS} | ${time} | code ${sig(name,t,time)}`}}
+function recapGroups(){const g={};S.log.forEach(e=>{(g[e.k]=g[e.k]||[]).push(e)});return g}
+function recapHtml(){
+  const b=bulletinText(),g=recapGroups();
+  let rows='',det='';
+  Object.keys(g).sort((x,y)=>x-y).forEach(k=>{
+    rows+=`<tr><td>${+k+1}. ${esc(EPN[k])}</td><td>${S.pts[k]} / ${EPMAX[k]}</td><td>${fmt(S.times[k])}</td><td>${S.att[k]===2?'oui':''}</td></tr>`;
+    det+=`<h3>${+k+1}. ${esc(EPN[k])} <span>${S.pts[k]} pt(s)</span></h3>`+g[k].map(e=>`<div class="e ${e.man?'mn':e.ok?'ok':'ko'}"><b>${e.man?'À corriger':e.ok?'Juste':'Erreur'}${e.at===2?' (réparation)':''}</b> ${esc(e.q)}<br>Ma réponse : <i>${esc(e.a)}</i>${(e.ok||e.man)?'':`<br>Attendu : <i>${esc(e.c)}</i>`}${(!e.ok&&!e.man&&e.why)?`<br><small>${esc(e.why)}</small>`:''}</div>`).join('');
+  });
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Récapitulatif - ${esc(b.name)}</title><style>body{font:15px/1.5 system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#12201c}h1{font-size:24px;margin:0}h3{margin:22px 0 6px;font-size:17px;border-bottom:2px solid #1d5fa8}h3 span{float:right;color:#1d5fa8}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccd5d1;padding:5px 8px;text-align:left}.code{font:14px monospace;background:#eef3f8;padding:10px;border-radius:8px;word-break:break-all}.e{padding:7px 10px;margin:6px 0;border-left:5px solid;border-radius:4px;background:#f6f8f7}.ok{border-color:#1f8a58}.ko{border-color:#c0392b;background:#fdf1ef}.mn{border-color:#b58a2e;background:#fbf3df}small{color:#555}@media print{body{margin:0}}</style></head><body><h1>Panne à Springfield : récapitulatif</h1><p><b>${esc(b.name)}</b> | Score ${b.t} / ${MAXPTS} | Temps ${b.time} | Flux rétablis : ${litSet().size} / 10</p><p class="code">${esc(b.txt)}</p><h2>Résumé par épreuve</h2><table><tr><th>Épreuve</th><th>Points</th><th>Temps</th><th>Réparée</th></tr>${rows}</table><h2>Détail des réponses</h2>${det}</body></html>`;
+}
+function vFin(){
+  const b=bulletinText(),pc=Math.round(b.t/MAXPTS*100),lit=litSet(),lvl=pc>=85?'Springfield repart : bravo !':pc>=60?'Springfield redémarre, quelques fuites restent':'Springfield est encore en panne : relis les corrections';
+  return card(`<p class="eyebrow">Mission terminée</p><h2>Ton bulletin</h2>
+  <div class="map">${circuitSvg({lit,plain:false})}</div>
+  <div class="bulletin"><dl><dt>Économiste</dt><dd>${esc(b.name)}</dd><dt>Score</dt><dd>${b.t} / ${MAXPTS}</dd><dt>Santé de l'économie</dt><dd>${pc} %</dd><dt>Flux rétablis</dt><dd>${lit.size} / 10</dd><dt>Temps</dt><dd>${b.time}</dd></dl><p>${lvl}</p></div>
+  <p class="small">Enregistre ton fichier récapitulatif (tes réponses, tes erreurs, ton score et ton code), puis dépose-le dans le travail à faire sur Pronote.</p>
+  <button class="btn" data-act="save" id="savebtn" style="width:100%">Enregistrer le fichier</button>
+  <p class="small" id="savemsg" role="status"></p>`);
+}
+function vProf(){
+  return card(`<p class="eyebrow">Espace professeur</p><h2>Vérifier des bulletins</h2>
+  <p>Colle un ou plusieurs textes reçus des élèves (une ligne par élève). Le code est recalculé à partir du prénom, du score et du temps.</p>
+  <div class="field"><label for="profin">Textes des élèves</label><textarea id="profin"></textarea></div>
+  <button class="btn" data-act="verify" style="width:100%">Vérifier</button><ul class="vlist" id="vres"></ul><p class="small"><a href="#jeu">Retour au jeu</a></p>`);
+}
+
+/* ---------- Rendu et actions ---------- */
+function render(){
+  if(location.hash==='#prof'){$app.innerHTML=vProf();return}
+  let h='';
+  if(S.screen==='intro')h=vIntro();else if(S.screen==='ep')h=vEp();else h=head()+vFin();
+  $app.innerHTML=h;window.scrollTo(0,0);
+}
+function saveForm(){
+  document.querySelectorAll('[data-f]').forEach(el=>{S.form[el.id]=el.value});
+  document.querySelectorAll('input[type=radio]:checked').forEach(el=>{S.form[el.name]=el.value});
+  document.querySelectorAll('input[type=checkbox]').forEach(el=>{S.form[el.name]=el.checked?'1':'0'});
+}
+function submit(){
+  const k=S.ep;saveForm();
+  S.items=EPV[k].check();
+  const raw=S.items.reduce((a,i)=>a+(i.pts||0),0);
+  S.raw[k]=Math.max(S.raw[k],raw);
+  S.pts[k]=S.att[k]===2?Math.max(S.pts[k],Math.round(raw/2)):raw;
+  S.times[k]+=Date.now()-S.epT0;
+  S.items.forEach(i=>S.log.push({k,at:S.att[k],q:i.q,a:i.a,c:i.c,ok:i.man?null:i.ok,man:!!i.man,why:i.why||''}));
+  S.done[k]=true;S.phase='res';
+}
+function act(a){
+  switch(a){
+    case 'start':{
+      const el=document.getElementById('prenom'),name=((el&&el.value)||'').replace(/\|/g,'').trim().slice(0,30);
+      if(!name){el.focus();return}
+      S=fresh();S.name=name;S.D=makeData(name);S.t0=Date.now();S.epT0=Date.now();S.screen='ep';break;
+    }
+    case 'submit':if(S.screen!=='ep'||S.phase!=='play')return;submit();break;
+    case 'retry':S.att[S.ep]=2;S.phase='play';S.epT0=Date.now();S.form={};S.items=[];break;
+    case 'next':
+      if(S.ep>=NEP-1){S.tEnd=Date.now();S.screen='fin';break}
+      S.ep++;S.phase='play';S.epT0=Date.now();S.form={};S.items=[];break;
+    case 'save':{
+      const msg=document.getElementById('savemsg'),name=((S.name||'eleve').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]/g,'')||'eleve'),html=recapHtml();
+      (async()=>{
+        try{
+          const d=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+          if(!d){
+            try{
+              const url=URL.createObjectURL(new Blob([html],{type:'text/html'})),an=document.createElement('a');
+              an.href=url;an.download='Springfield-'+name+'.html';document.body.appendChild(an);an.click();an.remove();
+              setTimeout(()=>URL.revokeObjectURL(url),4000);
+              msg.textContent="Fichier enregistré dans tes téléchargements. Dépose-le sur Pronote.";
+            }catch(e2){msg.textContent="Enregistrement impossible. Réessaie, ou fais une capture d'écran de ton bulletin."}
+            return;
+          }
+          await d.save({filename:'Springfield-'+name+'.html',data:new Blob([html],{type:'text/html'})});
+          msg.textContent="Fichier enregistré. Dépose-le sur Pronote.";
+        }catch(e){msg.textContent="Enregistrement non effectué. Clique de nouveau sur le bouton."}
+      })();
+      return;
+    }
+    case 'verify':{
+      const lines=(document.getElementById('profin').value||'').split('\n').map(l=>l.trim()).filter(Boolean);
+      const out=lines.map(l=>{
+        const p=l.split('|').map(x=>x.trim());
+        if(p.length<5)return `<li><strong>Illisible</strong> : ${esc(l)}</li>`;
+        const name=p[1],score=parseInt(p[2],10),time=p[3],code=p[4].replace(/^code\s*/i,'').toUpperCase();
+        if(isNaN(score))return `<li><strong>Illisible</strong> : ${esc(l)}</li>`;
+        return sig(name,score,time)===code?`<li><strong>Valide</strong> : ${esc(name)}, ${esc(p[2])} en ${esc(time)}.</li>`:`<li><strong>Invalide</strong> : ${esc(name)} (texte modifié ou code inventé).</li>`;
+      });
+      document.getElementById('vres').innerHTML=out.length?out.join(''):'<li>Aucun texte collé.</li>';
+      return;
+    }
+    default:return;
+  }
+  render();
+}
+$app.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled)act(b.dataset.act)});
+$app.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='prenom')act('start')});
+window.addEventListener('hashchange',render);
+setInterval(()=>{
+  const c=document.getElementById('chrono');
+  if(c&&S.t0&&!S.tEnd)c.textContent=fmt(elapsed());
+  if(location.hash==='#prof'||S.screen!=='ep'||S.phase!=='play')return;
+  const left=EPLIM[S.ep]-Math.floor((Date.now()-S.epT0)/1000);
+  const cd=document.getElementById('cd'),bar=document.getElementById('cdbar');
+  if(cd)cd.textContent=Math.max(0,left)+' s';
+  if(bar){bar.style.width=Math.max(0,left)/EPLIM[S.ep]*100+'%';bar.className=left<=15?'low':''}
+  if(left<=0)act('submit');
+},1000);
+function boot(d){
+  if(d&&d.v===STATE_V&&d.screen&&d.D&&Array.isArray(d.log))S=d;
+  render();
+}
+if(window.claude&&window.claude.hot){
+  window.claude.hot.snapshot(()=>S);
+  window.claude.hot.ready?window.claude.hot.ready(boot):boot(window.claude.hot.data);
+}else{boot()}
+</script></body></html>
