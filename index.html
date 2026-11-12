@@ -110,6 +110,10 @@
   }
   .empty .emoji { font-size: 40px; display: block; margin-bottom: 8px; }
 
+  .section { margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+  .section:first-child { margin-top: 0; }
+  .section::after { content: ""; flex: 1; height: 2px; background: var(--ink); opacity: .12; }
+
   footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 28px; }
   footer button { background: none; color: var(--muted); text-decoration: underline; padding: 0; font-weight: 500; font-size: 13px; }
 </style>
@@ -134,8 +138,12 @@
 
 <script>
   /* ================= CONFIGURATION =================
-     Pour ajouter un jeu : déposer le fichier .html dans le dépôt,
-     puis ajouter une ligne dans GAMES (classe, cours, code chiffré). */
+     CLASSES    : les classes et leurs cours
+     SEQUENCES  : les séquences d'un cours (facultatif)
+     RESSOURCES : jeux, quiz, fiches PDF, cours en ligne.
+       type   : "jeu" | "quiz" | "fiche" | "cours"
+       cls / course / seq : où la ressource est rangée (seq facultatif)
+       hash   : uniquement pour les jeux — empreinte SHA-256 de "jeux:CODE" */
 
   const CLASSES = [
     { id: "pmcv2", name: "PMCV2", emoji: "🛍️", color: "#ff5a36",
@@ -153,24 +161,42 @@
       ] },
   ];
 
-  // Les codes ne sont pas écrits en clair : seule leur empreinte SHA-256 de "jeux:CODE" est stockée.
-  const GAMES = [
-    { id: "accueil", cls: "smrc2", course: "accueil", emoji: "🛎️",
-      title: "Panique à l'accueil", desc: "Gère la foule et garde ton calme.",
-      url: "Panique-a-l-accueil.html", color: "#ff5a36",
-      hash: "a6062afd65f94b809a757002817f3f33216fd4ee49e4de5fe2873100104e0888" },
-    { id: "pion", cls: "pmcv2", course: "pro", emoji: "📍",
+  const SEQUENCES = [
+    { cls: "pmcv2", course: "pro", id: "chalandise", emoji: "🗺️",
+      name: "La zone de chalandise",
+      notions: "Isochrones et isométriques · zones primaire, secondaire, tertiaire · CA potentiel et rentabilité" },
+  ];
+
+  const RESSOURCES = [
+    // ---- PMCV2 · Enseignement pro · Zone de chalandise
+    { type: "jeu", id: "pion", cls: "pmcv2", course: "pro", seq: "chalandise", emoji: "📍",
       title: "Le Pion Rouge", desc: "Explore la zone de chalandise.",
       url: "Le-Pion-Rouge.html", color: "#d6336c",
       hash: "8581090ff3d8eb2cad0399017b09b4de6a2bbbb80f8ba7b19f8d6ce25e3a9e24" },
-    { id: "springfield", cls: "smrc2", course: "ecodroit", emoji: "⚡",
+    { type: "quiz", id: "zone-chalandise", cls: "pmcv2", course: "pro", seq: "chalandise", emoji: "🧠",
+      title: "Quiz : la zone de chalandise", desc: "10 questions chronométrées · calculatrice conseillée",
+      url: "quiz.html?q=zone-chalandise", color: "#ff5a36" },
+
+    // ---- SMRC2
+    { type: "jeu", id: "accueil", cls: "smrc2", course: "accueil", emoji: "🛎️",
+      title: "Panique à l'accueil", desc: "Gère la foule et garde ton calme.",
+      url: "Panique-a-l-accueil.html", color: "#ff5a36",
+      hash: "a6062afd65f94b809a757002817f3f33216fd4ee49e4de5fe2873100104e0888" },
+    { type: "jeu", id: "springfield", cls: "smrc2", course: "ecodroit", emoji: "⚡",
       title: "Panne à Springfield", desc: "Trouve l'origine de la panne.",
       url: "Panne-a-Springfield.html", color: "#e8a400",
       hash: "6b369a143d712d79f13290610108af45188c6f7044fa45fffccff130facfddbf" },
-    { id: "cap", cls: "smrc2", course: "soutien", emoji: "🧭",
+    { type: "jeu", id: "cap", cls: "smrc2", course: "soutien", emoji: "🧭",
       title: "Mon cap pour la Première", desc: "Trace ta route pour l'an prochain.",
       url: "Mon-cap-pour-la-Premiere.html", color: "#3b6fe0",
       hash: "7b0b3ae66181338c7ea3b80948e36eda48dc11432b35d2be413e4b578a8737fd" },
+  ];
+
+  const TYPES = [
+    { id: "cours", label: "📖 Cours en ligne" },
+    { id: "fiche", label: "📄 Fiches de révision" },
+    { id: "quiz",  label: "🧠 Quiz" },
+    { id: "jeu",   label: "🎮 Jeux" },
   ];
 
   /* ================= LOGIQUE ================= */
@@ -178,27 +204,36 @@
   const KEY = "salle-de-jeux-debloques";
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
   function save(list) { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {} }
+  function quizBest(id) {
+    try {
+      const h = JSON.parse(localStorage.getItem("quiz-historique:" + id)) || [];
+      return h.length ? Math.max(...h.map(x => x.n)) : null;
+    } catch (e) { return null; }
+  }
   let unlocked = load();
 
   const $ = (id) => document.getElementById(id);
   const nav = $("nav"), head = $("head"), view = $("view");
   const form = $("f"), input = $("code"), msg = $("msg");
 
-  function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
   function say(text, cls) { msg.textContent = text; msg.className = cls || ""; }
-  function plural(n, w) { return n + " " + w + (n > 1 ? "s" : ""); }
+  function countLabel(n) { return n + " ressource" + (n > 1 ? "s" : ""); }
+  function fmt(n) { return String(n).replace(".", ","); }
 
   function route() {
-    const [c, k] = location.hash.replace(/^#\/?/, "").split("/");
+    const [c, k, s] = location.hash.replace(/^#\/?/, "").split("/");
     const cls = CLASSES.find(x => x.id === c);
     const course = cls && cls.courses.find(x => x.id === k);
-    return { cls, course };
+    const seq = course && SEQUENCES.find(x => x.cls === cls.id && x.course === course.id && x.id === s);
+    return { cls, course, seq };
   }
 
-  function card({ tag = "div", href, cls = "", color, emoji, title, desc, state }) {
+  function card({ tag = "div", href, cls = "", color, emoji, title, desc, state, blank }) {
     const el = document.createElement(tag);
     el.className = "card " + cls;
     if (href) el.href = href;
+    if (blank) { el.target = "_blank"; el.rel = "noopener"; }
     if (color) el.style.setProperty("--c", color);
     el.innerHTML =
       '<span class="stripe"></span>' +
@@ -208,73 +243,119 @@
     return el;
   }
 
+  function resourceCard(r, popId) {
+    if (r.type === "jeu") {
+      const open = unlocked.includes(r.id);
+      const el = card({ tag: open ? "a" : "div", href: open ? r.url : null,
+        cls: (open ? "go" : "locked") + (r.id === popId ? " pop" : ""), color: r.color,
+        emoji: r.emoji, title: r.title, desc: r.desc, state: open ? "Jouer ▸" : "🔒 Verrouillé" });
+      if (!open) el.addEventListener("click", () => { input.focus(); say("Ce jeu est verrouillé : entre son code.", "err"); });
+      return el;
+    }
+    let state = "Ouvrir ▸";
+    if (r.type === "quiz") { const b = quizBest(r.id); state = b === null ? "À faire ▸" : "Record " + fmt(b) + "/20"; }
+    if (r.type === "fiche") state = "PDF ▸";
+    return card({ tag: "a", href: r.url, cls: "go", color: r.color, emoji: r.emoji,
+      title: r.title, desc: r.desc, state, blank: r.type === "fiche" });
+  }
+
+  // Affiche une liste de ressources rangées par type, avec un titre par type
+  function sections(list, popId) {
+    const frag = document.createDocumentFragment();
+    for (const t of TYPES) {
+      const items = list.filter(r => r.type === t.id);
+      if (!items.length) continue;
+      const h = document.createElement("div");
+      h.className = "section"; h.textContent = t.label;
+      frag.appendChild(h);
+      const grid = document.createElement("div"); grid.className = "grid";
+      items.forEach(r => grid.appendChild(resourceCard(r, popId)));
+      frag.appendChild(grid);
+    }
+    return frag;
+  }
+
+  function empty(text) {
+    const d = document.createElement("div");
+    d.className = "empty";
+    d.innerHTML = '<span class="emoji">🚧</span><strong>Bientôt disponible</strong><br>' + esc(text);
+    return d;
+  }
+
+  function courseLabel(k) { return k.name === "Enseignement pro" ? k.name + " · " + k.sub : k.name; }
+
   function render(popId) {
-    const { cls, course } = route();
+    const { cls, course, seq } = route();
     document.documentElement.style.setProperty("--c", cls ? cls.color : "");
     view.innerHTML = "";
-    const grid = document.createElement("div");
-    grid.className = "grid";
 
     // Fil d'Ariane
-    if (!cls) {
-      nav.innerHTML = "";
-    } else {
-      const backHref = course ? "#" + cls.id : "#";
-      nav.innerHTML =
-        '<a class="back" href="' + backHref + '" aria-label="Retour">←</a>' +
-        '<a href="#">Accueil</a><span class="sep">›</span>' +
-        (course
-          ? '<a href="#' + cls.id + '">' + esc(cls.name) + '</a><span class="sep">›</span><span class="here">' + esc(course.name + (course.sub && course.name === "Enseignement pro" ? " · " + course.sub : "")) + '</span>'
-          : '<span class="here">' + esc(cls.name) + '</span>');
+    const crumbs = [];
+    if (cls) crumbs.push({ href: "#" + cls.id, label: cls.name });
+    if (course) crumbs.push({ href: "#" + cls.id + "/" + course.id, label: courseLabel(course) });
+    if (seq) crumbs.push({ label: seq.name });
+    if (!crumbs.length) nav.innerHTML = "";
+    else {
+      const back = crumbs.length > 1 ? crumbs[crumbs.length - 2].href : "#";
+      nav.innerHTML = '<a class="back" href="' + back + '" aria-label="Retour">←</a><a href="#">Accueil</a>' +
+        crumbs.map((c, n) => '<span class="sep">›</span>' + (n === crumbs.length - 1
+          ? '<span class="here">' + esc(c.label) + '</span>'
+          : '<a href="' + c.href + '">' + esc(c.label) + '</a>')).join("");
     }
 
     if (!cls) {
       // ACCUEIL : choix de la classe
-      head.innerHTML =
-        '<span class="badge">Salle de jeux</span>' +
-        '<h1>Choisis ta classe</h1>' +
-        '<p>Puis ton cours, puis entre le code donné par ton prof.</p>';
-      grid.classList.add("classes");
+      head.innerHTML = '<span class="badge">Salle de jeux</span><h1>Choisis ta classe</h1>' +
+        '<p>Jeux, quiz et fiches de révision, rangés par cours.</p>';
+      const grid = document.createElement("div"); grid.className = "grid";
       for (const c of CLASSES) {
-        const n = GAMES.filter(g => g.cls === c.id).length;
+        const n = RESSOURCES.filter(r => r.cls === c.id).length;
         grid.appendChild(card({ tag: "a", href: "#" + c.id, cls: "big go", color: c.color,
-          emoji: c.emoji, title: c.name, desc: c.full, state: plural(n, "jeu").replace("jeus", "jeux") }));
+          emoji: c.emoji, title: c.name, desc: c.full, state: countLabel(n) }));
       }
-    } else if (!course) {
-      // CLASSE : choix du cours
-      head.innerHTML =
-        '<span class="badge">' + esc(cls.name) + '</span>' +
-        '<h1>Choisis ton cours</h1>' +
-        '<p>' + esc(cls.full) + '</p>';
-      for (const k of cls.courses) {
-        const games = GAMES.filter(g => g.cls === cls.id && g.course === k.id);
-        const open = games.filter(g => unlocked.includes(g.id)).length;
-        const state = games.length === 0 ? "Bientôt" : open + " / " + games.length + " débloqué" + (open > 1 ? "s" : "");
-        grid.appendChild(card({ tag: "a", href: "#" + cls.id + "/" + k.id,
-          cls: games.length ? "go" : "soon", color: cls.color,
-          emoji: k.emoji, title: k.name, desc: k.sub, state }));
-      }
-    } else {
-      // COURS : les jeux
-      head.innerHTML =
-        '<span class="badge">' + esc(cls.name) + '</span>' +
-        '<h1>' + esc(course.name) + '</h1>' +
-        '<p>' + esc(course.sub || "") + '</p>';
-      const games = GAMES.filter(g => g.cls === cls.id && g.course === course.id);
-      if (!games.length) {
-        view.innerHTML = '<div class="empty"><span class="emoji">🚧</span><strong>Bientôt disponible</strong><br>Aucun jeu pour ce cours pour l\'instant.</div>';
-        return;
-      }
-      for (const g of games) {
-        const open = unlocked.includes(g.id);
-        const el = card({ tag: open ? "a" : "div", href: open ? g.url : null,
-          cls: (open ? "go" : "locked") + (g.id === popId ? " pop" : ""), color: g.color,
-          emoji: g.emoji, title: g.title, desc: g.desc, state: open ? "Jouer ▸" : "🔒 Verrouillé" });
-        if (!open) el.addEventListener("click", () => { input.focus(); say("Ce jeu est verrouillé : entre son code.", "err"); });
-        grid.appendChild(el);
-      }
+      view.appendChild(grid);
+      return;
     }
-    view.appendChild(grid);
+
+    if (!course) {
+      // CLASSE : choix du cours
+      head.innerHTML = '<span class="badge">' + esc(cls.name) + '</span><h1>Choisis ton cours</h1><p>' + esc(cls.full) + '</p>';
+      const grid = document.createElement("div"); grid.className = "grid";
+      for (const k of cls.courses) {
+        const n = RESSOURCES.filter(r => r.cls === cls.id && r.course === k.id).length;
+        grid.appendChild(card({ tag: "a", href: "#" + cls.id + "/" + k.id, cls: n ? "go" : "soon",
+          color: cls.color, emoji: k.emoji, title: k.name, desc: k.sub, state: n ? countLabel(n) : "Bientôt" }));
+      }
+      view.appendChild(grid);
+      return;
+    }
+
+    if (!seq) {
+      // COURS : séquences + ressources hors séquence
+      head.innerHTML = '<span class="badge">' + esc(cls.name) + '</span><h1>' + esc(course.name) + '</h1><p>' + esc(course.sub || "") + '</p>';
+      const seqs = SEQUENCES.filter(s => s.cls === cls.id && s.course === course.id);
+      const loose = RESSOURCES.filter(r => r.cls === cls.id && r.course === course.id && !r.seq);
+      if (!seqs.length && !loose.length) { view.appendChild(empty("Aucune ressource pour ce cours pour l'instant.")); return; }
+      if (seqs.length) {
+        const h = document.createElement("div"); h.className = "section"; h.textContent = "📚 Séquences";
+        view.appendChild(h);
+        const grid = document.createElement("div"); grid.className = "grid";
+        seqs.forEach((s, n) => {
+          const count = RESSOURCES.filter(r => r.cls === cls.id && r.course === course.id && r.seq === s.id).length;
+          grid.appendChild(card({ tag: "a", href: "#" + cls.id + "/" + course.id + "/" + s.id, cls: count ? "go" : "soon",
+            color: cls.color, emoji: s.emoji, title: s.name, desc: s.notions, state: count ? countLabel(count) : "Bientôt" }));
+        });
+        view.appendChild(grid);
+      }
+      view.appendChild(sections(loose, popId));
+      return;
+    }
+
+    // SÉQUENCE : ressources par type
+    head.innerHTML = '<span class="badge">' + esc(cls.name + " · " + courseLabel(course)) + '</span><h1>' + esc(seq.name) + '</h1><p>' + esc(seq.notions || "") + '</p>';
+    const list = RESSOURCES.filter(r => r.cls === cls.id && r.course === course.id && r.seq === seq.id);
+    if (!list.length) { view.appendChild(empty("Aucune ressource pour cette séquence pour l'instant.")); return; }
+    view.appendChild(sections(list, popId));
   }
 
   function normalize(s) {
@@ -293,7 +374,7 @@
     let h;
     try { h = await sha256("jeux:" + code); }
     catch (err) { say("Ton navigateur ne peut pas vérifier le code. Essaie un autre navigateur.", "err"); return; }
-    const g = GAMES.find(x => x.hash === h);
+    const g = RESSOURCES.find(x => x.type === "jeu" && x.hash === h);
     if (!g) {
       form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
       say("Code inconnu… vérifie l'orthographe.", "err");
@@ -302,8 +383,7 @@
     if (!unlocked.includes(g.id)) { unlocked.push(g.id); save(unlocked); }
     input.value = "";
     say("🎉 « " + g.title + " » débloqué ! Ouverture…", "ok");
-    // Montre le jeu dans son cours, puis l'ouvre
-    const target = "#" + g.cls + "/" + g.course;
+    const target = "#" + [g.cls, g.course, g.seq].filter(Boolean).join("/");
     if (location.hash !== target) history.replaceState(null, "", target);
     render(g.id);
     setTimeout(() => { location.href = g.url; }, 900);
@@ -311,6 +391,7 @@
 
   form.addEventListener("animationend", () => form.classList.remove("shake"));
   window.addEventListener("hashchange", () => { say(""); render(); window.scrollTo(0, 0); });
+  window.addEventListener("pageshow", (e) => { if (e.persisted) render(); }); // rafraîchit les records au retour d'un quiz
 
   $("reset").addEventListener("click", () => {
     unlocked = []; save(unlocked); render(); say("Tous les jeux sont de nouveau verrouillés.", "");
