@@ -72,7 +72,7 @@ a.btn{text-decoration:none}
   <div class="bar" aria-hidden="true"><i id="prog"></i></div>
 </div></header>
 <div class="wrap"><main id="main" aria-live="polite"></main></div>
-<div class="footer">Cours d'enseignement pro PMCV2 - Monsieur Le Gros</div>
+<div class="footer">Cours d'enseignement pro SMRC2 - Monsieur Le Gros</div>
 
 <script>
 /* ===== A PERSONNALISER ===== */
@@ -578,7 +578,7 @@ function makeCard(nom, prenom, classe){
   title('Points à revoir');
   if (!S.miss.length) para('Aucune erreur : bravo !');
   else { S.miss.slice(0, 10).forEach(m => bullet(m.length > 150 ? m.slice(0,147) + '…' : m)); if (S.miss.length > 10) para('… et ' + (S.miss.length - 10) + ' autre(s).'); }
-  y += 40; g.font = '22px Arial, sans-serif'; g.fillText('Cours d\'enseignement pro PMCV2 - Monsieur Le Gros', L, y); y += 30;
+  y += 40; g.font = '22px Arial, sans-serif'; g.fillText('Cours d\'enseignement pro SMRC2 - Monsieur Le Gros', L, y); y += 30;
   const o = document.createElement('canvas'); o.width = W; o.height = y; o.getContext('2d').drawImage(c, 0, 0);
   return o;
 }
