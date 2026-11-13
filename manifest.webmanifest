@@ -1,7 +1,7 @@
 {
   "name": "Salle de jeux",
   "short_name": "Salle de jeux",
-  "description": "Jeux, quiz et fiches de révision pour PMCV2 et SMRC2.",
+  "description": "Cours, jeux, quiz et fiches de révision pour PMCV2 et SMRC2.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

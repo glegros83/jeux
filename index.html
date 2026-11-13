@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Salle de jeux</title>
-<meta name="description" content="Jeux, quiz et fiches de révision pour PMCV2 et SMRC2.">
+<meta name="description" content="Cours, jeux, quiz et fiches de révision pour PMCV2 et SMRC2.">
 <meta name="theme-color" content="#1d1a2e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -250,7 +250,7 @@
     if (!cls) {
       setBar(null);
       document.title = "Salle de jeux";
-      view.insertAdjacentHTML("beforeend", '<div class="hero"><h1>Salut ! 👋</h1><p>Jeux, quiz et fiches de révision. Choisis ta classe.</p></div>');
+      view.insertAdjacentHTML("beforeend", '<div class="hero"><h1>Salut ! 👋</h1><p>Cours, jeux, quiz et fiches de révision. Choisis ta classe.</p></div>');
       const last = lsGet("salle-derniere", null);
       if (last && last.hash) {
         const [c, k, s] = last.hash.replace(/^#/, "").split("/");

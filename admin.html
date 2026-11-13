@@ -117,11 +117,12 @@
       '<div class="panel"><h2>Créer la clé (une seule fois)</h2><ol>' +
         '<li>Ouvrir <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → Fine-grained token</a></li>' +
         '<li><b>Token name</b> : <i>Salle de jeux admin</i></li>' +
+        '<li><b>Resource owner</b> : <b>glegros83</b></li>' +
         '<li><b>Expiration</b> : la date de fin d\'année scolaire</li>' +
         '<li><b>Repository access</b> : <i>Only select repositories</i> → <b>jeux</b></li>' +
-        '<li><b>Permissions</b> → <i>Contents</i> : <b>Read and write</b></li>' +
-        '<li><b>Generate token</b>, copier la clé et la coller ici.</li>' +
-      '</ol><p class="muted">La clé reste uniquement dans ce navigateur. Ne la donnez à personne. Si le téléphone est perdu, supprimez-la sur github.com.</p></div>';
+        '<li><b>Permissions</b> : cliquer <i>+ Add permissions</i>, cocher <b>Contents</b>, puis choisir <b>Read and write</b> (<i>Metadata</i> s’ajoute tout seul, c’est normal)</li>' +
+        '<li><b>Generate token</b>, copier la clé <b>tout de suite</b> (elle ne s’affiche qu’une fois) et la coller ici.</li>' +
+      '</ol><p class="muted">La clé reste uniquement dans ce navigateur : pour gérer depuis le PC et le téléphone, collez la même clé sur chacun. Ne la donnez à personne. Si le téléphone est perdu, supprimez-la sur github.com.</p></div>';
     document.getElementById("go").onclick = async () => {
       const t = document.getElementById("tok").value.trim();
       if (!t) return;
