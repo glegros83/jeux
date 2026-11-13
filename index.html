@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Salle de jeux</title>
 <meta name="description" content="Cours, jeux, quiz et fiches de révision pour PMCV2 et SMRC2.">
-<meta name="theme-color" content="#1d1a2e">
+<meta name="theme-color" content="#160d2c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -13,124 +13,168 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Salle de jeux">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
+  /* ===== Habillage : borne d'arcade pixel × BD ===== */
   :root {
-    --bg: #f4f1ea; --bg2: #e9e3d6; --ink: #1d1a2e; --muted: #625d75; --card: #ffffff;
-    --line: rgba(29,26,46,.12); --accent: #ff5a36; --ok: #1f9d6b;
-    --shadow: 0 2px 0 rgba(29,26,46,.9); --bar: rgba(244,241,234,.86);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #15122b; --bg2: #1d1940; --ink: #f3efff; --muted: #a9a3c4; --card: #231f47;
-      --line: rgba(255,255,255,.1); --shadow: 0 2px 0 rgba(0,0,0,.6); --bar: rgba(21,18,43,.86);
-    }
+    --night: #160d2c; --night2: #241447; --ink: #0b0716; --paper: #fff8e7; --muted: #5d5470;
+    --yellow: #ffd23f; --pink: #ff3e8a; --cyan: #29d3f5; --green: #3ddc84;
+    --pixel: "Press Start 2P", ui-monospace, monospace;
+    --comic: "Bangers", Impact, "Arial Black", sans-serif;
+    --sh: 5px 5px 0 #000;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
-    background: var(--bg); color: var(--ink);
+    background-color: var(--night);
+    background-image:
+      radial-gradient(rgba(255,255,255,.09) 1.2px, transparent 1.7px),
+      radial-gradient(circle at 50% -10%, var(--night2), transparent 65%);
+    background-size: 14px 14px, 100% 100%;
+    background-attachment: fixed;
+    color: var(--paper);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh; min-height: 100dvh; -webkit-tap-highlight-color: transparent;
-    -webkit-text-size-adjust: 100%;
+    min-height: 100vh; min-height: 100dvh; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
+  }
+  /* lignes de balayage façon écran cathodique */
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 40;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
   }
   a { color: inherit; }
 
-  /* ---------- Barre du haut (fixe) ---------- */
+  /* ---------- Fronton de la borne (barre du haut) ---------- */
   .bar {
     position: sticky; top: 0; z-index: 10;
-    background: var(--bar); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px);
-    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #2b1656, #0f0820);
+    border-bottom: 4px solid #000; box-shadow: 0 4px 0 var(--pink);
     padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
   }
-  .bar-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .bar-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; min-height: 46px; }
   .bar .back {
     flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 12px; background: var(--card); border: 2px solid var(--ink); text-decoration: none;
-    font-size: 20px; font-weight: 800; box-shadow: var(--shadow);
+    background: var(--yellow); color: #000; border: 3px solid #000; border-radius: 4px; box-shadow: 3px 3px 0 #000;
+    text-decoration: none; font: 16px var(--pixel); padding-top: 2px;
   }
+  .bar .back:active { transform: translate(3px, 3px); box-shadow: none; }
   .bar .ttl { min-width: 0; flex: 1; }
-  .bar .ttl small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bar .ttl b { display: block; font-size: 17px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 19px; letter-spacing: -.01em; }
-  .brand img { width: 36px; height: 36px; border-radius: 10px; }
+  .bar .ttl small { display: block; font: 8px/1.6 var(--pixel); color: var(--cyan); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
+  .bar .ttl b { display: block; font: 24px/1.05 var(--comic); letter-spacing: .5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 2px 2px 0 #000; }
+  .brand { display: flex; align-items: center; gap: 12px; font: 13px/1.4 var(--pixel); color: var(--yellow); text-shadow: 3px 3px 0 var(--pink); }
+  .brand img { width: 38px; height: 38px; border: 3px solid #000; border-radius: 4px; box-shadow: 3px 3px 0 #000; }
 
-  main { max-width: 720px; margin: 0 auto; padding: 18px 16px calc(env(safe-area-inset-bottom) + 40px); }
+  main { max-width: 720px; margin: 0 auto; padding: 22px 16px calc(env(safe-area-inset-bottom) + 48px); }
 
-  /* ---------- En-tête de page ---------- */
-  .hero { margin: 6px 0 18px; }
-  .hero h1 { font-size: clamp(28px, 8vw, 40px); line-height: 1.05; margin: 0 0 6px; letter-spacing: -.02em; }
-  .hero p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.4; }
-  .chip-c {
-    display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-    color: var(--c, var(--accent)); border: 2px solid var(--c, var(--accent)); border-radius: 999px; padding: 3px 10px; margin-bottom: 10px;
+  /* ---------- Titres BD + bulles ---------- */
+  .hero { margin: 4px 0 22px; }
+  .hero h1 {
+    font: clamp(40px, 12vw, 64px)/.95 var(--comic); letter-spacing: 1px; margin: 0 0 14px; color: #fff;
+    -webkit-text-stroke: 2px #000; paint-order: stroke fill;
+    text-shadow: 4px 4px 0 var(--c, var(--pink)), 6px 6px 0 #000;
   }
+  .hero p {
+    position: relative; display: inline-block; margin: 0 0 6px; max-width: 100%;
+    background: var(--paper); color: var(--ink); font-weight: 700; font-size: 15px; line-height: 1.35;
+    border: 3px solid #000; border-radius: 16px; padding: 10px 14px; box-shadow: 4px 4px 0 #000;
+  }
+  .hero p::before, .hero p::after { content: ""; position: absolute; left: 22px; width: 0; height: 0; border-style: solid; }
+  .hero p::before { top: -16px; border-width: 0 10px 16px 6px; border-color: transparent transparent #000 transparent; }
+  .hero p::after { top: -10px; left: 25px; border-width: 0 6px 11px 3px; border-color: transparent transparent var(--paper) transparent; }
+  .chip-c {
+    display: inline-block; font: 9px/1 var(--pixel); text-transform: uppercase; color: #fff;
+    background: var(--c, var(--pink)); border: 3px solid #000; padding: 7px 9px 6px; margin-bottom: 14px;
+    box-shadow: 3px 3px 0 #000; transform: rotate(-2deg); text-shadow: 1px 1px 0 #000;
+  }
+  .press { font: 11px var(--pixel); color: var(--yellow); margin: 0 0 14px; text-shadow: 2px 2px 0 #000; animation: blink 1.1s steps(2, start) infinite; }
+  @keyframes blink { to { visibility: hidden; } }
 
-  /* ---------- Grandes tuiles (accueil) ---------- */
-  .tiles { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  /* ---------- Gros boutons de borne (classes) ---------- */
+  .tiles { display: grid; grid-template-columns: 1fr; gap: 18px; }
   @media (min-width: 560px) { .tiles { grid-template-columns: 1fr 1fr; } }
   .tile {
-    position: relative; display: block; text-decoration: none; overflow: hidden;
-    background: var(--c); color: #fff; border: 2px solid var(--ink); border-radius: 20px;
-    padding: 18px 18px 16px; box-shadow: var(--shadow); min-height: 128px;
+    position: relative; display: block; text-decoration: none; overflow: visible;
+    background: var(--c); color: #fff; border: 4px solid #000; border-radius: 6px;
+    padding: 18px 18px 16px; box-shadow: 6px 6px 0 #000; min-height: 136px;
   }
-  .tile .em { font-size: 34px; line-height: 1; }
-  .tile h2 { margin: 12px 0 2px; font-size: 28px; letter-spacing: -.01em; }
-  .tile p { margin: 0; font-size: 14px; opacity: .92; line-height: 1.3; padding-right: 70px; }
-  .tile .n { position: absolute; right: 14px; bottom: 14px; background: rgba(0,0,0,.22); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 800; }
-  .tile:active { transform: translateY(1px); }
+  .tile::before { /* trame BD */
+    content: ""; position: absolute; inset: 0; border-radius: 2px; pointer-events: none;
+    background: radial-gradient(rgba(0,0,0,.18) 1.4px, transparent 1.9px) 0 0 / 9px 9px;
+    -webkit-mask-image: linear-gradient(135deg, transparent 35%, #000); mask-image: linear-gradient(135deg, transparent 35%, #000);
+  }
+  .tile .em { position: relative; font-size: 34px; line-height: 1; filter: drop-shadow(2px 2px 0 #000); }
+  .tile h2 { position: relative; margin: 14px 0 8px; font: 22px/1.1 var(--pixel); text-shadow: 3px 3px 0 #000; }
+  .tile p { position: relative; margin: 0; font-size: 14px; font-weight: 700; line-height: 1.3; text-shadow: 1px 1px 0 rgba(0,0,0,.5); padding-right: 6px; }
+  .tile .n { /* étoile « POW » */
+    position: absolute; top: -18px; right: -10px; width: 86px; height: 86px; display: flex; align-items: center; justify-content: center;
+    text-align: center; font: 17px/1 var(--comic); letter-spacing: .5px; color: #000; background: var(--yellow); padding: 0 14px;
+    clip-path: polygon(50% 0%, 61% 18%, 82% 9%, 79% 31%, 100% 38%, 84% 54%, 96% 74%, 73% 75%, 68% 98%, 50% 84%, 32% 98%, 27% 75%, 4% 74%, 16% 54%, 0% 38%, 21% 31%, 18% 9%, 39% 18%);
+    filter: drop-shadow(3px 3px 0 #000); transform: rotate(10deg);
+  }
+  .tile:active { transform: translate(5px, 5px); box-shadow: 1px 1px 0 #000; }
 
-  /* ---------- Carte Reprendre ---------- */
+  /* ---------- « CONTINUE ? » ---------- */
   .resume {
-    display: flex; align-items: center; gap: 12px; text-decoration: none;
-    background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: var(--shadow);
-    padding: 12px 14px; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff;
+    background: #000; border: 3px solid var(--c); border-radius: 6px; box-shadow: 5px 5px 0 var(--c);
+    padding: 12px 14px; margin-bottom: 22px;
   }
-  .resume .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--c); display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
-  .resume small { display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .resume .ic { width: 44px; height: 44px; border-radius: 4px; border: 3px solid #fff; background: var(--c); display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
+  .resume small { display: block; font: 9px/1.6 var(--pixel); color: var(--yellow); animation: blink 1.1s steps(2, start) infinite; }
   .resume b { display: block; font-size: 16px; }
-  .resume .go { margin-left: auto; font-weight: 900; font-size: 20px; color: var(--c); }
+  .resume .go { margin-left: auto; font: 16px var(--pixel); color: var(--c); }
+  .resume:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--c); }
 
-  /* ---------- Listes compactes ---------- */
-  .sec { display: flex; align-items: center; gap: 8px; margin: 22px 0 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+  /* ---------- Cases de BD (listes) ---------- */
+  .sec { display: flex; align-items: center; gap: 10px; margin: 28px 0 12px; font: 10px/1.6 var(--pixel); color: var(--yellow); text-transform: uppercase; text-shadow: 2px 2px 0 #000; }
   .sec:first-child { margin-top: 0; }
-  .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-  .list { display: grid; gap: 10px; }
+  .sec::after { content: ""; flex: 1; height: 4px; background: repeating-linear-gradient(90deg, var(--yellow) 0 6px, transparent 6px 12px); opacity: .7; }
+  .list { display: grid; gap: 14px; }
   .row {
-    display: flex; align-items: center; gap: 12px; min-height: 68px; text-decoration: none;
-    background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: var(--shadow);
-    padding: 10px 12px; cursor: pointer; width: 100%; text-align: left; font: inherit; color: inherit;
+    display: flex; align-items: center; gap: 12px; min-height: 70px; text-decoration: none; width: 100%; text-align: left;
+    background: var(--paper); color: var(--ink); border: 3px solid #000; border-radius: 6px; box-shadow: var(--sh);
+    padding: 10px 12px; cursor: pointer; font: inherit;
   }
-  .row:active { transform: translateY(1px); }
+  .row:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 #000; }
   .row .ic {
-    flex: none; width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    font-size: 24px; background: var(--bg2); background: color-mix(in srgb, var(--c) 18%, var(--card)); border: 2px solid var(--c);
+    flex: none; width: 48px; height: 48px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; background: var(--c); border: 3px solid #000; box-shadow: 2px 2px 0 #000;
   }
   .row .tx { flex: 1; min-width: 0; }
-  .row .tx b { display: block; font-size: 16px; line-height: 1.25; }
-  .row .tx small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 13px; line-height: 1.3; margin-top: 2px; }
-  .row .rt { flex: none; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 5px 10px; background: var(--c); color: #fff; white-space: nowrap; }
-  .row.off { border-style: dashed; box-shadow: none; cursor: default; }
-  .row.off .ic, .row.off .tx { filter: grayscale(1); opacity: .5; }
-  .row.off .rt { background: var(--bg2); color: var(--muted); }
-  .row.soon .rt { background: var(--bg2); color: var(--muted); }
+  .row .tx b { display: block; font-size: 16px; font-weight: 800; line-height: 1.25; }
+  .row .tx small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 13px; line-height: 1.3; margin-top: 3px; }
+  .row .rt {
+    flex: none; font: 9px/1 var(--pixel); text-transform: uppercase; white-space: nowrap;
+    background: var(--c); color: #fff; border: 2px solid #000; padding: 7px 7px 6px; text-shadow: 1px 1px 0 #000; box-shadow: 2px 2px 0 #000;
+  }
+  .row.off { background: #2a2340; color: #a39bbb; box-shadow: none; border-style: dashed; cursor: default; }
+  .row.off .ic { filter: grayscale(1); opacity: .5; box-shadow: none; }
+  .row.off .tx small { color: #8a83a0; }
+  .row.off .rt, .row.soon .rt { background: #4a4360; color: #d6d0e6; }
+  .row.off:active { transform: none; box-shadow: none; }
 
-  .empty { text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 18px; padding: 30px 18px; }
+  .empty { text-align: center; color: var(--ink); background: var(--paper); border: 3px dashed #000; border-radius: 6px; padding: 28px 18px; box-shadow: var(--sh); }
   .empty .em { font-size: 40px; display: block; margin-bottom: 8px; }
+  .empty strong { font: 26px var(--comic); letter-spacing: .5px; }
 
-  /* ---------- Bandeau « installer » et toast ---------- */
+  /* ---------- Installer + bulle d'info ---------- */
   .install {
-    display: none; align-items: center; gap: 12px; margin-top: 26px; padding: 12px 14px;
-    border: 2px dashed var(--line); border-radius: 16px; font-size: 14px; color: var(--muted);
+    display: none; align-items: center; gap: 12px; margin-top: 30px; padding: 12px 14px;
+    background: var(--paper); color: var(--ink); border: 3px solid #000; border-radius: 6px; box-shadow: var(--sh); font-size: 14px;
   }
   .install.show { display: flex; }
-  .install b { color: var(--ink); }
-  .install button { margin-left: auto; flex: none; border: 0; border-radius: 10px; background: var(--ink); color: var(--bg); font: 800 14px system-ui, sans-serif; padding: 10px 14px; cursor: pointer; }
+  .install button { margin-left: auto; flex: none; border: 3px solid #000; border-radius: 4px; background: var(--green); color: #000; font: 9px var(--pixel); padding: 10px 10px; cursor: pointer; box-shadow: 2px 2px 0 #000; }
+  .credits { text-align: center; margin-top: 30px; font: 9px/1.8 var(--pixel); color: rgba(255,255,255,.45); }
   .toast {
-    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 18px); transform: translate(-50%, 20px);
-    background: var(--ink); color: var(--bg); font-weight: 700; font-size: 14px; padding: 12px 16px; border-radius: 12px;
-    opacity: 0; pointer-events: none; transition: .25s; max-width: calc(100% - 32px); text-align: center; z-index: 20;
+    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 20px); transform: translate(-50%, 20px) rotate(-1deg);
+    background: var(--yellow); color: #000; font: 21px/1.15 var(--comic); letter-spacing: .5px; padding: 12px 18px;
+    border: 3px solid #000; border-radius: 14px; box-shadow: 4px 4px 0 #000;
+    opacity: 0; pointer-events: none; transition: .2s; max-width: calc(100% - 32px); text-align: center; z-index: 60;
   }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0) rotate(-1deg); }
+
+  @media (prefers-reduced-motion: reduce) { .press, .resume small { animation: none; } }
 </style>
 </head>
 <body>
@@ -174,6 +218,8 @@
   const $ = (id) => document.getElementById(id);
   const bar = $("bar"), view = $("view");
   function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+  // la police pixel n'a pas de majuscules accentuées
+  function px(s) { return String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
   function fmt(n) { return String(n).replace(".", ","); }
   let toastT;
   function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2200); }
@@ -200,13 +246,13 @@
     else el.type = "button";
     el.style.setProperty("--c", color);
     el.innerHTML = '<span class="ic">' + emoji + '</span><span class="tx"><b>' + esc(title) + '</b>' +
-      (desc ? '<small>' + esc(desc) + '</small>' : '') + '</span>' + (right ? '<span class="rt">' + esc(right) + '</span>' : '');
+      (desc ? '<small>' + esc(desc) + '</small>' : '') + '</span>' + (right ? '<span class="rt">' + esc(px(right)) + '</span>' : '');
     if (onTap) el.addEventListener("click", onTap);
     return el;
   }
 
   function list(items) { const d = document.createElement("div"); d.className = "list"; items.forEach(i => d.appendChild(i)); return d; }
-  function sec(label) { const d = document.createElement("div"); d.className = "sec"; d.textContent = label; return d; }
+  function sec(label) { const d = document.createElement("div"); d.className = "sec"; d.textContent = px(label); return d; }
   function empty(text) { const d = document.createElement("div"); d.className = "empty"; d.innerHTML = '<span class="em">🚧</span><strong>Bientôt disponible</strong><br>' + esc(text); return d; }
 
   function resourceRow(r) {
@@ -237,7 +283,7 @@
       return;
     }
     bar.innerHTML = '<a class="back" href="' + back + '" aria-label="Retour">‹</a>' +
-      '<div class="ttl"><small>' + esc(small) + '</small><b>' + esc(title) + '</b></div>';
+      '<div class="ttl"><small>' + esc(px(small)) + '</small><b>' + esc(title) + '</b></div>';
   }
 
   /* ---------- Rendu ---------- */
@@ -250,7 +296,7 @@
     if (!cls) {
       setBar(null);
       document.title = "Salle de jeux";
-      view.insertAdjacentHTML("beforeend", '<div class="hero"><h1>Salut ! 👋</h1><p>Cours, jeux, quiz et fiches de révision. Choisis ta classe.</p></div>');
+      view.insertAdjacentHTML("beforeend", '<div class="hero"><div class="press">▶ PRESS START</div><h1>Salut ! 👋</h1><p>Cours, jeux, quiz et fiches de révision. Choisis ta classe !</p></div>');
       const last = lsGet("salle-derniere", null);
       if (last && last.hash) {
         const [c, k, s] = last.hash.replace(/^#/, "").split("/");
@@ -260,7 +306,7 @@
         if (valid) {
           const a = document.createElement("a");
           a.className = "resume"; a.href = last.hash; a.style.setProperty("--c", lc.color);
-          a.innerHTML = '<span class="ic">' + (last.emoji || "▶️") + '</span><span><small>Reprendre</small><b>' + esc(last.title) + '</b></span><span class="go">›</span>';
+          a.innerHTML = '<span class="ic">' + (last.emoji || "▶️") + '</span><span><small>CONTINUE ?</small><b>' + esc(last.title) + '</b></span><span class="go">›</span>';
           view.appendChild(a);
         }
       }
@@ -273,6 +319,7 @@
         tiles.appendChild(a);
       }
       view.appendChild(tiles);
+      view.insertAdjacentHTML("beforeend", '<div class="credits">CREDITS : 99 · 1 JOUEUR</div>');
       return;
     }
 
@@ -316,7 +363,7 @@
     // SÉQUENCE
     setBar("#" + cls.id + "/" + course.id, cls.name + " · " + courseLabel(course), seq.name);
     document.title = seq.name + " · " + cls.name;
-    view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">Séquence</span><h1>' + esc(seq.name) + '</h1><p>' + esc(seq.notions || "") + '</p></div>');
+    view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">Sequence</span><h1>' + esc(seq.name) + '</h1><p>' + esc(seq.notions || "") + '</p></div>');
     if (A.seqState(ETAT, seq) !== "ouvert") {
       view.appendChild(empty(etatLoaded ? "Cette séquence n'est pas encore ouverte." : "Chargement…"));
       return;
