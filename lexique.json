@@ -1,0 +1,30 @@
+{
+  "mots": [
+    { "id": "zc-zone", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Zone de chalandise", "def": "Territoire d'où vient la majorité des clients d'un point de vente." },
+    { "id": "zc-primaire", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Zone primaire", "def": "Zone la plus proche du magasin (environ 0 à 10 min) : clients fréquents, qui viennent par exemple chaque semaine." },
+    { "id": "zc-secondaire", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Zone secondaire", "def": "Zone un peu plus éloignée (environ 10 à 20 min) : clients réguliers, qui viennent par exemple chaque mois." },
+    { "id": "zc-tertiaire", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Zone tertiaire", "def": "Zone la plus éloignée (environ 20 à 30 min) : clients occasionnels, qui viennent quelques fois par an." },
+    { "id": "zc-isochrone", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Courbe isochrone", "def": "Courbe qui relie les points situés au même temps de trajet du magasin (10 min, 20 min, 30 min…). Elle se déforme selon les routes et les obstacles." },
+    { "id": "zc-isometrique", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Courbe isométrique", "def": "Cercle qui relie les points situés à la même distance du magasin (5 km, 10 km, 15 km…)." },
+    { "id": "zc-attractivite", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Taux d'attractivité", "def": "Part des habitants (ou des familles) d'une zone qui deviennent clients. Il baisse quand on s'éloigne du magasin." },
+    { "id": "zc-cap", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Chiffre d'affaires potentiel (CAP)", "def": "Ce que le magasin peut espérer vendre dans sa zone : nombre d'habitants × taux de clients potentiels × budget moyen annuel par client.", "ex": "65 000 habitants × 6 % × 120 € = 468 000 €" },
+    { "id": "zc-seuil", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Seuil de rentabilité", "def": "Chiffre d'affaires minimum à atteindre pour que le projet soit rentable." },
+    { "id": "zc-chevauchement", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Chevauchement des zones", "def": "Les zones de chalandise de plusieurs commerces se superposent : un concurrent peut attirer une partie des clients de notre zone." },
+    { "id": "zc-pessimiste", "cls": "pmcv2", "seq": "pmcv2/pro/chalandise", "mot": "Scénario pessimiste", "def": "Hypothèse défavorable (par exemple une concurrence plus forte) pour vérifier si le projet reste rentable." },
+
+    { "id": "vc-veille", "cls": "pmcv2", "seq": "pmcv2/pro/veille", "mot": "Veille commerciale", "def": "Rechercher, hiérarchiser, exploiter et actualiser en continu des informations pour mieux connaître son marché et prendre de bonnes décisions." },
+    { "id": "vc-interne", "cls": "pmcv2", "seq": "pmcv2/pro/veille", "mot": "Source interne", "def": "Information disponible dans l'entreprise : base clients, données de vente, retours de l'équipe, études et documents internes." },
+    { "id": "vc-externe", "cls": "pmcv2", "seq": "pmcv2/pro/veille", "mot": "Source externe", "def": "Information disponible hors de l'entreprise : sites des concurrents, réseaux sociaux, presse spécialisée, salons, INSEE…" },
+    { "id": "vc-crm", "cls": "pmcv2", "seq": "pmcv2/pro/veille", "mot": "CRM", "def": "Base de données clients de l'entreprise (Customer Relationship Management) : coordonnées, historique d'achats, préférences." },
+    { "id": "vc-hierarchiser", "cls": "pmcv2", "seq": "pmcv2/pro/veille", "mot": "Hiérarchiser", "def": "Trier et classer les informations selon leur importance pour l'entreprise, en gardant les plus pertinentes et les plus fiables." },
+    { "id": "vc-fiable", "cls": "pmcv2", "seq": "pmcv2/pro/veille", "mot": "Information fiable", "def": "Information qui vient d'une source sérieuse et vérifiée." },
+    { "id": "vc-pertinente", "cls": "pmcv2", "seq": "pmcv2/pro/veille", "mot": "Information pertinente", "def": "Information utile pour répondre à mon objectif." },
+
+    { "id": "pf-pfmp", "cls": "smrc2", "res": "pfmp-parcours", "mot": "PFMP", "def": "Période de formation en milieu professionnel : le stage obligatoire du bac pro, en entreprise." },
+    { "id": "pf-convention", "cls": "smrc2", "res": "pfmp-parcours", "mot": "Convention de stage", "def": "Document signé par l'entreprise, le lycée et l'élève (ou son responsable légal). Sans convention signée par tous, pas de départ en PFMP." },
+    { "id": "pf-tuteur", "cls": "smrc2", "res": "pfmp-parcours", "mot": "Tuteur", "def": "Personne de l'entreprise qui encadre l'élève au quotidien pendant la PFMP." },
+    { "id": "pf-referent", "cls": "smrc2", "res": "pfmp-parcours", "mot": "Professeur référent", "def": "Professeur du lycée qui suit la PFMP de l'élève." },
+    { "id": "pf-gratification", "cls": "smrc2", "res": "pfmp-parcours", "mot": "Gratification", "def": "Somme versée par l'État à l'élève pour chaque semaine de PFMP : 50 € en Seconde, 75 € en Première, 100 € en Terminale.", "ex": "3 semaines en Seconde : 3 × 50 € = 150 €" },
+    { "id": "pf-savoiretre", "cls": "smrc2", "res": "pfmp-parcours", "mot": "Savoir-être", "def": "Attitudes attendues en milieu professionnel : ponctualité, politesse, tenue adaptée, calme, discrétion." }
+  ]
+}

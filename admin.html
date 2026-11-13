@@ -106,6 +106,31 @@
   .save { background: #12092a; border-top: 4px solid #000; box-shadow: 0 -4px 0 #ff3e8a; backdrop-filter: none; -webkit-backdrop-filter: none; }
   .status { color: #fff8e7; }
   button.link { color: #a39bbb; }
+
+  /* ===== Onglets + lexique ===== */
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 18px; }
+  .tabs button { border: 3px solid #000; border-radius: 4px; background: #2a2340; color: #d6d0e6; font: 10px/1.4 var(--pixel); padding: 14px 8px; cursor: pointer; box-shadow: 4px 4px 0 #000; }
+  .tabs button.on { background: #ffd23f; color: #000; }
+  .tabs button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+  .tabs .dotc { display: inline-block; background: #ff3e8a; color: #fff; border: 2px solid #000; padding: 3px 5px 2px; margin-left: 4px; }
+  .lbl { display: block; font-weight: 800; font-size: 14px; margin: 10px 0 2px; }
+  .legend + .lbl, .tabs + .legend + .lbl { color: #fff8e7; }
+  select.inp, textarea.inp, input.inp { width: 100%; font: 600 15px system-ui, sans-serif; padding: 11px 12px; border: 3px solid #000; border-radius: 4px; background: #fff; color: #0b0716; margin: 4px 0 8px; }
+  textarea.inp { resize: vertical; min-height: 84px; line-height: 1.4; }
+  .lexpanel { margin-top: 8px; }
+  .lexrow { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 2px dashed rgba(0,0,0,.15); }
+  .lexrow:first-child { border-top: 0; padding-top: 0; }
+  .lexrow.changed .lx b::after { content: " ●"; color: #e08a00; }
+  .lexrow.editing { background: #fff1c2; margin: 0 -8px; padding: 10px 8px; border-radius: 6px; }
+  .lx { flex: 1; min-width: 0; }
+  .lx b { display: block; font-size: 16px; }
+  .lx span { display: block; font-size: 14px; line-height: 1.4; }
+  .lx i { display: block; font-size: 13px; color: #5d5470; margin-top: 2px; }
+  .lxb { display: flex; gap: 6px; flex: none; }
+  .mini { width: 40px; height: 40px; border: 2px solid #000; border-radius: 4px; background: #fff; cursor: pointer; font-size: 17px; box-shadow: 2px 2px 0 #000; }
+  .mini:active { transform: translate(2px, 2px); box-shadow: none; }
+  .row2 { display: flex; gap: 10px; margin-top: 6px; }
+  .row2 .btn { flex: 1; }
 </style>
 </head>
 <body>
@@ -118,8 +143,8 @@
 
 <script src="catalogue.js"></script>
 <script>
-  const OWNER = "glegros83", REPO = "jeux", BRANCH = "main", FILE = "etat.json";
-  const API = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + FILE;
+  const OWNER = "glegros83", REPO = "jeux", BRANCH = "main";
+  const API = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/";
   const TOKEN_KEY = "salle-admin-token";
   const { CLASSES, SEQUENCES, RESSOURCES } = window.CATALOGUE;
   const A = window.ACCES;
@@ -135,10 +160,16 @@
   function b64encode(s) { const bytes = new TextEncoder().encode(s); let bin = ""; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
   const clone = (o) => JSON.parse(JSON.stringify(o));
 
-  let saved = null, draft = null, sha = null;
+  /* Deux fichiers gérés : les accès et le lexique */
+  const FILES = {
+    etat:    { path: "etat.json",    msg: "Espace prof : mise à jour des accès",  saved: null, draft: null, sha: null },
+    lexique: { path: "lexique.json", msg: "Espace prof : mise à jour du lexique", saved: null, draft: null, sha: null },
+  };
+  let tab = "acces";
+  try { tab = sessionStorage.getItem("admin-tab") || "acces"; } catch (e) {}
 
-  async function gh(method, body) {
-    const r = await fetch(API + (method === "GET" ? "?ref=" + BRANCH + "&t=" + Date.now() : ""), {
+  async function gh(path, method, body) {
+    const r = await fetch(API + path + (method === "GET" ? "?ref=" + BRANCH + "&t=" + Date.now() : ""), {
       method, cache: "no-store",
       headers: { "Authorization": "Bearer " + getToken(), "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
       body: body ? JSON.stringify(body) : undefined,
@@ -151,7 +182,7 @@
   function loginView(err) {
     saveBar.classList.remove("show");
     app.innerHTML =
-      '<div class="panel"><h1>Connexion</h1><p class="muted">Cette page permet d\'ouvrir, griser ou masquer les séquences et activités. Elle utilise une <b>clé d\'accès GitHub</b>, à coller une seule fois sur cet appareil.</p>' +
+      '<div class="panel"><h1>Connexion</h1><p class="muted">Cette page permet d\'ouvrir, griser ou masquer les séquences et activités, et de gérer le lexique. Elle utilise une <b>clé d\'accès GitHub</b>, à coller une seule fois sur cet appareil.</p>' +
       '<input type="password" id="tok" placeholder="github_pat_…" autocomplete="off" spellcheck="false">' +
       '<button class="btn" id="go">Se connecter</button>' +
       (err ? '<div class="msg err">' + esc(err) + '</div>' : '') + '</div>' +
@@ -172,15 +203,27 @@
     };
   }
 
+  async function loadFile(key, empty) {
+    const F = FILES[key];
+    try {
+      const f = await gh(F.path, "GET");
+      F.sha = f.sha; F.saved = JSON.parse(b64decode(f.content));
+    } catch (e) {
+      if (e.status === 404 && key !== "etat") { F.sha = null; F.saved = empty; }
+      else throw e;
+    }
+    F.draft = clone(F.saved);
+  }
+
   async function load() {
     if (!getToken()) return loginView();
     app.innerHTML = '<div class="panel">Chargement…</div>';
     try {
-      const f = await gh("GET");
-      sha = f.sha;
-      saved = JSON.parse(b64decode(f.content));
-      saved.sequences = saved.sequences || {}; saved.ressources = saved.ressources || {};
-      draft = clone(saved);
+      await loadFile("etat");
+      FILES.etat.saved.sequences = FILES.etat.saved.sequences || {}; FILES.etat.saved.ressources = FILES.etat.saved.ressources || {};
+      FILES.etat.draft = clone(FILES.etat.saved);
+      await loadFile("lexique", { mots: [] });
+      FILES.lexique.saved.mots = FILES.lexique.saved.mots || []; FILES.lexique.draft = clone(FILES.lexique.saved);
       render();
     } catch (e) {
       setToken("");
@@ -190,7 +233,46 @@
     }
   }
 
-  /* ---------- Tableau de bord ---------- */
+  /* ---------- Comptage des changements ---------- */
+  function etatChanges() {
+    const d = FILES.etat.draft, s = FILES.etat.saved; let n = 0;
+    for (const q of SEQUENCES) if (A.seqState(d, q) !== A.seqState(s, q)) n++;
+    for (const r of RESSOURCES) if (A.resOwnState(d, r) !== A.resOwnState(s, r)) n++;
+    return n;
+  }
+  function lexChanges() {
+    const a = new Map(FILES.lexique.saved.mots.map(w => [w.id, JSON.stringify(w)]));
+    const b = new Map(FILES.lexique.draft.mots.map(w => [w.id, JSON.stringify(w)]));
+    let n = 0;
+    b.forEach((v, k) => { if (a.get(k) !== v) n++; });
+    a.forEach((v, k) => { if (!b.has(k)) n++; });
+    return n;
+  }
+
+  /* ---------- Rendu général ---------- */
+  function render() {
+    const y = window.scrollY;
+    const ne = etatChanges(), nl = lexChanges();
+    app.innerHTML = '<div class="tabs">' +
+      '<button type="button" data-t="acces" class="' + (tab === "acces" ? "on" : "") + '">🔓 Accès' + (ne ? ' <span class="dotc">' + ne + '</span>' : '') + '</button>' +
+      '<button type="button" data-t="lexique" class="' + (tab === "lexique" ? "on" : "") + '">📖 Lexique' + (nl ? ' <span class="dotc">' + nl + '</span>' : '') + '</button></div>';
+    app.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+      tab = b.dataset.t; try { sessionStorage.setItem("admin-tab", tab); } catch (e) {}
+      render(); window.scrollTo(0, 0);
+    });
+    if (tab === "lexique") renderLexique(); else renderAcces();
+    app.insertAdjacentHTML("beforeend", '<p style="text-align:center;margin-top:28px"><button class="link" id="logout">Se déconnecter de cet appareil</button></p>');
+    document.getElementById("logout").onclick = () => { if (confirm("Oublier la clé GitHub sur cet appareil ?")) { setToken(""); loginView(); } };
+    window.scrollTo(0, y);
+
+    const n = ne + nl;
+    saveBar.classList.toggle("show", n > 0 || !!statusEl.textContent);
+    const pb = document.getElementById("publish");
+    pb.textContent = n ? "Publier (" + n + ")" : "Publier";
+    pb.disabled = n === 0;
+  }
+
+  /* ---------- Onglet Accès ---------- */
   function seg(cur, onPick) {
     const d = document.createElement("div"); d.className = "seg";
     for (const v of ["ouvert", "grise", "masque"]) {
@@ -201,7 +283,6 @@
     }
     return d;
   }
-
   function item({ em, title, sub, cur, changed, child, eff, onPick }) {
     const d = document.createElement("div");
     d.className = "item" + (child ? " child" : "") + (changed ? " changed" : "");
@@ -210,91 +291,191 @@
     if (eff) d.insertAdjacentHTML("beforeend", '<div class="eff">' + esc(eff) + '</div>');
     return d;
   }
-
-  function setSeq(key, v) { draft.sequences[key] = v; render(); }
-  function setRes(id, v) { if (v === "ouvert") delete draft.ressources[id]; else draft.ressources[id] = v; render(); }
-
-  function countChanges() {
-    let n = 0;
-    for (const s of SEQUENCES) { const k = A.seqKey(s); if (A.seqState(draft, s) !== A.seqState(saved, s)) n++; }
-    for (const r of RESSOURCES) if (A.resOwnState(draft, r) !== A.resOwnState(saved, r)) n++;
-    return n;
+  function setSeq(key, v) { FILES.etat.draft.sequences[key] = v; render(); }
+  function setRes(id, v) { const r = FILES.etat.draft.ressources; if (v === "ouvert") delete r[id]; else r[id] = v; render(); }
+  function resItem(r, loose) {
+    const d = FILES.etat.draft, own = A.resOwnState(d, r), eff = A.resState(d, r);
+    return item({ em: TYPE_EM[r.type] || "•", title: r.title, sub: r.type.charAt(0).toUpperCase() + r.type.slice(1), cur: own, child: !loose,
+      changed: own !== A.resOwnState(FILES.etat.saved, r),
+      eff: eff !== own ? "→ " + LABELS[eff] + " pour les élèves, car la séquence est « " + LABELS[eff] + " »" : "",
+      onPick: v => setRes(r.id, v) });
   }
-
-  function render() {
-    const y = window.scrollY;
-    app.innerHTML = '<p class="legend"><span>🟢 <b>Ouvert</b> : visible et accessible</span><span>🟠 <b>À venir</b> : visible, grisé</span><span>⚫ <b>Masqué</b> : invisible</span></p>';
+  function renderAcces() {
+    const d = FILES.etat.draft, s = FILES.etat.saved;
+    app.insertAdjacentHTML("beforeend", '<p class="legend"><span>🟢 <b>Ouvert</b> : visible et accessible</span><span>🟠 <b>À venir</b> : visible, grisé</span><span>⚫ <b>Masqué</b> : invisible</span></p>');
     for (const c of CLASSES) {
       app.insertAdjacentHTML("beforeend", '<div class="cls" style="--c:' + c.color + '"><span class="dot"></span><h2>' + esc(c.name) + '</h2></div>');
       for (const k of c.courses) {
-        const seqs = SEQUENCES.filter(s => s.cls === c.id && s.course === k.id);
+        const seqs = SEQUENCES.filter(q => q.cls === c.id && q.course === k.id);
         const loose = RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && !r.seq);
         app.insertAdjacentHTML("beforeend", '<div class="course">' + esc(k.name + (k.name === "Enseignement pro" ? " · " + k.sub : "")) + '</div>');
         if (!seqs.length && !loose.length) { app.insertAdjacentHTML("beforeend", '<p class="muted" style="font-size:14px;margin:0 0 8px">Rien pour l\'instant.</p>'); continue; }
-        for (const s of seqs) {
-          const key = A.seqKey(s), cur = A.seqState(draft, s);
-          app.appendChild(item({ em: s.emoji, title: s.name, sub: "Séquence", cur, changed: cur !== A.seqState(saved, s), onPick: v => setSeq(key, v) }));
-          for (const r of RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && r.seq === s.id)) app.appendChild(resItem(r));
+        for (const q of seqs) {
+          const key = A.seqKey(q), cur = A.seqState(d, q);
+          app.appendChild(item({ em: q.emoji, title: q.name, sub: "Séquence", cur, changed: cur !== A.seqState(s, q), onPick: v => setSeq(key, v) }));
+          for (const r of RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && r.seq === q.id)) app.appendChild(resItem(r));
         }
         for (const r of loose) app.appendChild(resItem(r, true));
       }
     }
-    app.insertAdjacentHTML("beforeend", '<p style="text-align:center;margin-top:28px"><button class="link" id="logout">Se déconnecter de cet appareil</button></p>');
-    document.getElementById("logout").onclick = () => { if (confirm("Oublier la clé GitHub sur cet appareil ?")) { setToken(""); loginView(); } };
-    window.scrollTo(0, y);
-
-    const n = countChanges();
-    saveBar.classList.toggle("show", n > 0 || !!statusEl.textContent);
-    const pb = document.getElementById("publish");
-    pb.textContent = n ? "Publier (" + n + ")" : "Publier";
-    pb.disabled = n === 0;
   }
 
-  function resItem(r, loose) {
-    const own = A.resOwnState(draft, r), eff = A.resState(draft, r);
-    return item({ em: TYPE_EM[r.type] || "•", title: r.title, sub: r.type.charAt(0).toUpperCase() + r.type.slice(1), cur: own, child: !loose,
-      changed: own !== A.resOwnState(saved, r),
-      eff: eff !== own ? "→ " + LABELS[eff] + " pour les élèves, car la séquence est « " + LABELS[eff] + " »" : "",
-      onPick: v => setRes(r.id, v) });
+  /* ---------- Onglet Lexique ---------- */
+  // Un mot est rattaché à une séquence (seq) ou à une activité hors séquence (res)
+  function places() {
+    const out = [];
+    for (const c of CLASSES) for (const k of c.courses) {
+      const kn = k.name === "Enseignement pro" ? k.sub : k.name;
+      for (const q of SEQUENCES.filter(q => q.cls === c.id && q.course === k.id))
+        out.push({ v: "seq:" + A.seqKey(q), cls: c.id, label: c.name + " · " + kn + " · " + q.emoji + " " + q.name });
+      for (const r of RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && !r.seq))
+        out.push({ v: "res:" + r.id, cls: c.id, label: c.name + " · " + kn + " · " + r.emoji + " " + r.title });
+    }
+    return out;
+  }
+  const placeOf = (w) => w.seq ? "seq:" + w.seq : w.res ? "res:" + w.res : "";
+  let curPlace = null, editId = null;
+  try { curPlace = sessionStorage.getItem("admin-place"); } catch (e) {}
+
+  function renderLexique() {
+    const P = places();
+    if (!P.find(p => p.v === curPlace)) curPlace = P.length ? P[0].v : null;
+    const mots = FILES.lexique.draft.mots;
+    const savedById = new Map(FILES.lexique.saved.mots.map(w => [w.id, JSON.stringify(w)]));
+    const count = (v) => mots.filter(w => placeOf(w) === v).length;
+
+    let html = '<p class="legend">Choisissez la séquence ou l\'activité, puis ajoutez ses mots. Ils apparaissent sous la séquence et dans le lexique général de la classe (seulement quand la séquence est ouverte).</p>' +
+      '<label class="lbl" for="place">Séquence ou activité</label><select id="place" class="inp">' +
+      P.map(p => '<option value="' + esc(p.v) + '"' + (p.v === curPlace ? ' selected' : '') + '>' + esc(p.label) + ' (' + count(p.v) + ')</option>').join("") + '</select>';
+
+    const here = mots.filter(w => placeOf(w) === curPlace).sort((a, b) => a.mot.localeCompare(b.mot, "fr", { sensitivity: "base" }));
+    html += '<div class="panel lexpanel">';
+    html += here.length ? here.map(w => {
+      const changed = savedById.get(w.id) !== JSON.stringify(w);
+      return '<div class="lexrow' + (changed ? ' changed' : '') + (w.id === editId ? ' editing' : '') + '"><div class="lx"><b>' + esc(w.mot) + '</b><span>' + esc(w.def) + '</span>' +
+        (w.ex ? '<i>Exemple : ' + esc(w.ex) + '</i>' : '') + '</div>' +
+        '<div class="lxb"><button type="button" class="mini" data-edit="' + esc(w.id) + '" aria-label="Modifier">✏️</button>' +
+        '<button type="button" class="mini" data-del="' + esc(w.id) + '" aria-label="Supprimer">🗑️</button></div></div>';
+    }).join("") : '<p class="muted" style="margin:4px 0">Aucun mot pour l\'instant.</p>';
+    html += '</div>';
+
+    const e = editId ? mots.find(w => w.id === editId) : null;
+    html += '<div class="panel"><h2>' + (e ? '✏️ Modifier le mot' : '➕ Ajouter un mot') + '</h2>' +
+      '<label class="lbl" for="lxm">Mot ou expression</label><input id="lxm" class="inp" type="text" value="' + esc(e ? e.mot : "") + '" autocomplete="off">' +
+      '<label class="lbl" for="lxd">Définition</label><textarea id="lxd" class="inp" rows="3">' + esc(e ? e.def : "") + '</textarea>' +
+      '<label class="lbl" for="lxe">Exemple <span class="muted">(facultatif)</span></label><input id="lxe" class="inp" type="text" value="' + esc(e && e.ex ? e.ex : "") + '" autocomplete="off">' +
+      '<div class="row2">' + (e ? '<button type="button" class="btn ghost" id="lxcancel">Annuler</button>' : '') +
+      '<button type="button" class="btn" id="lxok">' + (e ? 'Enregistrer' : 'Ajouter le mot') + '</button></div>' +
+      '<div class="msg err" id="lxerr"></div>' +
+      '<p class="muted" style="font-size:13px;margin:10px 0 0">Les mots ajoutés seront visibles par les élèves après « Publier ».</p></div>';
+
+    app.insertAdjacentHTML("beforeend", html);
+
+    document.getElementById("place").onchange = (ev) => {
+      curPlace = ev.target.value; editId = null;
+      try { sessionStorage.setItem("admin-place", curPlace); } catch (e2) {}
+      render();
+    };
+    app.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => {
+      editId = b.dataset.edit; render();
+      document.getElementById("lxm").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    app.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+      const w = mots.find(x => x.id === b.dataset.del);
+      if (w && confirm("Supprimer « " + w.mot + " » ?")) {
+        FILES.lexique.draft.mots = mots.filter(x => x.id !== w.id);
+        if (editId === w.id) editId = null;
+        render();
+      }
+    });
+    const cancel = document.getElementById("lxcancel");
+    if (cancel) cancel.onclick = () => { editId = null; render(); };
+    document.getElementById("lxok").onclick = () => {
+      const mot = document.getElementById("lxm").value.trim();
+      const def = document.getElementById("lxd").value.trim();
+      const ex = document.getElementById("lxe").value.trim();
+      const err = document.getElementById("lxerr");
+      if (!mot || !def) { err.textContent = "Il faut au moins le mot et sa définition."; return; }
+      const p = P.find(x => x.v === curPlace);
+      if (!p) return;
+      const [kind, ref] = [curPlace.slice(0, 3), curPlace.slice(4)];
+      const dup = mots.find(w => w.id !== editId && placeOf(w) === curPlace && w.mot.toLowerCase() === mot.toLowerCase());
+      if (dup) { err.textContent = "Ce mot existe déjà pour cette séquence."; return; }
+      const w = { id: editId || ("m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)), cls: p.cls };
+      w[kind] = ref; w.mot = mot; w.def = def; if (ex) w.ex = ex;
+      if (editId) FILES.lexique.draft.mots = mots.map(x => x.id === editId ? w : x);
+      else FILES.lexique.draft.mots = mots.concat([w]);
+      editId = null;
+      render();
+      document.getElementById("lxm").focus();
+    };
   }
 
-  document.getElementById("cancel").onclick = () => { draft = clone(saved); statusEl.textContent = ""; render(); };
+  /* ---------- Annuler / Publier ---------- */
+  document.getElementById("cancel").onclick = () => {
+    for (const k in FILES) FILES[k].draft = clone(FILES[k].saved);
+    editId = null; statusEl.textContent = ""; render();
+  };
+
+  function serialize(key) {
+    const d = FILES[key].draft;
+    if (key === "etat") {
+      const out = { sequences: {}, ressources: {} };
+      Object.keys(d.sequences).sort().forEach(k => out.sequences[k] = d.sequences[k]);
+      Object.keys(d.ressources).sort().forEach(k => out.ressources[k] = d.ressources[k]);
+      return out;
+    }
+    const keys = ["id", "cls", "seq", "res", "mot", "def", "ex"];
+    return { mots: d.mots.slice().sort((a, b) => (a.cls + a.mot).localeCompare(b.cls + b.mot, "fr", { sensitivity: "base" }))
+      .map(w => { const o = {}; keys.forEach(k => { if (w[k] !== undefined && w[k] !== "") o[k] = w[k]; }); return o; }) };
+  }
 
   document.getElementById("publish").onclick = async () => {
     const pb = document.getElementById("publish");
-    pb.disabled = true; statusEl.className = "status"; statusEl.textContent = "Enregistrement…";
-    const out = { sequences: {}, ressources: {} };
-    Object.keys(draft.sequences).sort().forEach(k => out.sequences[k] = draft.sequences[k]);
-    Object.keys(draft.ressources).sort().forEach(k => out.ressources[k] = draft.ressources[k]);
-    const text = JSON.stringify(out, null, 2) + "\n";
+    pb.disabled = true; statusEl.className = "status"; statusEl.style.color = ""; statusEl.textContent = "Enregistrement…";
+    const todo = [];
+    if (etatChanges()) todo.push("etat");
+    if (lexChanges()) todo.push("lexique");
+    const live = [];
     try {
-      const res = await gh("PUT", { message: "Espace prof : mise à jour des accès", content: b64encode(text), sha, branch: BRANCH });
-      sha = res.content.sha; saved = clone(out); draft = clone(out);
+      for (const key of todo) {
+        const F = FILES[key], out = serialize(key);
+        const text = key === "etat" ? JSON.stringify(out, null, 2) + "\n" : '{\n  "mots": [\n' + out.mots.map(w => "    " + JSON.stringify(w)).join(",\n") + '\n  ]\n}\n';
+        const body = { message: F.msg, content: b64encode(text), branch: BRANCH };
+        if (F.sha) body.sha = F.sha;
+        const res = await gh(F.path, "PUT", body);
+        F.sha = res.content.sha; F.saved = clone(out); F.draft = clone(out);
+        live.push([F.path, out]);
+      }
       statusEl.textContent = "⏳ Enregistré. Mise en ligne en cours (environ 1 min)…";
       render();
-      waitLive(text);
+      waitLive(live);
     } catch (e) {
-      statusEl.className = "status"; statusEl.style.color = "var(--err)";
-      statusEl.textContent = e.status === 409 ? "Le fichier a changé ailleurs : rechargez la page." :
+      statusEl.style.color = "var(--err)";
+      statusEl.textContent = e.status === 409 || e.status === 422 ? "Un fichier a changé ailleurs : rechargez la page." :
                              e.status === 401 || e.status === 403 ? "Clé refusée : reconnectez-vous." : "Échec : " + e.message;
       pb.disabled = false;
+      render();
     }
   };
 
-  async function waitLive(text) {
-    const want = JSON.stringify(JSON.parse(text));
-    for (let i = 0; i < 60; i++) {
+  async function waitLive(files) {
+    const pending = files.map(([path, out]) => ({ path, want: JSON.stringify(out) }));
+    for (let i = 0; i < 60 && pending.length; i++) {
       await new Promise(r => setTimeout(r, 5000));
-      try {
-        const r = await fetch("etat.json?t=" + Date.now(), { cache: "no-store" });
-        if (r.ok && JSON.stringify(await r.json()) === want) {
-          statusEl.style.color = "var(--ok)"; statusEl.textContent = "✅ En ligne : les élèves voient les changements.";
-          setTimeout(() => { statusEl.textContent = ""; statusEl.style.color = ""; render(); }, 6000);
-          return;
-        }
-      } catch (e) {}
+      for (let j = pending.length - 1; j >= 0; j--) {
+        try {
+          const r = await fetch(pending[j].path + "?t=" + Date.now(), { cache: "no-store" });
+          if (r.ok && JSON.stringify(await r.json()) === pending[j].want) pending.splice(j, 1);
+        } catch (e) {}
+      }
     }
-    statusEl.textContent = "Enregistré, mais la mise en ligne prend plus de temps que prévu. Vérifiez dans quelques minutes.";
+    if (!pending.length) {
+      statusEl.style.color = "var(--ok)"; statusEl.textContent = "✅ En ligne : les élèves voient les changements.";
+      setTimeout(() => { statusEl.textContent = ""; statusEl.style.color = ""; render(); }, 6000);
+    } else {
+      statusEl.textContent = "Enregistré, mais la mise en ligne prend plus de temps que prévu. Vérifiez dans quelques minutes.";
+    }
   }
 
   load();

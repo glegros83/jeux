@@ -174,6 +174,33 @@
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0) rotate(-1deg); }
 
+  /* ---------- Lexique ---------- */
+  .lexbox { margin-top: 28px; background: var(--paper); color: var(--ink); border: 3px solid #000; border-radius: 6px; box-shadow: var(--sh); }
+  .lexbox > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 14px; font: 10px/1.6 var(--pixel); text-transform: uppercase; }
+  .lexbox > summary::-webkit-details-marker { display: none; }
+  .lexbox > summary::after { content: "▼"; margin-left: auto; font-size: 10px; }
+  .lexbox[open] > summary::after { content: "▲"; }
+  .lexbox > summary .cnt { background: var(--c, var(--pink)); color: #fff; border: 2px solid #000; padding: 4px 6px 3px; font-size: 9px; }
+  .lex-list { padding: 0 14px 6px; }
+  .lex-item { border-top: 2px dashed rgba(0,0,0,.18); padding: 11px 0; }
+  .lex-item b { display: block; font-size: 17px; line-height: 1.25; }
+  .lex-item p { margin: 3px 0 0; font-size: 15px; line-height: 1.45; }
+  .lex-item .ex { font-style: italic; color: var(--muted); }
+  .lex-item .src { display: inline-block; margin-top: 5px; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .lex-search { width: 100%; font: 600 17px system-ui, sans-serif; padding: 13px 14px; margin: 0 0 16px; color: var(--ink); background: var(--paper); border: 3px solid #000; border-radius: 6px; box-shadow: 4px 4px 0 #000; }
+  .lex-letter { font: 14px var(--pixel); color: var(--yellow); text-shadow: 2px 2px 0 #000; margin: 22px 0 8px; }
+  .lex-card { background: var(--paper); color: var(--ink); border: 3px solid #000; border-radius: 6px; box-shadow: var(--sh); padding: 0 14px; }
+  .lex-card .lex-item:first-child { border-top: 0; }
+  .lex-none { color: var(--muted); text-align: center; padding: 20px; }
+  html.calm .lexbox, html.calm .lex-card { border: 1px solid rgba(0,0,0,.1); border-radius: 16px; }
+  html.calm .lexbox > summary { font: 800 14px/1.4 var(--pixel); text-transform: none; }
+  html.calm .lexbox > summary .cnt { border: 0; border-radius: 999px; font-size: 12px; padding: 4px 9px; }
+  html.calm .lex-item { border-top: 1px solid rgba(0,0,0,.08); }
+  html.calm .lex-search { border: 1px solid rgba(0,0,0,.18); border-radius: 14px; box-shadow: none; font-family: var(--pixel); }
+  html.calm .lex-letter { font: 900 20px var(--pixel); color: var(--ink); text-shadow: none; }
+  html[data-skin="lisible"] .lexbox, html[data-skin="lisible"] .lex-card, html[data-skin="lisible"] .lex-search { border: 2px solid #000; }
+  html[data-skin="lisible"] .lex-item b { font-size: 20px; }
+  html[data-skin="lisible"] .lex-item p { font-size: 18px; color: #000; }
   @media (prefers-reduced-motion: reduce) { .press, .resume small { animation: none; } }
 
   /* ===== Bouton et panneau « Affichage » ===== */
@@ -326,6 +353,60 @@
   /* ---------- État ouvert / à venir / masqué ---------- */
   let ETAT = lsGet("salle-etat-cache", null) || { sequences: {}, ressources: {} };
   let etatLoaded = !!lsGet("salle-etat-cache", null);
+  let LEX = lsGet("salle-lex-cache", null) || { mots: [] };
+  async function loadLex() {
+    try {
+      const r = await fetch("lexique.json?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) return;
+      const l = await r.json();
+      if (JSON.stringify(l) !== JSON.stringify(LEX)) { LEX = l; lsSet("salle-lex-cache", l); if (etatLoaded) render(); }
+    } catch (e) {}
+  }
+  function wordOpen(w) {
+    if (w.seq) { const s = SEQUENCES.find(x => A.seqKey(x) === w.seq); return !!s && A.seqState(ETAT, s) === "ouvert"; }
+    if (w.res) { const r = RESSOURCES.find(x => x.id === w.res); return !!r && A.resState(ETAT, r) === "ouvert"; }
+    return true;
+  }
+  function wordSource(w) {
+    if (w.seq) { const s = SEQUENCES.find(x => A.seqKey(x) === w.seq); return s ? s.emoji + " " + s.name : ""; }
+    if (w.res) { const r = RESSOURCES.find(x => x.id === w.res); return r ? r.emoji + " " + r.title : ""; }
+    return "";
+  }
+  const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const byWord = (a, b) => a.mot.localeCompare(b.mot, "fr", { sensitivity: "base" });
+  function lexItem(w, withSource) {
+    return '<div class="lex-item"><b>' + esc(w.mot) + '</b><p>' + esc(w.def) + '</p>' +
+      (w.ex ? '<p class="ex">Exemple : ' + esc(w.ex) + '</p>' : '') +
+      (withSource ? '<span class="src">Vu dans : ' + esc(wordSource(w)) + '</span>' : '') + '</div>';
+  }
+  function lexBox(words, title, withSource) {
+    const d = document.createElement("details");
+    d.className = "lexbox"; d.open = words.length <= 6;
+    d.innerHTML = '<summary>📖 ' + esc(px(title)) + ' <span class="cnt">' + words.length + '</span></summary>' +
+      '<div class="lex-list">' + words.slice().sort(byWord).map(w => lexItem(w, withSource)).join("") + '</div>';
+    return d;
+  }
+  function renderLexPage(cls) {
+    setBar("#" + cls.id, cls.name, "Lexique");
+    document.title = "Lexique " + cls.name;
+    const words = (LEX.mots || []).filter(w => w.cls === cls.id && wordOpen(w)).sort(byWord);
+    view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">' + esc(cls.name) + '</span><h1>Lexique</h1><p>Tous les mots vus dans les séquences et activités ouvertes. ' + words.length + ' mot' + (words.length > 1 ? 's' : '') + '.</p></div>');
+    if (!words.length) { view.appendChild(empty("Aucun mot pour l'instant.")); return; }
+    const inp = document.createElement("input");
+    inp.className = "lex-search"; inp.type = "search"; inp.placeholder = "🔍 Chercher un mot…"; inp.setAttribute("aria-label", "Chercher un mot");
+    const out = document.createElement("div");
+    view.appendChild(inp); view.appendChild(out);
+    function draw() {
+      const q = norm(inp.value.trim());
+      const found = q ? words.filter(w => norm(w.mot).includes(q) || norm(w.def).includes(q)) : words;
+      if (!found.length) { out.innerHTML = '<div class="lex-card"><p class="lex-none">Aucun mot ne correspond.</p></div>'; return; }
+      const groups = {};
+      found.forEach(w => { const L = norm(w.mot).charAt(0).toUpperCase() || "#"; (groups[L] = groups[L] || []).push(w); });
+      out.innerHTML = Object.keys(groups).sort().map(L => '<div class="lex-letter">' + esc(L) + '</div><div class="lex-card">' + groups[L].map(w => lexItem(w, true)).join("") + '</div>').join("");
+    }
+    inp.addEventListener("input", draw);
+    draw();
+  }
   async function loadEtat() {
     try {
       const r = await fetch("etat.json?t=" + Date.now(), { cache: "no-store" });
@@ -359,7 +440,7 @@
     const cls = CLASSES.find(x => x.id === c);
     const course = cls && cls.courses.find(x => x.id === k);
     const seq = course && SEQUENCES.find(x => x.cls === cls.id && x.course === course.id && x.id === s);
-    return { cls, course, seq };
+    return { cls, course, seq, lex: !!cls && k === "lexique" };
   }
 
   function row({ href, color, emoji, title, desc, right, off, soon, blank, onTap }) {
@@ -452,7 +533,7 @@
 
   /* ---------- Rendu ---------- */
   function render() {
-    const { cls, course, seq } = route();
+    const { cls, course, seq, lex } = route();
     document.documentElement.style.setProperty("--c", cls ? cls.color : "");
     view.innerHTML = "";
 
@@ -487,6 +568,9 @@
       return;
     }
 
+    // LEXIQUE DE LA CLASSE
+    if (lex) { renderLexPage(cls); return; }
+
     // CLASSE
     if (!course) {
       setBar("#", "Classe", cls.name);
@@ -497,6 +581,11 @@
         return row({ href: n ? "#" + cls.id + "/" + k.id : null, color: cls.color, emoji: k.emoji, title: k.name, desc: k.sub,
           right: n ? n + " ›" : "Bientôt", soon: !n, onTap: n ? null : () => toast("Rien pour l'instant dans ce cours.") });
       })));
+      const nw = (LEX.mots || []).filter(w => w.cls === cls.id && wordOpen(w)).length;
+      view.appendChild(sec("📖 Lexique"));
+      view.appendChild(list([row({ href: nw ? "#" + cls.id + "/lexique" : null, color: cls.color, emoji: "📖", title: "Lexique " + cls.name,
+        desc: "Tous les mots à connaître, avec leur définition", right: nw ? nw + " mots ›" : "Bientôt", soon: !nw,
+        onTap: nw ? null : () => toast("Le lexique se remplira au fil des séquences.") })]));
       return;
     }
 
@@ -521,6 +610,9 @@
         })));
       }
       view.appendChild(byType(loose));
+      const looseIds = loose.map(r => r.id);
+      const lw = (LEX.mots || []).filter(w => w.res && looseIds.includes(w.res) && wordOpen(w));
+      if (lw.length) view.appendChild(lexBox(lw, "Lexique du cours", true));
       return;
     }
 
@@ -536,11 +628,14 @@
     const items = visibleRes(resOf(cls.id, course.id, seq.id));
     if (!items.length) { view.appendChild(empty("Aucune activité dans cette séquence pour l'instant.")); return; }
     view.appendChild(byType(items));
+    const ids = items.map(r => r.id), key = A.seqKey(seq);
+    const sw = (LEX.mots || []).filter(w => (w.seq === key || (w.res && ids.includes(w.res))) && wordOpen(w));
+    if (sw.length) view.appendChild(lexBox(sw, "Lexique de la séquence", false));
   }
 
   window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
-  window.addEventListener("pageshow", (e) => { if (e.persisted) { render(); loadEtat(); } });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) loadEtat(); });
+  window.addEventListener("pageshow", (e) => { if (e.persisted) { render(); loadEtat(); loadLex(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadEtat(); loadLex(); } });
 
   /* ---------- Ajouter à l'écran d'accueil ---------- */
   (function installHint() {
@@ -568,6 +663,7 @@
   if (etatLoaded) render();
   else { setBar(null); view.innerHTML = '<div class="empty">Chargement…</div>'; }
   loadEtat();
+  loadLex();
 </script>
 </body>
 </html>
