@@ -3,5 +3,7 @@
     "pmcv2/pro/chalandise": "ouvert",
     "pmcv2/pro/veille": "ouvert"
   },
-  "ressources": {}
+  "ressources": {
+    "pfmp-parcours": "grise"
+  }
 }

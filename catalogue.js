@@ -22,6 +22,7 @@ window.CATALOGUE = {
         { id: "accueil",  emoji: "🛎️", name: "Enseignement pro", sub: "Accueil" },
         { id: "ecodroit", emoji: "⚖️", name: "Éco-droit", sub: "Économie et droit" },
         { id: "soutien",  emoji: "🧭", name: "Soutien au parcours", sub: "Construire son orientation" },
+        { id: "pfmp",     emoji: "🧳", name: "PFMP", sub: "Préparer sa période en entreprise" },
       ] },
   ],
 
@@ -61,6 +62,9 @@ window.CATALOGUE = {
     { type: "jeu", id: "cap", cls: "smrc2", course: "soutien", emoji: "🧭",
       title: "Mon cap pour la Première", desc: "Trace ta route pour l'an prochain.",
       url: "Mon-cap-pour-la-Premiere.html", color: "#3b6fe0" },
+    { type: "jeu", id: "pfmp-parcours", cls: "smrc2", course: "pfmp", emoji: "🎒",
+      title: "PFMP : le parcours", desc: "6 niveaux pour être prêt(e) le jour J · 25-30 min",
+      url: "pfmp-parcours.html", color: "#1f4fd8" },
   ],
 };
 

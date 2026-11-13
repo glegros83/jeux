@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PFMP : le parcours</title>
+<style>
+:root{
+  --bg:#f4f6fb; --card:#ffffff; --ink:#1b2438; --muted:#55607a; --line:#d9dfec;
+  --brand:#1f4fd8; --brand-ink:#ffffff; --accent:#f2a900;
+  --good:#117a43; --good-bg:#e2f5ea; --mid:#8a5a00; --mid-bg:#fff2d6; --bad:#b3261e; --bad-bg:#fde7e5;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1524; --card:#182036; --ink:#eef1f8; --muted:#a9b3cc; --line:#2a3555;
+    --brand:#6f95ff; --brand-ink:#0b1020; --accent:#ffc83d;
+    --good:#6ee0a0; --good-bg:#12332a; --mid:#ffd27a; --mid-bg:#3a2d0e; --bad:#ff9a92; --bad-bg:#3b1b1a; }
+}
+*{box-sizing:border-box}
+html{font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 16px 8px;border-bottom:1px solid var(--line)}
+.top-in{max-width:760px;margin:0 auto}
+.top-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:.9rem}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--accent));border-radius:99px;transition:width .4s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 2px 10px rgba(20,30,60,.06)}
+h1{font-size:1.7rem;line-height:1.2;margin:.2em 0 .4em}
+h2{font-size:1.3rem;line-height:1.25;margin:.2em 0 .5em}
+p{margin:.5em 0}
+.big{font-size:3rem;line-height:1}
+.muted{color:var(--muted)}
+.tag{display:inline-block;background:var(--brand);color:var(--brand-ink);border-radius:99px;padding:2px 12px;font-size:.8rem;font-weight:700}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-block;background:var(--brand);color:var(--brand-ink);border:0;border-radius:12px;padding:14px 22px;font-weight:700;font-size:1rem;margin-top:12px}
+.btn.ghost{background:transparent;color:var(--brand);border:2px solid var(--brand)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;font-size:1rem}
+.opt:hover:not(:disabled){border-color:var(--brand)}
+.opt:disabled{cursor:default}
+.opt.good{border-color:var(--good);background:var(--good-bg)}
+.opt.mid{border-color:var(--mid);background:var(--mid-bg)}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.opt.pick{outline:3px solid var(--brand)}
+.fb{border-left:6px solid var(--line);padding:10px 14px;margin:12px 0;border-radius:8px;background:var(--bg)}
+.fb.good{border-color:var(--good)} .fb.mid{border-color:var(--mid)} .fb.bad{border-color:var(--bad)}
+.ctx{background:var(--bg);border-radius:12px;padding:12px 14px;font-style:italic;margin-bottom:10px}
+.plan li{margin:.4em 0}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.pill{padding:3px 10px;border-radius:99px;border:2px solid var(--line);font-size:.8rem;font-weight:700;color:var(--muted)}
+.pill.on{border-color:var(--brand);color:var(--brand)}
+.pill.done{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.swipe{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stepcard{background:var(--bg);border:2px dashed var(--line);border-radius:14px;padding:22px 16px;text-align:center;font-weight:700;font-size:1.15rem;margin:10px 0}
+.seq{counter-reset:s;list-style:none;padding:0;margin:8px 0}
+.seq li{counter-increment:s;background:var(--bg);border-radius:10px;padding:10px 12px;margin:6px 0;display:flex;gap:10px}
+.seq li::before{content:counter(s);font-weight:800;color:var(--brand);min-width:1.4em}
+.check{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:12px;margin:8px 0;cursor:pointer}
+.check input{width:22px;height:22px;margin-top:3px;flex:none}
+.check.sel{border-color:var(--brand)}
+.contract{border:3px double var(--brand);border-radius:14px;padding:18px;margin:14px 0;background:var(--bg)}
+.inp{font:inherit;width:100%;padding:12px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);margin:4px 0 10px}
+label.f{display:block;font-weight:700;font-size:.9rem}
+.preview{max-width:100%;border:1px solid var(--line);border-radius:10px;margin-top:12px;background:#fff}
+a.btn{text-decoration:none}
+.footer{text-align:center;color:var(--muted);font-size:.85rem;padding:16px 16px 40px}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="top-row"><span id="lvl">PFMP : le parcours</span><span id="xp"></span></div>
+  <div class="bar" aria-hidden="true"><i id="prog"></i></div>
+</div></header>
+<div class="wrap"><main id="main" aria-live="polite"></main></div>
+<div class="footer">Cours d'enseignement pro PMCV2 - Monsieur Le Gros</div>
+
+<script>
+/* ===== A PERSONNALISER ===== */
+const CONFIG = {
+  prof: "ton professeur (M. Le Gros)",
+  classe: "SMRC2",   // classe pré-remplie dans le fichier final (modifiable par l'élève)
+  // Texte affiché pour savoir à qui parler au lycée en cas de souci
+  contactLycee: "mon professeur référent ou la vie scolaire (CPE)"
+};
+
+/* ===== SITUATIONS DE DEPART ===== */
+const STATUS = [
+  { id:"rien", emoji:"🔍", t:"Je n'ai encore rien trouvé",
+    title:"Tu n'as pas encore d'entreprise : pas de panique, mais il faut s'y mettre.",
+    plan:[
+      "Mets ton CV à jour (une page, simple, sans faute).",
+      "Fais une liste de 5 entreprises du secteur qui t'intéresse (commerces, hôtels, enseignes de ta ville).",
+      "Demande autour de toi : famille, voisins, ancien stage de 3e, amis. Beaucoup de stages se trouvent comme ça.",
+      "Présente-toi sur place, bien habillé(e), ou appelle : « Bonjour, je suis élève en Bac Pro, je cherche une PFMP. Puis-je parler au responsable ? »",
+      "Dis-le à " + "{PROF}" + " cette semaine. Ne reste pas seul(e) avec ce problème : plus on s'y prend tôt, plus on a de choix."
+    ]},
+  { id:"pistes", emoji:"📞", t:"J'ai contacté des entreprises, j'attends des réponses",
+    title:"Tu as lancé la machine. Maintenant il faut suivre et relancer.",
+    plan:[
+      "Note dans un tableau : entreprise, date du contact, nom de la personne, réponse attendue.",
+      "Relance par téléphone ou mail au bout de quelques jours, poliment : « Je reviens vers vous au sujet de ma demande de PFMP. »",
+      "Garde toujours une piste de secours : n'attends pas une seule réponse pour continuer à chercher.",
+      "Informe {PROF} de l'avancée, surtout si tu n'as toujours pas de réponse."
+    ]},
+  { id:"accord", emoji:"🤝", t:"Une entreprise a dit oui (à l'oral ou par mail)",
+    title:"Bravo, mais attention : un « oui » n'est pas encore une convention.",
+    plan:[
+      "Remercie l'entreprise (mail ou appel) et confirme les dates.",
+      "Récupère les informations : nom exact de l'entreprise, adresse, nom et fonction de ton tuteur, horaires, téléphone.",
+      "Transmets-les au lycée pour que la convention soit préparée.",
+      "Si tu avais d'autres pistes, préviens-les honnêtement que tu as trouvé.",
+      "Tu ne pars pas tant que la convention n'est pas signée par tous."
+    ]},
+  { id:"cours", emoji:"✍️", t:"La convention est en cours de signature",
+    title:"Tu y es presque. Les signatures sont l'étape la plus facile à oublier.",
+    plan:[
+      "Vérifie qui a déjà signé : l'entreprise, le lycée, toi (ou ton responsable légal si tu es mineur(e)).",
+      "Si l'entreprise tarde, relance poliment et rappelle que le lycée attend sa signature.",
+      "Si c'est ton responsable légal qui doit signer, ramène le document dès demain.",
+      "Garde une copie de la convention dès qu'elle est complète.",
+      "Pas de convention signée par tous = pas de départ en PFMP."
+    ]},
+  { id:"signe", emoji:"✅", t:"La convention est signée par tous",
+    title:"Tu es prêt(e) administrativement. Il reste à préparer le jour J.",
+    plan:[
+      "Range une copie de la convention dans ton sac pour le premier jour.",
+      "Note : nom et téléphone de ton tuteur, adresse exacte, horaires, numéro du lycée.",
+      "Teste ton trajet avant : transport, durée, marge de sécurité.",
+      "Prépare ta tenue (propre, adaptée au métier) la veille.",
+      "Fais le parcours ci-dessous pour être à l'aise dès la première minute."
+    ]}
+];
+
+/* ===== NIVEAUX ===== */
+const LEVELS = [
+{ emoji:"📄", title:"La convention : ton ticket d'entrée",
+  intro:"Sans convention signée, pas de PFMP. On vérifie que tu connais les règles du jeu.",
+  items:[
+  { type:"order", q:"Remets les étapes dans le bon ordre, de la recherche jusqu'au départ.",
+    steps:[
+      "Je trouve une entreprise qui accepte de m'accueillir",
+      "Je donne les informations de l'entreprise au lycée",
+      "Le lycée prépare la convention",
+      "L'entreprise, le lycée et moi (ou mon responsable légal) signons",
+      "Je garde ma copie et je pars en PFMP"
+    ],
+    why:"Dans cet ordre : trouver, informer, préparer, signer, partir. On ne saute jamais l'étape des signatures." },
+  { type:"mcq", q:"Le responsable d'un magasin te dit : « Viens lundi, on réglera les papiers plus tard. » Que fais-tu ?",
+    opts:[
+      { t:"Je viens lundi : il a dit que c'était bon, les papiers suivront sans problème.", pts:0, fb:"Sans convention signée, tu n'es pas officiellement en PFMP et tu n'es pas couvert(e) comme élève en cas de problème." },
+      { t:"Je remercie et j'explique que je commence une fois la convention signée.", pts:2, fb:"Exactement. C'est professionnel, et ça te protège." },
+      { t:"Je ne réponds plus : ça me paraît louche.", pts:0, fb:"Ce n'est pas louche : c'est juste une étape à respecter. Explique-le calmement." },
+      { t:"Je viens lundi sans le dire au lycée.", pts:0, fb:"Dangereux : le lycée doit savoir où tu es. Jamais de PFMP cachée." }
+    ]},
+  { type:"mcq", q:"C'est quoi, un tuteur de stage ?",
+    opts:[
+      { t:"La personne de l'entreprise qui m'encadre au quotidien.", pts:2, fb:"Oui. C'est ta personne de référence sur place, elle t'apprend le métier." },
+      { t:"Mon professeur principal, qui suit ma scolarité toute l'année.", pts:0, fb:"Non, lui c'est côté lycée. Le professeur référent suit ta PFMP depuis le lycée." },
+      { t:"Un autre élève plus expérimenté.", pts:0, fb:"Non : le tuteur est un professionnel de l'entreprise." },
+      { t:"Le client le plus régulier du magasin.", pts:0, fb:"Non, c'est quelqu'un de l'entreprise désigné pour t'encadrer." }
+    ]},
+  { type:"mcq", q:"En lycée pro, qui paie la gratification de PFMP de l'élève ?",
+    opts:[
+      { t:"L'entreprise qui m'accueille, comme un petit salaire", pts:0, fb:"Non : l'entreprise ne te paie pas." },
+      { t:"L'État, pas l'entreprise", pts:2, fb:"Oui. L'État verse une gratification pour chaque semaine de PFMP : 50 € en Seconde, 75 € en Première et 100 € en Terminale. L'entreprise ne te paie pas." },
+      { t:"Le lycée, avec son propre budget", pts:0, fb:"Non : c'est l'État qui paie, pas le lycée ni l'entreprise." },
+      { t:"Personne : une PFMP n'est jamais payée", pts:0, fb:"Si : tu es en formation, mais l'État verse une gratification par semaine." }
+    ]},
+  { type:"mcq", q:"Calcul : tu es en Première (75 € par semaine de PFMP) et tu fais 3 semaines de PFMP. Combien l'État te verse-t-il ?",
+    opts:[
+      { t:"150 €", pts:0, fb:"Ça ferait 2 semaines. Tu en fais 3." },
+      { t:"225 €", pts:2, fb:"75 € × 3 semaines = 225 €. En Seconde ce serait 150 € (50 × 3), en Terminale 300 € (100 × 3)." },
+      { t:"300 €", pts:0, fb:"Ça, c'est le montant en Terminale pour 3 semaines (100 × 3). En Première, c'est 75 € par semaine." },
+      { t:"75 €", pts:0, fb:"C'est le montant d'une seule semaine. Multiplie par 3." }
+    ]},
+  { type:"mcq", q:"Deux entreprises te disent oui pour la même période. Que fais-tu ?",
+    opts:[
+      { t:"Je dis oui aux deux et je verrai le jour J pour choisir.", pts:0, fb:"Non : tu fais perdre du temps à une entreprise et tu abîmes ta réputation." },
+      { t:"Je choisis l'une des deux et je préviens l'autre poliment.", pts:2, fb:"Oui. L'honnêteté compte, le monde professionnel est petit." },
+      { t:"Je prends la première et je ne dis rien à l'autre.", pts:1, fb:"Mieux que rien, mais il faut prévenir la seconde. Un petit mail suffit." }
+    ]},
+  { type:"mcq", q:"Quel est le meilleur « kit du premier jour » ?",
+    opts:[
+      { t:"Rien de spécial : on verra bien sur place, à mon arrivée.", pts:0, fb:"Pas très rassurant pour une première impression." },
+      { t:"Seulement mon téléphone : tout est dedans, y compris les contacts et les horaires.", pts:0, fb:"Et s'il n'a plus de batterie ? Note aussi les infos sur papier." },
+      { t:"Convention, contact du tuteur, numéro du lycée, horaires.", pts:2, fb:"Complet : tu sais où aller, avec qui, et qui appeler en cas de souci." }
+    ]}
+  ]},
+
+{ emoji:"🤝", title:"Savoir-être : ce qu'on attend de toi",
+  intro:"En PFMP, on te juge autant sur ton attitude que sur ce que tu sais faire. Que ferais-tu ?",
+  items:[
+  { type:"mcq", ctx:"Ton réveil n'a pas sonné. Tu vas arriver avec 20 minutes de retard.", q:"Que fais-tu ?",
+    opts:[
+      { t:"J'arrive en courant sans rien dire : ça ne se verra pas trop du tout.", pts:0, fb:"Ça se voit, et ça donne l'image de quelqu'un de peu fiable." },
+      { t:"J'envoie un SMS au tuteur pour le prévenir.", pts:1, fb:"C'est déjà mieux que rien, mais un appel est plus respectueux." },
+      { t:"J'appelle l'entreprise, je m'excuse et j'indique mon arrivée.", pts:2, fb:"Le bon réflexe : tu préviens, tu assumes, tu rassures." }
+    ]},
+  { type:"mcq", ctx:"Un ami t'envoie des messages pendant que tu es en poste.", q:"Que fais-tu de ton téléphone ?",
+    opts:[
+      { t:"Je regarde vite fait derrière le comptoir : personne ne voit rien.", pts:0, fb:"Les clients et le tuteur le voient très bien." },
+      { t:"Il reste dans mon sac, je le regarde à la pause.", pts:2, fb:"Oui. Pendant le travail, ton attention est pour l'entreprise et les clients." },
+      { t:"Je réponds : ce n'est que deux secondes.", pts:0, fb:"Deux secondes de trop devant un client." }
+    ]},
+  { type:"mcq", ctx:"Premier jour de PFMP.", q:"Que penses-tu de ta tenue ?",
+    opts:[
+      { t:"Mon jogging préféré : c'est confortable pour travailler toute la journée.", pts:0, fb:"La tenue fait partie de l'image de l'entreprise." },
+      { t:"Comme pour sortir le week-end.", pts:0, fb:"Reste sobre et adapté au métier." },
+      { t:"Je demande s'il y a une tenue imposée et je viens soigné(e).", pts:2, fb:"Parfait : tu anticipes et tu montres du sérieux." }
+    ]},
+  { type:"mcq", ctx:"Ton tuteur t'explique une tâche, mais tu n'as rien compris.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je fais semblant d'avoir compris et je me débrouille ensuite.", pts:0, fb:"Le risque : faire une erreur. Mieux vaut demander." },
+      { t:"Je ne dis rien et je regarde comment font les autres.", pts:1, fb:"Observer est utile, mais pose aussi ta question." },
+      { t:"Je reformule : « Si j'ai bien compris, je dois… ? »", pts:2, fb:"Poser une question ou reformuler montre que tu t'intéresses. C'est valorisé." }
+    ]},
+  { type:"mcq", ctx:"Un collègue te fait une remarque sèche devant les autres.", q:"Comment réagis-tu ?",
+    opts:[
+      { t:"Je réponds du tac au tac devant tout le monde pour me faire respecter.", pts:0, fb:"Ça risque de créer un conflit dont tu sortiras perdant(e)." },
+      { t:"Je quitte mon poste sans rien dire à personne.", pts:0, fb:"Quitter son poste, c'est grave. Reste, respire, parles-en ensuite." },
+      { t:"Je reste calme et j'écoute. Si ça se répète, j'en parle au tuteur.", pts:2, fb:"Oui. Garder son calme est une grande qualité professionnelle." }
+    ]},
+  { type:"mcq", ctx:"Il n'y a plus de client, tu n'as plus rien à faire.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je demande s'il y a autre chose à faire, ou je range.", pts:2, fb:"Tu montres de l'initiative : c'est ce que retiennent les tuteurs." },
+      { t:"Je m'assois et je sors mon téléphone : il n'y a personne.", pts:0, fb:"Mauvaise image garantie." },
+      { t:"J'attends qu'on me dise quoi faire, sans bouger.", pts:1, fb:"Pas grave, mais tu peux prendre l'initiative en demandant." }
+    ]}
+  ]},
+
+{ emoji:"✅", title:"Code de bonne conduite : ça se fait ou pas ?",
+  intro:"Tu vois une phrase. Tu décides si ça se fait en PFMP ou non.",
+  items:[
+  { type:"sort", q:"Ça se fait ou ça ne se fait pas ?", labels:["✅ Ça se fait","❌ Ça ne se fait pas"],
+    cards:[
+      { t:"Dire bonjour à tout le monde en arrivant", ok:true, why:"Le bonjour est la base de toute relation professionnelle." },
+      { t:"Tutoyer un client que je ne connais pas", ok:false, why:"On vouvoie les clients, toujours." },
+      { t:"Mâcher du chewing-gum devant un client", ok:false, why:"Ça donne une image négligée." },
+      { t:"Demander avant de prendre ma pause", ok:true, why:"Tu préviens, tu ne disparais pas." },
+      { t:"Prendre des photos de clients ou du magasin pour les réseaux", ok:false, why:"Interdit sans autorisation : droit à l'image et confidentialité." },
+      { t:"Poser des questions quand je ne comprends pas", ok:true, why:"Les stagiaires qui posent des questions apprennent plus vite." },
+      { t:"Manger à mon poste, devant les clients", ok:false, why:"Les repas se prennent à la pause, dans l'espace prévu." },
+      { t:"Remercier mon tuteur à la fin de la PFMP", ok:true, why:"Un petit mot, ça compte, et ça laisse une bonne trace." },
+      { t:"Critiquer l'entreprise sur les réseaux sociaux", ok:false, why:"Ça peut te nuire (et nuire au lycée) : on règle les problèmes en parlant au tuteur ou à ton professeur." },
+      { t:"Garder pour moi les informations internes (chiffres, problèmes)", ok:true, why:"Discrétion professionnelle : ce qui se passe dans l'entreprise y reste." },
+      { t:"Parler fort et avec des mots de copains à l'équipe", ok:false, why:"Adapte ton langage : poli, clair, pas de familiarité." },
+      { t:"Arriver 5 à 10 minutes en avance", ok:true, why:"Être à l'heure, c'est être prêt(e) à l'heure, pas arriver à l'heure pile." }
+    ]}
+  ]},
+
+{ emoji:"🚑", title:"Retards, absences et imprévus",
+  intro:"Les imprévus arrivent. Ce qui compte, c'est comment tu les gères.",
+  items:[
+  { type:"mcq", ctx:"Tu te réveilles malade le matin d'une journée de PFMP.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je préviens seulement l'entreprise : le lycée sera au courant.", pts:1, fb:"Le lycée est responsable de toi : il doit être prévenu aussi." },
+      { t:"Je ne préviens personne : j'expliquerai demain si on me demande.", pts:0, fb:"Une absence non signalée est très mal vue." },
+      { t:"Je préviens l'entreprise ET le lycée, avec un justificatif.", pts:2, fb:"Les deux doivent être prévenus. Un seul appel ne suffit pas." }
+    ]},
+  { type:"mcq", ctx:"Tu as un rendez-vous (médecin, administratif) pendant une journée de PFMP.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je pars à l'heure du rendez-vous sans rien demander à personne.", pts:0, fb:"Tu ne peux pas partir sans autorisation." },
+      { t:"Je préviens à l'avance l'entreprise et le lycée, et je demande.", pts:2, fb:"Anticiper, c'est respecter l'équipe." },
+      { t:"Je dis que je suis malade : c'est plus simple.", pts:0, fb:"Mentir est la pire solution : ça se sait toujours." }
+    ]},
+  { type:"mcq", ctx:"Tu te coupes légèrement en ouvrant un carton.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je ne dis rien : ce n'est qu'une égratignure de rien du tout.", pts:0, fb:"Tu pourrais le regretter si ça s'infecte, ou si on te demande pourquoi tu n'as rien dit." },
+      { t:"J'attends la fin de la journée pour le dire.", pts:1, fb:"Dis-le tout de suite, pas plus tard." },
+      { t:"Je préviens tout de suite mon tuteur, même si c'est léger.", pts:2, fb:"Il faut le signaler tout de suite : cela protège ta couverture en cas d'accident." }
+    ]},
+  { type:"mcq", ctx:"On te demande de laver le sol et de ranger la réserve.", q:"Est-ce normal ?",
+    opts:[
+      { t:"Non : je suis là pour vendre, pas pour nettoyer ni ranger.", pts:0, fb:"Les petites tâches font partie du métier." },
+      { t:"Oui, mais je le fais vite et mal pour en finir.", pts:0, fb:"Si tu le fais, fais-le bien." },
+      { t:"Oui, ça fait partie du métier et je le fais sérieusement.", pts:2, fb:"Tout le monde passe par là, même les chefs. Bien faire les petites tâches donne confiance." }
+    ]},
+  { type:"mcq", ctx:"On te demande d'utiliser une machine dangereuse, ou de faire quelque chose qui te met mal à l'aise.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je le fais quand même pour ne pas passer pour un(e) nul(le).", pts:0, fb:"Ta sécurité passe avant tout." },
+      { t:"Je dis que je ne suis pas formé(e) et j'en parle à {CONTACT}.", pts:2, fb:"Tu n'es jamais obligé(e) d'accepter un danger. Parle-en : tu n'es pas seul(e)." },
+      { t:"Je pars sans rien dire à personne.", pts:0, fb:"Ne pars pas : explique, puis préviens le lycée." }
+    ]}
+  ]},
+
+{ emoji:"⭐", title:"Qualité de service : parle comme un pro",
+  intro:"Tes mots font la différence. Choisis la meilleure formulation.",
+  items:[
+  { type:"mcq", q:"Un client entre dans le magasin. Que dis-tu ?",
+    opts:[
+      { t:"Je ne dis rien et j'attends tranquillement qu'il parle en premier.", pts:0, fb:"Le client doit se sentir accueilli." },
+      { t:"« Salut, tu veux quoi ? »", pts:0, fb:"Trop familier. On vouvoie, on salue." },
+      { t:"« Bonjour, bienvenue. Puis-je vous aider ? »", pts:2, fb:"Poli, clair, ouvert." }
+    ]},
+  { type:"mcq", q:"Le produit demandé n'est plus en rayon. Que réponds-tu ?",
+    opts:[
+      { t:"« Y en a plus, c'est fini, repassez demain. »", pts:0, fb:"Sec et peu professionnel." },
+      { t:"« Je vérifie en réserve et je reviens. »", pts:2, fb:"Tu cherches une solution au lieu d'annoncer une impasse." },
+      { t:"« Je sais pas, c'est pas mon rayon. »", pts:0, fb:"Au moins, propose de te renseigner." }
+    ]},
+  { type:"mcq", q:"Un client te pose une question et tu ne connais pas la réponse.",
+    opts:[
+      { t:"J'invente une réponse pour faire bonne impression devant lui.", pts:0, fb:"Une mauvaise information est pire que pas d'information." },
+      { t:"« Ce n'est pas mon problème, demandez à quelqu'un d'autre. »", pts:0, fb:"Jamais de cette façon." },
+      { t:"« Je me renseigne et je reviens vers vous. »", pts:2, fb:"Honnête et efficace : le client sait que tu t'en occupes. Tu peux demander à ton tuteur." }
+    ]},
+  { type:"mcq", ctx:"Un client est mécontent et élève la voix.", q:"Quelle est la meilleure attitude ?",
+    opts:[
+      { t:"Je lui réponds sur le même ton pour qu'il se calme et qu'on en finisse.", pts:0, fb:"Tu aggraves la situation." },
+      { t:"J'écoute, je m'excuse et je propose une solution.", pts:2, fb:"Écouter, reformuler, proposer. Et tu n'es pas obligé(e) de gérer seul(e)." },
+      { t:"Je disparais en réserve sans lui dire où je vais.", pts:1, fb:"Aller chercher le tuteur peut être une bonne idée, mais préviens le client avant." }
+    ]},
+  { type:"mcq", ctx:"Tu es avec un client, et deux autres attendent.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je les ignore jusqu'à ce que j'aie fini avec le premier client.", pts:0, fb:"Ils risquent de partir." },
+      { t:"Je laisse le premier client pour servir tous les autres.", pts:0, fb:"Termine d'abord ce que tu as commencé." },
+      { t:"Je dis « Je suis à vous dans un instant » et je termine.", pts:2, fb:"Tu montres que tu les as vus. L'attente devient plus facile." }
+    ]},
+  { type:"mcq", q:"Le client part. Que dis-tu ?",
+    opts:[
+      { t:"Rien : il est parti, ce n'est plus mon client.", pts:0, fb:"Dommage : le dernier mot compte." },
+      { t:"« Merci, bonne journée, à bientôt ! »", pts:2, fb:"Une belle sortie donne envie de revenir." },
+      { t:"« Allez, salut, bonne continuation ! »", pts:0, fb:"Trop familier." }
+    ]}
+  ]},
+
+{ emoji:"🏆", title:"Boss final : ta première journée",
+  intro:"Une journée complète, de l'arrivée au bilan. Chaque choix compte.",
+  items:[
+  { type:"mcq", ctx:"Ta PFMP commence à 8h30. Il est 8h15.", q:"Où es-tu ?",
+    opts:[
+      { t:"Dans le bus : j'arriverai juste à l'heure pile.", pts:1, fb:"Risqué : le moindre retard et c'est mal parti." },
+      { t:"Encore chez moi, à finir mon petit-déjeuner tranquillement.", pts:0, fb:"À 8h15 pour 8h30, tu es déjà en retard." },
+      { t:"Devant l'entreprise : j'ai testé le trajet hier.", pts:2, fb:"Tu commences avec calme et sérieux : tu es là avant l'heure, sans stress." }
+    ]},
+  { type:"mcq", ctx:"Tu arrives. Une personne te regarde sans rien dire.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je m'assois et j'attends qu'on vienne me voir.", pts:0, fb:"Prends l'initiative." },
+      { t:"Je me présente et je demande M. ou Mme [tuteur].", pts:2, fb:"Nom, statut, objectif : c'est la bonne présentation. Dis par exemple : « Bonjour, je suis X, élève de Bac Pro, et je viens pour ma PFMP. »" },
+      { t:"Je regarde les produits tout(e) seul(e) en attendant.", pts:0, fb:"Présente-toi d'abord." }
+    ]},
+  { type:"mcq", ctx:"Ton tuteur te présente à l'équipe.", q:"Comment réagis-tu ?",
+    opts:[
+      { t:"Je fais un petit signe de la main sans parler à personne.", pts:1, fb:"Un vrai « bonjour » avec un sourire est mieux." },
+      { t:"Je regarde mon téléphone pendant les présentations.", pts:0, fb:"Non." },
+      { t:"Je dis bonjour à chacun avec le sourire.", pts:2, fb:"Les prénoms, c'est la clé d'une bonne ambiance." }
+    ]},
+  { type:"mcq", ctx:"On te donne ta première mission : étiqueter des produits.", q:"Quelle est ta réaction ?",
+    opts:[
+      { t:"Je la fais en vitesse pour passer à autre chose très vite.", pts:0, fb:"Les erreurs coûtent plus de temps qu'elles n'en font gagner." },
+      { t:"Je la fais avec soin et je préviens quand j'ai terminé.", pts:2, fb:"Tu montres que tu es fiable, même sur une tâche simple." },
+      { t:"Je dis que c'est une tâche pour débutants, pas pour moi.", pts:0, fb:"Tu es débutant(e), justement !" }
+    ]},
+  { type:"mcq", ctx:"Midi. C'est l'heure de la pause.", q:"Que fais-tu ?",
+    opts:[
+      { t:"Je pars et je reviens quand j'ai fini de manger.", pts:0, fb:"Respecte la durée prévue." },
+      { t:"Je ne prends pas de pause, pour montrer ma motivation.", pts:1, fb:"Le repos aussi fait partie de la règle, ne le néglige pas." },
+      { t:"Je demande où et quand la prendre, et je reviens à l'heure.", pts:2, fb:"Tu respectes le cadre." }
+    ]},
+  { type:"mcq", ctx:"17h. La journée se termine.", q:"Que fais-tu avant de partir ?",
+    opts:[
+      { t:"Je range mon poste, je remercie mon tuteur et je dis au revoir.", pts:2, fb:"Une belle fin de journée, comme tu veux que l'entreprise se souvienne de toi. Demande aussi les horaires du lendemain." },
+      { t:"Je pars dès que l'horloge sonne, sans rien dire.", pts:0, fb:"Prends le temps de dire au revoir et de ranger." },
+      { t:"Je pars sans rien dire : ils comprendront bien.", pts:0, fb:"Ça se remarque." }
+    ]}
+  ]}
+];
+
+/* ===== ENGAGEMENTS ===== */
+const ENG = [
+  "Je préviens l'entreprise ET le lycée en cas de retard ou d'absence.",
+  "J'arrive toujours 10 minutes en avance.",
+  "Mon téléphone reste rangé pendant le travail.",
+  "Je dis bonjour et au revoir à tout le monde.",
+  "Je pose des questions quand je ne comprends pas.",
+  "Je viens avec une tenue propre et adaptée.",
+  "Je reste calme et poli(e) même face à un client agressif.",
+  "Je remercie mon tuteur à la fin de ma PFMP."
+];
+
+/* ===== MOTEUR ===== */
+const $ = s => document.querySelector(s);
+const main = $('#main');
+const rep = s => s.replace('{PROF}', CONFIG.prof).replace('{CONTACT}', CONFIG.contactLycee);
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function itemMax(it){ return it.type==='mcq' ? Math.max(...it.opts.map(o=>o.pts)) : it.type==='sort' ? it.cards.length : 3; }
+const TOTAL_ITEMS = LEVELS.reduce((n,l)=>n+l.items.length,0);
+const MAX_XP = LEVELS.reduce((n,l)=>n+l.items.reduce((m,i)=>m+itemMax(i),0),0);
+let S;
+function reset(){ S = { xp:0, li:0, ii:0, done:0, status:null, lv:LEVELS.map(()=>0), eng:[], miss:[] }; }
+function header(label){
+  $('#lvl').textContent = label;
+  $('#xp').textContent = '⭐ ' + S.xp + ' / ' + MAX_XP;
+  $('#prog').style.width = Math.round(100 * S.done / TOTAL_ITEMS) + '%';
+}
+function add(p){ S.xp += p; S.lv[S.li] += p; }
+function set(html){ main.innerHTML = html; window.scrollTo({top:0,behavior:'smooth'}); }
+function pills(){
+  return '<div class="pill-row">' + LEVELS.map((l,i)=>'<span class="pill '+(i<S.li?'done':i===S.li?'on':'')+'">'+l.emoji+' '+(i+1)+'</span>').join('') + '</div>';
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+/* ---- écrans ---- */
+function welcome(){
+  reset(); header('PFMP : le parcours');
+  set('<div class="card"><div class="big">🎒</div><h1>PFMP : prêt(e) pour le grand départ ?</h1>' +
+      '<p>Un parcours en <b>6 niveaux</b> pour préparer ta période de formation en milieu professionnel : la convention, les savoir-être, le code de bonne conduite, les imprévus, la qualité de service et ta première journée.</p>' +
+      '<p class="muted">Compte environ 25 à 30 minutes. Aucune note : tu gagnes des ⭐ et tu lis les corrections. Tu peux le refaire autant de fois que tu veux.</p>' +
+      '<button class="btn" id="go">C\'est parti</button></div>');
+  $('#go').onclick = statusScreen;
+}
+function statusScreen(){
+  header('Question de départ');
+  set('<div class="card"><span class="tag">Départ</span><h2>Où en es-tu de ta recherche de PFMP ?</h2><p class="muted">Réponds honnêtement : personne ne te juge, ça sert à te donner les bons conseils.</p>' +
+      STATUS.map((s,i)=>'<button class="opt" data-i="'+i+'">'+s.emoji+' '+esc(s.t)+'</button>').join('') + '</div>');
+  main.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ S.status = STATUS[+b.dataset.i]; planScreen(); });
+}
+function planHTML(st){
+  return '<h2>'+st.emoji+' '+esc(rep(st.title))+'</h2><ol class="plan">' + st.plan.map(p=>'<li>'+esc(rep(p))+'</li>').join('') + '</ol>';
+}
+function planScreen(){
+  header('Ton plan d\'action');
+  set('<div class="card">' + planHTML(S.status) +
+      '<p class="muted">Ce plan te sera rappelé à la fin du parcours. Maintenant, on passe aux choses sérieuses.</p>' +
+      '<button class="btn" id="go">Commencer le niveau 1</button></div>');
+  $('#go').onclick = levelIntro;
+}
+function levelIntro(){
+  const L = LEVELS[S.li]; header('Niveau ' + (S.li+1) + ' / ' + LEVELS.length);
+  set('<div class="card">'+pills()+'<div class="big">'+L.emoji+'</div><h1>Niveau '+(S.li+1)+' : '+esc(L.title)+'</h1><p>'+esc(L.intro)+'</p><button class="btn" id="go">Go</button></div>');
+  $('#go').onclick = () => { S.ii = 0; itemScreen(); };
+}
+function next(){
+  S.done++; S.ii++;
+  if (S.ii >= LEVELS[S.li].items.length) levelEnd(); else itemScreen();
+}
+function levelEnd(){
+  const L = LEVELS[S.li]; const mx = L.items.reduce((m,i)=>m+itemMax(i),0); const sc = S.lv[S.li];
+  const pc = sc / mx; const msg = pc >= .8 ? 'Excellent !' : pc >= .5 ? 'Bien joué, relis les corrections pour progresser.' : 'Niveau difficile, mais tu as tout lu : tu sauras mieux la prochaine fois.';
+  header('Niveau ' + (S.li+1) + ' terminé');
+  const last = S.li === LEVELS.length - 1;
+  set('<div class="card"><div class="big">🎉</div><h1>Niveau '+(S.li+1)+' terminé</h1><p><b>'+sc+' / '+mx+' ⭐</b> sur ce niveau.</p><p>'+msg+'</p><button class="btn" id="go">'+(last?'Voir mon résultat final':'Niveau suivant')+'</button></div>');
+  $('#go').onclick = () => { if (last) finalScreen(); else { S.li++; levelIntro(); } };
+}
+
+/* ---- types d'items ---- */
+function itemScreen(){
+  const L = LEVELS[S.li], it = L.items[S.ii];
+  header('Niveau ' + (S.li+1) + ' · question ' + (S.ii+1) + '/' + L.items.length);
+  if (it.type === 'mcq') mcq(it); else if (it.type === 'sort') sortGame(it); else orderGame(it);
+}
+function mcq(it){
+  const opts = shuffle(it.opts); const best = Math.max(...it.opts.map(o=>o.pts));
+  set('<div class="card">'+pills()+(it.ctx?'<div class="ctx">'+esc(rep(it.ctx))+'</div>':'')+'<h2>'+esc(rep(it.q))+'</h2><div id="opts">' +
+      opts.map((o,i)=>'<button class="opt" data-i="'+i+'">'+esc(rep(o.t))+'</button>').join('') + '</div><div id="fb"></div></div>');
+  const btns = main.querySelectorAll('.opt');
+  btns.forEach(b => b.onclick = () => {
+    const o = opts[+b.dataset.i]; add(o.pts); if (o.pts !== best) S.miss.push((it.ctx ? rep(it.ctx) + ' ' : '') + rep(it.q));
+    btns.forEach((x,i) => { x.disabled = true; const p = opts[i].pts; x.classList.add(p === best ? 'good' : p > 0 ? 'mid' : 'bad'); });
+    b.classList.add('pick');
+    const cls = o.pts === best ? 'good' : o.pts > 0 ? 'mid' : 'bad';
+    const head = o.pts === best ? '✅ Bonne réponse (+'+o.pts+' ⭐). ' : o.pts > 0 ? '🟡 Presque (+'+o.pts+' ⭐). ' : '❌ Pas celle-là. ';
+    let extra = '';
+    if (o.pts !== best) { const bo = opts.find(x=>x.pts===best); extra = '<p><b>La meilleure réponse :</b> '+esc(rep(bo.t))+'<br><span class="muted">'+esc(rep(bo.fb))+'</span></p>'; }
+    $('#fb').innerHTML = '<div class="fb '+cls+'"><b>'+head+'</b>'+esc(rep(o.fb))+extra+'</div><button class="btn" id="nx">Suite</button>';
+    $('#nx').onclick = next; $('#nx').focus();
+  });
+}
+function sortGame(it){
+  const cards = shuffle(it.cards); let k = 0, ok = 0;
+  function show(){
+    if (k >= cards.length) {
+      set('<div class="card">'+pills()+'<h2>Tri terminé</h2><p><b>'+ok+' / '+cards.length+'</b> bonnes réponses.</p><button class="btn" id="nx">Suite</button></div>');
+      $('#nx').onclick = next; return;
+    }
+    const c = cards[k];
+    set('<div class="card">'+pills()+'<h2>'+esc(it.q)+'</h2><p class="muted">Carte '+(k+1)+' / '+cards.length+'</p><div class="stepcard">'+esc(c.t)+'</div>' +
+        '<div class="swipe"><button class="opt" data-v="1">'+it.labels[0]+'</button><button class="opt" data-v="0">'+it.labels[1]+'</button></div><div id="fb"></div></div>');
+    const btns = main.querySelectorAll('.opt');
+    btns.forEach(b => b.onclick = () => {
+      const val = b.dataset.v === '1'; const good = val === c.ok;
+      if (good) { ok++; add(1); } else S.miss.push('Tri : « ' + c.t + ' »');
+      btns.forEach(x => { x.disabled = true; });
+      b.classList.add(good ? 'good' : 'bad');
+      $('#fb').innerHTML = '<div class="fb '+(good?'good':'bad')+'"><b>'+(good?'✅ Bien vu (+1 ⭐). ':'❌ Pas tout à fait. ')+'</b>'+(c.ok?'Ça se fait. ':'Ça ne se fait pas. ')+esc(c.why)+'</div><button class="btn" id="nx">Carte suivante</button>';
+      $('#nx').onclick = () => { k++; show(); }; $('#nx').focus();
+    });
+  }
+  show();
+}
+function orderGame(it){
+  const pool = shuffle(it.steps.map((t,i)=>({t,i}))); let chosen = [], tries = 0;
+  function draw(msg){
+    set('<div class="card">'+pills()+'<h2>'+esc(it.q)+'</h2><p class="muted">Touche les étapes dans l\'ordre. Tu peux recommencer.</p>' +
+        '<h3>Ton ordre</h3><ol class="seq">'+(chosen.length?chosen.map(c=>'<li>'+esc(c.t)+'</li>').join(''):'<li class="muted">(vide)</li>')+'</ol>' +
+        '<div id="pool">'+pool.filter(p=>!chosen.includes(p)).map(p=>'<button class="opt" data-i="'+p.i+'">'+esc(p.t)+'</button>').join('')+'</div>' +
+        '<div id="fb">'+(msg||'')+'</div><button class="btn ghost" id="rs">Recommencer</button></div>');
+    main.querySelectorAll('#pool .opt').forEach(b => b.onclick = () => {
+      chosen.push(pool.find(p=>p.i===+b.dataset.i));
+      if (chosen.length < pool.length) return draw();
+      tries++;
+      const good = chosen.every((c,i)=>c.i===i);
+      if (good) {
+        const pts = tries === 1 ? 3 : tries === 2 ? 2 : 1; add(pts); if (tries > 1) S.miss.push('Ordre des étapes de la convention');
+        set('<div class="card">'+pills()+'<h2>✅ Bon ordre !</h2><ol class="seq">'+it.steps.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ol><div class="fb good">+'+pts+' ⭐ — '+esc(it.why)+'</div><button class="btn" id="nx">Suite</button></div>');
+        $('#nx').onclick = next;
+      } else {
+        chosen = [];
+        draw('<div class="fb bad"><b>❌ Ce n\'est pas le bon ordre.</b> Réfléchis : qu\'est-ce qui doit se passer avant ? Essaie encore.</div>');
+      }
+    });
+    $('#rs').onclick = () => { chosen = []; draw(); };
+  }
+  draw();
+}
+
+/* ---- final ---- */
+function rankOf(pc){
+  return pc >= .85 ? ['🥇','Stagiaire modèle','Tu as les bons réflexes. Il ne reste qu\'à les appliquer sur le terrain.']
+       : pc >= .65 ? ['🥈','Stagiaire solide','Tu connais l\'essentiel. Relis les points ratés avant de partir.']
+       : pc >= .4  ? ['🥉','Stagiaire en progression','Pas mal pour un début. Refais le parcours en lisant bien les corrections.']
+       :             ['🧭','Stagiaire à préparer','Tu as des bases à renforcer. Refais le parcours et pose tes questions à ton professeur.'];
+}
+function finalScreen(){
+  header('Résultat final'); S.done = TOTAL_ITEMS; $('#prog').style.width = '100%';
+  const pc = S.xp / MAX_XP;
+  const rank = rankOf(pc);
+  set('<div class="card"><div class="big">'+rank[0]+'</div><h1>'+rank[1]+'</h1><p><b>'+S.xp+' / '+MAX_XP+' ⭐</b> ('+Math.round(pc*100)+' %)</p><p>'+rank[2]+'</p>' +
+      '<h2>Niveau par niveau</h2><ul>'+LEVELS.map((l,i)=>{const mx=l.items.reduce((m,x)=>m+itemMax(x),0);return '<li>'+l.emoji+' '+esc(l.title)+' : <b>'+S.lv[i]+' / '+mx+'</b></li>';}).join('')+'</ul>' +
+      '<button class="btn" id="go">Dernière étape : mon engagement</button></div>');
+  $('#go').onclick = engage;
+}
+function engage(){
+  header('Mon engagement'); let sel = [];
+  set('<div class="card"><span class="tag">Dernière étape</span><h2>Choisis tes 3 engagements</h2><p>Parmi ces règles, lesquelles vas-tu te promettre de respecter à 100 % pendant ta PFMP ?</p><div id="list">' +
+      ENG.map((e,i)=>'<label class="check"><input type="checkbox" data-i="'+i+'"><span>'+esc(e)+'</span></label>').join('') +
+      '</div><p class="muted" id="cnt">0 / 3 choisis</p><button class="btn" id="ok" disabled>Valider mon contrat</button></div>');
+  const boxes = main.querySelectorAll('input');
+  boxes.forEach(bx => bx.onchange = () => {
+    sel = [...boxes].filter(x=>x.checked).map(x=>+x.dataset.i);
+    if (sel.length > 3) { bx.checked = false; sel = sel.filter(i=>i!==+bx.dataset.i); }
+    boxes.forEach(x => x.closest('.check').classList.toggle('sel', x.checked));
+    $('#cnt').textContent = sel.length + ' / 3 choisis'; $('#ok').disabled = sel.length !== 3;
+  });
+  $('#ok').onclick = () => { S.eng = sel; contract(); };
+}
+function wrapText(g, txt, x, y, maxW, lh){
+  const words = String(txt).split(' '); let line = '';
+  for (const w of words){
+    const test = line ? line + ' ' + w : w;
+    if (g.measureText(test).width > maxW && line){ g.fillText(line, x, y); y += lh; line = w; } else line = test;
+  }
+  if (line){ g.fillText(line, x, y); y += lh; }
+  return y;
+}
+function makeCard(nom, prenom, classe){
+  const W = 1000, H = 3200, L = 60, MW = W - 2*L;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,W,H); g.fillStyle = '#111'; g.textBaseline = 'alphabetic';
+  let y = 80;
+  const title = (txt) => { y += 28; g.font = '700 34px Arial, sans-serif'; g.fillText(txt, L, y); y += 12; g.fillRect(L, y, MW, 3); y += 40; };
+  const para  = (txt, bold) => { g.font = (bold ? '700 ' : '') + '28px Arial, sans-serif'; y = wrapText(g, txt, L, y, MW, 38); };
+  const bullet = (txt) => { g.font = '28px Arial, sans-serif'; g.fillText('•', L, y); y = wrapText(g, txt, L + 34, y, MW - 34, 38) + 6; };
+  g.font = '700 46px Arial, sans-serif'; g.fillText('PFMP : le parcours', L, y); y += 52;
+  g.font = '30px Arial, sans-serif'; g.fillText('Résultat de l\'élève', L, y); y += 24;
+  g.fillRect(L, y, MW, 4); y += 50;
+  para(prenom + ' ' + nom.toUpperCase(), true);
+  para('Classe : ' + classe + '   •   Date : ' + new Date().toLocaleDateString('fr-FR'));
+  const pc = S.xp / MAX_XP, rk = rankOf(pc);
+  title('Mon score');
+  para(S.xp + ' / ' + MAX_XP + ' points (' + Math.round(pc*100) + ' %) — ' + rk[1], true);
+  title('Score par niveau');
+  LEVELS.forEach((l,i)=>{ const mx = l.items.reduce((m,x)=>m+itemMax(x),0); bullet('Niveau ' + (i+1) + ' — ' + l.title + ' : ' + S.lv[i] + ' / ' + mx); });
+  title('Où j\'en suis dans ma recherche de PFMP');
+  para(S.status ? S.status.t : 'Non précisé', true);
+  title('Mes 3 engagements');
+  S.eng.forEach(i => bullet(ENG[i]));
+  title('Points à revoir');
+  if (!S.miss.length) para('Aucune erreur : bravo !');
+  else { S.miss.slice(0, 10).forEach(m => bullet(m.length > 150 ? m.slice(0,147) + '…' : m)); if (S.miss.length > 10) para('… et ' + (S.miss.length - 10) + ' autre(s).'); }
+  y += 40; g.font = '22px Arial, sans-serif'; g.fillText('Cours d\'enseignement pro PMCV2 - Monsieur Le Gros', L, y); y += 30;
+  const o = document.createElement('canvas'); o.width = W; o.height = y; o.getContext('2d').drawImage(c, 0, 0);
+  return o;
+}
+function contract(){
+  header('Mon contrat de stagiaire');
+  set('<div class="card"><div class="contract"><h2>📝 Mon contrat de stagiaire</h2><p>Pendant ma PFMP, je m\'engage à :</p><ol>' + S.eng.map(i=>'<li>'+esc(ENG[i])+'</li>').join('') + '</ol></div>' +
+      '<h2>📤 Mon fichier pour Pronote</h2>' +
+      '<p>Écris ton nom puis crée ton fichier : il contient ton score, ton avancée dans ta recherche de PFMP, tes engagements et les points à revoir. Ensuite, dépose-le sur Pronote.</p>' +
+      '<label class="f">Nom<input class="inp" id="fn" autocomplete="off"></label>' +
+      '<label class="f">Prénom<input class="inp" id="fp" autocomplete="off"></label>' +
+      '<label class="f">Classe<input class="inp" id="fc" autocomplete="off" value="'+esc(CONFIG.classe)+'"></label>' +
+      '<button class="btn" id="mk" disabled>Créer mon fichier</button><div id="out"></div></div>' +
+      '<div class="card"><h2>Rappel de ton plan d\'action</h2>' + planHTML(S.status) + '<button class="btn ghost" id="again">Refaire le parcours</button></div>');
+  const fn = $('#fn'), fp = $('#fp'), fc = $('#fc'), mk = $('#mk');
+  const chk = () => { mk.disabled = !(fn.value.trim() && fp.value.trim() && fc.value.trim()); };
+  [fn, fp, fc].forEach(x => x.oninput = chk);
+  mk.onclick = () => {
+    const nom = fn.value.trim(), prenom = fp.value.trim(), classe = fc.value.trim();
+    const cv = makeCard(nom, prenom, classe);
+    const url = cv.toDataURL('image/png');
+    const clean = t => t.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    const fname = 'PFMP_' + clean(nom).toUpperCase() + '_' + clean(prenom) + '.png';
+    $('#out').innerHTML = '<p><b>✅ Ton fichier est prêt.</b></p><a class="btn" id="dl" download="'+fname+'" href="'+url+'">Télécharger mon fichier</a>' +
+      '<p class="muted">Fichier : '+fname+'. Si le téléchargement ne marche pas, appuie longuement sur l\'image pour l\'enregistrer, ou fais une capture d\'écran.</p><img class="preview" alt="Aperçu de mon fichier" src="'+url+'">';
+  };
+  $('#again').onclick = welcome;
+}
+welcome();
+</script>
+</body>
+</html>
