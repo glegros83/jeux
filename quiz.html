@@ -134,6 +134,7 @@
 </style>
 </head>
 <body>
+<script data-goatcounter="https://sallejeux.goatcounter.com/count" data-goatcounter-settings='{"no_onload": true}' async src="https://gc.zgo.at/count.js" id="gcscript"></script>
 <main id="app"><div class="panel">Chargement du quiz…</div></main>
 
 <script>
@@ -157,7 +158,11 @@
   function fmt(n) { return (Math.round(n * 2) / 2).toString().replace(".", ","); }
   function fmtTime(s) { s = Math.max(0, Math.ceil(s)); const m = Math.floor(s / 60); return m ? m + ":" + String(s % 60).padStart(2, "0") : s + " s"; }
 
+  function gcCount(o) { try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(o); } catch (e) {} }
   function start(Q) {
+    const gcs = document.getElementById("gcscript");
+    const countView = () => gcCount({ path: "quiz/" + Q.id, title: "Quiz · " + Q.titre });
+    if (window.goatcounter && window.goatcounter.count) countView(); else if (gcs) gcs.addEventListener("load", countView);
     document.title = "Quiz · " + Q.titre;
     if (Q.couleur) document.documentElement.style.setProperty("--c", Q.couleur);
     const KEY = "quiz-historique:" + Q.id;
@@ -320,6 +325,7 @@
         const now = new Date();
         prev.push({ d: now.toISOString(), n: note, a: amenage });
         saveHistory(prev);
+        gcCount({ path: "quiz-termine/" + Q.id, title: "Quiz terminé · " + Q.titre, event: true });
 
         const nOk = results.filter(r => r.status === "ok" || r.status === "half").length;
         const mention = note >= 18 ? "🏆 Excellent !" : note >= 14 ? "🎉 Très bien !" : note >= 10 ? "👍 C'est acquis, continue !" : "💪 Revois ta fiche et retente ta chance !";

@@ -348,6 +348,7 @@
 <div class="sheet-bg" id="sheetBg"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Choisir l'affichage"></div>
 
+<script data-goatcounter="https://sallejeux.goatcounter.com/count" data-goatcounter-settings='{"no_onload": true}' async src="https://gc.zgo.at/count.js" id="gcscript"></script>
 <script src="catalogue.js"></script>
 <script>
   const { CLASSES, SEQUENCES, RESSOURCES } = window.CATALOGUE;
@@ -503,7 +504,7 @@
     if (r.type === "jeu") right = "Jouer ▸";
     if (r.type === "fiche") right = "PDF";
     if (r.type === "quiz") { const b = quizBest(r.id); right = b === null ? "À faire" : "★ " + fmt(b) + "/20"; }
-    return row({ href: r.url, color: r.color, emoji: r.emoji, title: r.title, desc: r.desc, right, blank: r.type === "fiche" });
+    return row({ href: r.url, color: r.color, emoji: r.emoji, title: r.title, desc: r.desc, right, blank: r.type === "fiche", onTap: () => trackOpen(r) });
   }
 
   function byType(resList) {
@@ -566,6 +567,21 @@
   function closeSheet() { $("sheet").classList.remove("show"); $("sheetBg").classList.remove("show"); }
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
 
+
+  /* ---------- Compteur de visites (GoatCounter, anonyme, sans cookie) ---------- */
+  let lastTracked = null;
+  function track() {
+    try {
+      const path = "/" + location.hash.replace(/^#\/?/, "");
+      if (path === lastTracked || !window.goatcounter || !window.goatcounter.count) return;
+      lastTracked = path;
+      window.goatcounter.count({ path: path, title: document.title });
+    } catch (e) {}
+  }
+  function trackOpen(r) {
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: "ouvrir/" + r.id, title: r.title, event: true }); } catch (e) {}
+  }
+  (function () { const s = document.getElementById("gcscript"); if (s) s.addEventListener("load", () => setTimeout(track, 300)); })();
 
   /* ---------- Rendu ---------- */
   function render() {
@@ -669,7 +685,7 @@
     if (sw.length) view.appendChild(lexBox(sw, "Lexique de la séquence", (w) => w.res ? resSource(w) : ""));
   }
 
-  window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+  window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); setTimeout(track, 50); });
   window.addEventListener("pageshow", (e) => { if (e.persisted) { render(); loadEtat(); loadLex(); } });
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { loadEtat(); loadLex(); } });
 

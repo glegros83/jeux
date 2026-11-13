@@ -108,8 +108,8 @@
   button.link { color: #a39bbb; }
 
   /* ===== Onglets + lexique ===== */
-  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 18px; }
-  .tabs button { border: 3px solid #000; border-radius: 4px; background: #2a2340; color: #d6d0e6; font: 10px/1.4 var(--pixel); padding: 14px 8px; cursor: pointer; box-shadow: 4px 4px 0 #000; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 4px 0 18px; }
+  .tabs button { border: 3px solid #000; border-radius: 4px; background: #2a2340; color: #d6d0e6; font: 9px/1.4 var(--pixel); padding: 14px 4px; white-space: nowrap; cursor: pointer; box-shadow: 4px 4px 0 #000; }
   .tabs button.on { background: #ffd23f; color: #000; }
   .tabs button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
   .tabs .dotc { display: inline-block; background: #ff3e8a; color: #fff; border: 2px solid #000; padding: 3px 5px 2px; margin-left: 4px; }
@@ -131,6 +131,28 @@
   .mini:active { transform: translate(2px, 2px); box-shadow: none; }
   .row2 { display: flex; gap: 10px; margin-top: 6px; }
   .row2 .btn { flex: 1; }
+  /* ===== Stats ===== */
+  .periods { display: flex; gap: 8px; margin: 0 0 14px; }
+  .periods button { flex: 1; border: 3px solid #000; border-radius: 4px; background: #2a2340; color: #d6d0e6; font: 9px var(--pixel); padding: 11px 4px; cursor: pointer; box-shadow: 3px 3px 0 #000; }
+  .periods button.on { background: #29d3f5; color: #000; }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .kpi { background: #fff8e7; color: #0b0716; border: 3px solid #000; border-radius: 6px; box-shadow: 4px 4px 0 #000; padding: 12px; }
+  .kpi small { display: block; font-weight: 800; font-size: 12px; color: #5d5470; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi b { display: block; font: 30px/1.1 var(--comic); letter-spacing: .5px; margin-top: 4px; }
+  .kpi span { font-size: 12px; color: #5d5470; }
+  .chart { display: flex; align-items: flex-end; gap: 3px; height: 130px; padding-top: 18px; }
+  .chart .b { flex: 1; position: relative; background: #ff5a36; border: 2px solid #000; border-bottom: 0; min-height: 2px; }
+  .chart .b.we { background: #29d3f5; }
+  .chart .b i { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font: 700 10px system-ui; font-style: normal; color: #0b0716; }
+  .chart-axis { display: flex; gap: 3px; border-top: 3px solid #000; padding-top: 4px; }
+  .chart-axis span { flex: 1; text-align: center; font-size: 9px; font-weight: 700; color: #5d5470; overflow: hidden; white-space: nowrap; }
+  .toplist { list-style: none; padding: 0; margin: 0; }
+  .toplist li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 2px dashed rgba(0,0,0,.15); font-size: 14px; }
+  .toplist li:first-child { border-top: 0; }
+  .toplist .lb { flex: 1; min-width: 0; }
+  .toplist .tbar { height: 6px; background: #ff5a36; border-radius: 3px; margin-top: 4px; }
+  .toplist b { flex: none; font: 20px var(--comic); }
+  .note { font-size: 13px; color: #d6d0e6; margin: 4px 0 12px; }
 </style>
 </head>
 <body>
@@ -143,6 +165,7 @@
 
 <script src="catalogue.js"></script>
 <script>
+  try { localStorage.setItem("skipgc", "t"); } catch (e) {} // vos visites ne sont pas comptées sur cet appareil
   const OWNER = "glegros83", REPO = "jeux", BRANCH = "main";
   const API = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/";
   const TOKEN_KEY = "salle-admin-token";
@@ -255,12 +278,13 @@
     const ne = etatChanges(), nl = lexChanges();
     app.innerHTML = '<div class="tabs">' +
       '<button type="button" data-t="acces" class="' + (tab === "acces" ? "on" : "") + '">🔓 Accès' + (ne ? ' <span class="dotc">' + ne + '</span>' : '') + '</button>' +
-      '<button type="button" data-t="lexique" class="' + (tab === "lexique" ? "on" : "") + '">📖 Lexique' + (nl ? ' <span class="dotc">' + nl + '</span>' : '') + '</button></div>';
+      '<button type="button" data-t="lexique" class="' + (tab === "lexique" ? "on" : "") + '">📖 Lexique' + (nl ? ' <span class="dotc">' + nl + '</span>' : '') + '</button>' +
+      '<button type="button" data-t="stats" class="' + (tab === "stats" ? "on" : "") + '">📊 Stats</button></div>';
     app.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
       tab = b.dataset.t; try { sessionStorage.setItem("admin-tab", tab); } catch (e) {}
       render(); window.scrollTo(0, 0);
     });
-    if (tab === "lexique") renderLexique(); else renderAcces();
+    if (tab === "lexique") renderLexique(); else if (tab === "stats") renderStats(); else renderAcces();
     app.insertAdjacentHTML("beforeend", '<p style="text-align:center;margin-top:28px"><button class="link" id="logout">Se déconnecter de cet appareil</button></p>');
     document.getElementById("logout").onclick = () => { if (confirm("Oublier la clé GitHub sur cet appareil ?")) { setToken(""); loginView(); } };
     window.scrollTo(0, y);
@@ -412,6 +436,132 @@
       render();
       document.getElementById("lxm").focus();
     };
+  }
+
+  /* ---------- Onglet Stats (GoatCounter, lecture seule) ---------- */
+  const GC = "https://sallejeux.goatcounter.com";
+  const GC_KEY = "salle-gc-token";
+  let statsDays = 7;
+  function gcToken() { try { return localStorage.getItem(GC_KEY) || ""; } catch (e) { return ""; } }
+  function gcSetToken(t) { try { t ? localStorage.setItem(GC_KEY, t) : localStorage.removeItem(GC_KEY); } catch (e) {} }
+  async function gc(path) {
+    const r = await fetch(GC + "/api/v0" + path, { cache: "no-store", headers: { "Authorization": "Bearer " + gcToken(), "Content-Type": "application/json" } });
+    if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+    return r.json();
+  }
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const ymd = (d) => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  const JOURS = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"];
+
+  // Traduit un chemin compté en nom lisible
+  function pathLabel(p, title) {
+    p = String(p || "").replace(/^\//, "");
+    const resById = (id) => RESSOURCES.find(r => r.id === id);
+    if (p.startsWith("ouvrir/")) { const r = resById(p.slice(7)); return r ? r.emoji + " " + r.title : (title || p); }
+    if (p.startsWith("quiz-termine/")) { const r = RESSOURCES.find(x => x.type === "quiz" && x.id === p.slice(13)); return "🏁 " + (r ? r.title : (title || p)); }
+    if (p.startsWith("quiz/")) { const r = RESSOURCES.find(x => x.type === "quiz" && x.id === p.slice(5)); return "🧠 " + (r ? r.title : (title || p)) + " (page ouverte)"; }
+    if (p === "") return "🏠 Accueil";
+    const [c, k, s] = p.split("/");
+    const cls = CLASSES.find(x => x.id === c);
+    if (!cls) return title || "/" + p;
+    if (k === "lexique") return "📖 Lexique " + cls.name;
+    const course = k && cls.courses.find(x => x.id === k);
+    if (!course) return cls.emoji + " " + cls.name + " (choix du cours)";
+    const seq = s && SEQUENCES.find(x => x.cls === c && x.course === k && x.id === s);
+    if (seq) return seq.emoji + " " + seq.name + " · " + cls.name;
+    return course.emoji + " " + cls.name + " · " + (course.name === "Enseignement pro" ? course.sub : course.name);
+  }
+
+  function renderStats() {
+    if (!gcToken()) {
+      app.insertAdjacentHTML("beforeend",
+        '<div class="panel"><h2>📊 Connecter les statistiques</h2>' +
+        '<p class="muted">Une seule fois sur cet appareil : collez la clé GoatCounter <b>en lecture seule</b>.</p>' +
+        '<ol><li>Ouvrir <a href="' + GC + '/user/api" target="_blank" rel="noopener">sallejeux.goatcounter.com → API</a></li>' +
+        '<li><b>New API key</b> : nom <i>Espace prof</i>, cocher seulement <b>Read statistics</b></li>' +
+        '<li>Copier la clé et la coller ci-dessous.</li></ol>' +
+        '<input type="password" id="gctok" class="inp" placeholder="Clé API GoatCounter" autocomplete="off" spellcheck="false">' +
+        '<button class="btn" id="gcgo" type="button">Afficher les statistiques</button><div class="msg err" id="gcerr"></div></div>');
+      document.getElementById("gcgo").onclick = async () => {
+        const t = document.getElementById("gctok").value.trim();
+        if (!t) return;
+        gcSetToken(t);
+        try { await gc("/me"); render(); }
+        catch (e) { gcSetToken(""); document.getElementById("gcerr").textContent = e.status === 401 || e.status === 403 ? "Clé refusée : vérifiez-la (droit « Read statistics »)." : "Impossible de joindre GoatCounter (" + e.message + ")."; }
+      };
+      return;
+    }
+    app.insertAdjacentHTML("beforeend",
+      '<div class="periods">' + [[7, "7 jours"], [30, "30 jours"], [90, "3 mois"]].map(([d, l]) =>
+        '<button type="button" data-d="' + d + '" class="' + (statsDays === d ? "on" : "") + '">' + l + '</button>').join("") + '</div>' +
+      '<p class="note">Visites anonymes des élèves (vos propres visites ne sont pas comptées sur cet appareil). Certains téléphones bloquent le compteur : les chiffres sont un minimum.</p>' +
+      '<div id="stats"><div class="panel">Chargement des statistiques…</div></div>');
+    app.querySelectorAll(".periods button").forEach(b => b.onclick = () => { statsDays = +b.dataset.d; render(); });
+    loadStats();
+  }
+
+  async function loadStats() {
+    const end = new Date();
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (statsDays - 1));
+    const q = "?start=" + encodeURIComponent(start.toISOString()) + "&end=" + encodeURIComponent(end.toISOString());
+    try {
+      const tot = await gc("/stats/total" + q);
+      const hits = await gc("/stats/hits" + q + "&limit=60");
+      if (document.getElementById("stats")) drawStats(tot, hits, start, end);
+    } catch (e) {
+      const box = document.getElementById("stats");
+      if (!box) return;
+      box.innerHTML = '<div class="panel"><p>' + (e.status === 401 || e.status === 403 ? "La clé GoatCounter a été refusée." : "Impossible de joindre GoatCounter (" + esc(e.message) + ").") + '</p>' +
+        '<button class="btn ghost" id="gcreset" type="button">Changer de clé</button></div>';
+      document.getElementById("gcreset").onclick = () => { gcSetToken(""); render(); };
+    }
+  }
+
+  function drawStats(tot, hits, start, end) {
+    const byDay = {};
+    (tot.stats || []).forEach(s => { byDay[String(s.day).slice(0, 10)] = s; });
+    const days = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) days.push(new Date(d));
+    let horsCours = 0, total = 0;
+    const counts = days.map(d => {
+      const s = byDay[ymd(d)] || {};
+      const n = s.daily != null ? s.daily : (s.hourly || []).reduce((x, y) => x + y, 0);
+      total += n;
+      const we = d.getDay() === 0 || d.getDay() === 6;
+      if (we) horsCours += n;
+      else (s.hourly || []).forEach((v, hr) => { if (hr < 8 || hr >= 17) horsCours += v; });
+      return { d, n, we };
+    });
+    if (tot.total != null && tot.total > total) total = tot.total;
+    const today = counts.length ? counts[counts.length - 1].n : 0;
+    const pct = total ? Math.round(100 * horsCours / total) : 0;
+    const max = Math.max(1, ...counts.map(c => c.n));
+    const step = counts.length > 31 ? 7 : counts.length > 10 ? 3 : 1;
+
+    const list = (hits.hits || []).filter(x => x.count > 0);
+    const pages = list.filter(x => !x.event && !String(x.path).startsWith("quiz-termine/")).sort((x, y) => y.count - x.count).slice(0, 12);
+    const opens = list.filter(x => x.event || String(x.path).startsWith("quiz-termine/")).sort((x, y) => y.count - x.count).slice(0, 12);
+    const top = (arr, color) => {
+      if (!arr.length) return '<p class="muted" style="margin:4px 0">Rien pour l\'instant.</p>';
+      const m = Math.max(...arr.map(x => x.count));
+      return '<ul class="toplist">' + arr.map(x => '<li><div class="lb">' + esc(pathLabel(x.path, x.title)) +
+        '<div class="tbar" style="width:' + Math.max(4, Math.round(100 * x.count / m)) + '%;background:' + color + '"></div></div><b>' + x.count + '</b></li>').join("") + '</ul>';
+    };
+
+    document.getElementById("stats").innerHTML =
+      '<div class="kpis">' +
+        '<div class="kpi"><small>Aujourd\'hui</small><b>' + today + '</b><span>visites</span></div>' +
+        '<div class="kpi"><small>' + (statsDays === 90 ? "3 derniers mois" : statsDays + " derniers jours") + '</small><b>' + total + '</b><span>visites</span></div>' +
+        '<div class="kpi" style="grid-column:1/-1"><small>🌙 Hors temps de cours</small><b>' + pct + ' %</b><span>des visites le soir (avant 8 h, après 17 h) ou le week-end : ' + horsCours + ' visite' + (horsCours > 1 ? 's' : '') + '</span></div>' +
+      '</div>' +
+      '<div class="panel"><h2>Jour par jour</h2>' +
+        '<div class="chart">' + counts.map(c => '<div class="b' + (c.we ? ' we' : '') + '" style="height:' + Math.round(100 * c.n / max) + '%" title="' + c.d.toLocaleDateString("fr-FR") + ' : ' + c.n + '">' + (c.n && counts.length <= 31 ? '<i>' + c.n + '</i>' : '') + '</div>').join("") + '</div>' +
+        '<div class="chart-axis">' + counts.map((c, i) => '<span>' + (i % step === 0 ? JOURS[c.d.getDay()] + " " + c.d.getDate() : "") + '</span>').join("") + '</div>' +
+        '<p class="muted" style="font-size:12px;margin:8px 0 0">🟧 semaine · 🟦 week-end</p></div>' +
+      '<div class="panel"><h2>Pages les plus vues</h2>' + top(pages, "#ff5a36") + '</div>' +
+      '<div class="panel"><h2>Activités ouvertes</h2><p class="muted" style="font-size:13px;margin:0 0 6px">Clics sur un jeu, une fiche ou un quiz · 🏁 = quiz terminé</p>' + top(opens, "#29d3f5") + '</div>' +
+      '<p style="text-align:center"><a href="' + GC + '" target="_blank" rel="noopener" style="color:#29d3f5">Ouvrir le tableau complet sur GoatCounter ›</a> · <button class="link" id="gcout" type="button">Oublier la clé stats</button></p>';
+    document.getElementById("gcout").onclick = () => { if (confirm("Oublier la clé GoatCounter sur cet appareil ?")) { gcSetToken(""); render(); } };
   }
 
   /* ---------- Annuler / Publier ---------- */
