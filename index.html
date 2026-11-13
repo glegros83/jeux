@@ -187,6 +187,19 @@
   .lex-item p { margin: 3px 0 0; font-size: 15px; line-height: 1.45; }
   .lex-item .ex { font-style: italic; color: var(--muted); }
   .lex-item .src { display: inline-block; margin-top: 5px; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .lexmini { margin: -4px 6px 0 14px; background: var(--paper); color: var(--ink); border: 3px solid #000; border-top: 0; border-radius: 0 0 6px 6px; }
+  .lexmini > summary { list-style: none; cursor: pointer; padding: 8px 12px; font: 8px/1.6 var(--pixel); text-transform: uppercase; display: flex; gap: 8px; align-items: center; }
+  .lexmini > summary::-webkit-details-marker { display: none; }
+  .lexmini > summary::after { content: "▼"; margin-left: auto; }
+  .lexmini[open] > summary::after { content: "▲"; }
+  .lexmini .lex-list { padding: 0 12px 4px; }
+  .lexmini .lex-item b { font-size: 16px; }
+  .lexmini .lex-item p { font-size: 14px; }
+  .with-lex { display: grid; }
+  html.calm .lexmini { border: 1px solid rgba(0,0,0,.1); border-top: 0; border-radius: 0 0 14px 14px; margin: -8px 10px 0; padding-top: 6px; }
+  html.calm .lexmini > summary { font: 800 13px/1.4 var(--pixel); text-transform: none; }
+  html[data-skin="lisible"] .lexmini { border: 2px solid #000; border-top: 0; }
+  html[data-skin="lisible"] .lexmini > summary { font-size: 15px; }
   .lex-search { width: 100%; font: 600 17px system-ui, sans-serif; padding: 13px 14px; margin: 0 0 16px; color: var(--ink); background: var(--paper); border: 3px solid #000; border-radius: 6px; box-shadow: 4px 4px 0 #000; }
   .lex-letter { font: 14px var(--pixel); color: var(--yellow); text-shadow: 2px 2px 0 #000; margin: 22px 0 8px; }
   .lex-card { background: var(--paper); color: var(--ink); border: 3px solid #000; border-radius: 6px; box-shadow: var(--sh); padding: 0 14px; }
@@ -369,15 +382,38 @@
   }
   function wordSource(w) {
     if (w.seq) { const s = SEQUENCES.find(x => A.seqKey(x) === w.seq); return s ? s.emoji + " " + s.name : ""; }
-    if (w.res) { const r = RESSOURCES.find(x => x.id === w.res); return r ? r.emoji + " " + r.title : ""; }
+    if (w.res) {
+      const r = RESSOURCES.find(x => x.id === w.res);
+      if (!r) return "";
+      const s = r.seq && SEQUENCES.find(x => x.cls === r.cls && x.course === r.course && x.id === r.seq);
+      return (s ? s.emoji + " " + s.name + " › " : "") + r.emoji + " " + r.title;
+    }
     return "";
+  }
+  function resSource(w) {
+    const r = w.res && RESSOURCES.find(x => x.id === w.res);
+    return r ? r.emoji + " " + r.title : "";
+  }
+  const resWords = (r) => (LEX.mots || []).filter(w => w.res === r.id && wordOpen(w));
+  // Petit lexique replié, affiché juste sous la ligne d'une activité
+  function withLex(r, el) {
+    const ws = A.resState(ETAT, r) === "ouvert" ? resWords(r) : [];
+    if (!ws.length) return el;
+    const box = document.createElement("div");
+    box.className = "with-lex";
+    const d = document.createElement("details");
+    d.className = "lexmini";
+    d.innerHTML = '<summary>📖 ' + esc(px("Lexique de l'activité")) + ' (' + ws.length + ')</summary><div class="lex-list">' +
+      ws.slice().sort(byWord).map(w => lexItem(w, false)).join("") + '</div>';
+    box.appendChild(el); box.appendChild(d);
+    return box;
   }
   const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const byWord = (a, b) => a.mot.localeCompare(b.mot, "fr", { sensitivity: "base" });
   function lexItem(w, withSource) {
     return '<div class="lex-item"><b>' + esc(w.mot) + '</b><p>' + esc(w.def) + '</p>' +
       (w.ex ? '<p class="ex">Exemple : ' + esc(w.ex) + '</p>' : '') +
-      (withSource ? '<span class="src">Vu dans : ' + esc(wordSource(w)) + '</span>' : '') + '</div>';
+      (withSource ? (function () { const s = typeof withSource === "function" ? withSource(w) : wordSource(w); return s ? '<span class="src">Vu dans : ' + esc(s) + '</span>' : ''; })() : '') + '</div>';
   }
   function lexBox(words, title, withSource) {
     const d = document.createElement("details");
@@ -476,7 +512,7 @@
       const items = resList.filter(r => r.type === t.id);
       if (!items.length) continue;
       frag.appendChild(sec(t.label));
-      frag.appendChild(list(items.map(resourceRow)));
+      frag.appendChild(list(items.map(r => withLex(r, resourceRow(r)))));
     }
     return frag;
   }
@@ -612,7 +648,7 @@
       view.appendChild(byType(loose));
       const looseIds = loose.map(r => r.id);
       const lw = (LEX.mots || []).filter(w => w.res && looseIds.includes(w.res) && wordOpen(w));
-      if (lw.length) view.appendChild(lexBox(lw, "Lexique du cours", true));
+      if (lw.length) view.appendChild(lexBox(lw, "Lexique du cours", resSource));
       return;
     }
 
@@ -630,7 +666,7 @@
     view.appendChild(byType(items));
     const ids = items.map(r => r.id), key = A.seqKey(seq);
     const sw = (LEX.mots || []).filter(w => (w.seq === key || (w.res && ids.includes(w.res))) && wordOpen(w));
-    if (sw.length) view.appendChild(lexBox(sw, "Lexique de la séquence", false));
+    if (sw.length) view.appendChild(lexBox(sw, "Lexique de la séquence", (w) => w.res ? resSource(w) : ""));
   }
 
   window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });

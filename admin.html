@@ -326,8 +326,11 @@
     const out = [];
     for (const c of CLASSES) for (const k of c.courses) {
       const kn = k.name === "Enseignement pro" ? k.sub : k.name;
-      for (const q of SEQUENCES.filter(q => q.cls === c.id && q.course === k.id))
-        out.push({ v: "seq:" + A.seqKey(q), cls: c.id, label: c.name + " · " + kn + " · " + q.emoji + " " + q.name });
+      for (const q of SEQUENCES.filter(q => q.cls === c.id && q.course === k.id)) {
+        out.push({ v: "seq:" + A.seqKey(q), cls: c.id, label: c.name + " · " + kn + " · " + q.emoji + " " + q.name + " — séquence entière" });
+        for (const r of RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && r.seq === q.id))
+          out.push({ v: "res:" + r.id, cls: c.id, label: "\u00a0\u00a0\u00a0\u00a0↳ " + r.emoji + " " + r.title + " (activité)" });
+      }
       for (const r of RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && !r.seq))
         out.push({ v: "res:" + r.id, cls: c.id, label: c.name + " · " + kn + " · " + r.emoji + " " + r.title });
     }
@@ -344,7 +347,7 @@
     const savedById = new Map(FILES.lexique.saved.mots.map(w => [w.id, JSON.stringify(w)]));
     const count = (v) => mots.filter(w => placeOf(w) === v).length;
 
-    let html = '<p class="legend">Choisissez la séquence ou l\'activité, puis ajoutez ses mots. Ils apparaissent sous la séquence et dans le lexique général de la classe (seulement quand la séquence est ouverte).</p>' +
+    let html = '<p class="legend">Choisissez où ranger le mot : une <b>activité</b> (il s\'affiche sous l\'activité), ou la <b>séquence entière</b>. Tout remonte : activité → séquence → lexique de la classe. Les mots restent cachés tant que la séquence ou l\'activité n\'est pas ouverte.</p>' +
       '<label class="lbl" for="place">Séquence ou activité</label><select id="place" class="inp">' +
       P.map(p => '<option value="' + esc(p.v) + '"' + (p.v === curPlace ? ' selected' : '') + '>' + esc(p.label) + ' (' + count(p.v) + ')</option>').join("") + '</select>';
 
