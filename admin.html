@@ -347,7 +347,7 @@
     const savedById = new Map(FILES.lexique.saved.mots.map(w => [w.id, JSON.stringify(w)]));
     const count = (v) => mots.filter(w => placeOf(w) === v).length;
 
-    let html = '<p class="legend">Choisissez où ranger le mot : une <b>activité</b> (il s\'affiche sous l\'activité), ou la <b>séquence entière</b>. Tout remonte : activité → séquence → lexique de la classe. Les mots restent cachés tant que la séquence ou l\'activité n\'est pas ouverte.</p>' +
+    let html = '<p class="legend"><span>Choisissez où ranger le mot : une <b>activité</b> (il s\'affiche sous l\'activité), ou la <b>séquence entière</b>. Tout remonte : activité → séquence → lexique de la classe. Les mots restent cachés tant que la séquence ou l\'activité n\'est pas ouverte.</span></p>' +
       '<label class="lbl" for="place">Séquence ou activité</label><select id="place" class="inp">' +
       P.map(p => '<option value="' + esc(p.v) + '"' + (p.v === curPlace ? ' selected' : '') + '>' + esc(p.label) + ' (' + count(p.v) + ')</option>').join("") + '</select>';
 
