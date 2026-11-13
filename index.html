@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bangers&family=Nunito:wght@500;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   /* ===== Habillage : borne d'arcade pixel × BD ===== */
   :root {
@@ -175,7 +175,116 @@
   .toast.show { opacity: 1; transform: translate(-50%, 0) rotate(-1deg); }
 
   @media (prefers-reduced-motion: reduce) { .press, .resume small { animation: none; } }
+
+  /* ===== Bouton et panneau « Affichage » ===== */
+  .skin-btn {
+    flex: none; margin-left: auto; height: 44px; min-width: 44px; padding: 0 10px; cursor: pointer;
+    background: var(--cyan); color: #000; border: 3px solid #000; border-radius: 4px; box-shadow: 3px 3px 0 #000;
+    font: 10px var(--pixel); display: inline-flex; align-items: center; gap: 6px;
+  }
+  .skin-btn:active { transform: translate(3px, 3px); box-shadow: none; }
+  .sheet-bg { position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,.55); display: none; }
+  .sheet-bg.show { display: block; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 71; max-width: 560px; margin: 0 auto;
+    background: var(--paper); color: var(--ink); border: 3px solid #000; border-bottom: 0; border-radius: 14px 14px 0 0;
+    padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px); transform: translateY(105%); transition: transform .22s;
+  }
+  .sheet.show { transform: none; }
+  .sheet h3 { margin: 0 0 4px; font: 26px var(--comic); letter-spacing: .5px; }
+  .sheet p { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+  .skin-opt {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer; margin-bottom: 10px;
+    padding: 12px 14px; border: 3px solid #000; border-radius: 8px; background: #fff; color: #111; font: inherit;
+  }
+  .skin-opt b { display: block; font-size: 17px; }
+  .skin-opt small { color: #555; font-size: 14px; }
+  .skin-opt .sw { flex: none; width: 54px; height: 54px; border-radius: 8px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .skin-opt.on { outline: 4px solid var(--pink); outline-offset: 2px; }
+  .skin-opt .ck { margin-left: auto; font-size: 22px; visibility: hidden; }
+  .skin-opt.on .ck { visibility: visible; }
+
+  /* ===================================================================
+     STYLES CALMES : « Doux » et « Lecture facile » (classe .calm)
+     =================================================================== */
+  html.calm { --pixel: "Nunito", system-ui, sans-serif; --comic: "Nunito", system-ui, sans-serif;
+    --paper: #ffffff; --ink: #26213a; --muted: #5f5a70; --sh: 0 4px 14px rgba(40,30,80,.10); }
+  html.calm body { background: #f6f2ea; background-image: none; color: var(--ink); }
+  html.calm body::after, html.calm .press, html.calm .credits { display: none; }
+  html.calm .bar { background: #fffaf2; border-bottom: 1px solid rgba(0,0,0,.1); box-shadow: none; }
+  html.calm .brand { font: 800 19px var(--pixel); color: var(--ink); text-shadow: none; }
+  html.calm .brand img { border: 0; border-radius: 10px; box-shadow: none; }
+  html.calm .bar .back { background: #fff; color: var(--ink); border: 1px solid rgba(0,0,0,.18); border-radius: 12px; box-shadow: none; font: 800 22px var(--pixel); padding: 0; }
+  html.calm .bar .ttl small { font: 700 12px/1.4 var(--pixel); color: var(--muted); text-transform: none; }
+  html.calm .bar .ttl b { font: 800 18px/1.25 var(--pixel); color: var(--ink); text-shadow: none; letter-spacing: 0; }
+  html.calm .skin-btn { background: #fff; color: var(--ink); border: 1px solid rgba(0,0,0,.18); border-radius: 12px; box-shadow: none; font: 800 14px var(--pixel); }
+  html.calm .hero h1 { font: 800 clamp(30px, 8vw, 42px)/1.1 var(--pixel); color: var(--ink); -webkit-text-stroke: 0; text-shadow: none; letter-spacing: -.01em; }
+  html.calm .hero p { background: none; border: 0; box-shadow: none; padding: 0; color: var(--muted); font-weight: 500; font-size: 16px; }
+  html.calm .hero p::before, html.calm .hero p::after { display: none; }
+  html.calm .chip-c { font: 800 12px/1 var(--pixel); letter-spacing: .06em; background: none; color: var(--c, var(--ink)); border: 2px solid var(--c, var(--ink)); border-radius: 999px; box-shadow: none; transform: none; text-shadow: none; padding: 5px 10px; }
+  html.calm .tile { border: 0; border-radius: 20px; box-shadow: 0 8px 22px rgba(0,0,0,.14); }
+  html.calm .tile::before { display: none; }
+  html.calm .tile .em { filter: none; }
+  html.calm .tile h2 { font: 900 28px/1.1 var(--pixel); text-shadow: none; }
+  html.calm .tile p { text-shadow: none; font-weight: 600; padding-right: 96px; }
+  html.calm .tile .n { clip-path: none; filter: none; transform: none; width: auto; height: auto; top: auto; right: 14px; bottom: 14px;
+    background: rgba(0,0,0,.22); color: #fff; font: 800 13px var(--pixel); letter-spacing: 0; border-radius: 999px; padding: 5px 10px; }
+  html.calm .tile:active, html.calm .row:active, html.calm .resume:active { transform: scale(.985); }
+  html.calm .resume { background: #fff; color: var(--ink); border: 0; border-radius: 16px; box-shadow: var(--sh); }
+  html.calm .resume .ic { border: 0; border-radius: 12px; }
+  html.calm .resume small { font: 800 12px var(--pixel); color: var(--muted); animation: none; }
+  html.calm .resume .go { font: 800 24px var(--pixel); }
+  html.calm .sec { font: 800 13px/1.4 var(--pixel); color: var(--muted); text-shadow: none; letter-spacing: .06em; }
+  html.calm .sec::after { height: 1px; background: rgba(0,0,0,.12); opacity: 1; }
+  html.calm .row { background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 16px; box-shadow: var(--sh); }
+  html.calm .row .ic { border: 0; border-radius: 12px; box-shadow: none; background: #eee; background: color-mix(in srgb, var(--c) 20%, #fff); }
+  html.calm .row .rt { font: 800 12px/1 var(--pixel); text-transform: none; border: 0; border-radius: 999px; text-shadow: none; box-shadow: none; padding: 7px 11px; }
+  html.calm .row.off { background: #efebe3; color: #77718a; border: 1px dashed rgba(0,0,0,.22); }
+  html.calm .row.off .rt, html.calm .row.soon .rt { background: #e2ddd2; color: #5f5a70; }
+  html.calm .empty { border: 2px dashed rgba(0,0,0,.15); box-shadow: none; }
+  html.calm .empty strong { font: 800 19px var(--pixel); }
+  html.calm .install { border: 1px dashed rgba(0,0,0,.2); box-shadow: none; border-radius: 16px; }
+  html.calm .install button { font: 800 14px var(--pixel); border: 0; border-radius: 10px; box-shadow: none; background: var(--ink); color: #fff; }
+  html.calm .toast { font: 700 15px/1.3 var(--pixel); letter-spacing: 0; background: var(--ink); color: #fff; border: 0; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.25); transform: translate(-50%, 20px); }
+  html.calm .toast.show { transform: translate(-50%, 0); }
+  html.calm .sheet { border: 0; box-shadow: 0 -10px 30px rgba(0,0,0,.2); }
+  html.calm .sheet h3 { font: 800 22px var(--pixel); }
+
+  /* ---------- Lecture facile : contraste maximal, texte plus grand ---------- */
+  html.calm[data-skin="lisible"] { --pixel: "Atkinson Hyperlegible", Verdana, sans-serif; --ink: #000; --muted: #2b2b2b; --sh: none; }
+  html[data-skin="lisible"] body { background: #fff; font-size: 18px; line-height: 1.5; }
+  html[data-skin="lisible"] .bar { background: #fff; border-bottom: 3px solid #000; }
+  html[data-skin="lisible"] .bar .back, html[data-skin="lisible"] .skin-btn { border: 2px solid #000; }
+  html[data-skin="lisible"] .bar .ttl small { font-size: 14px; color: #000; }
+  html[data-skin="lisible"] .bar .ttl b { font-size: 20px; }
+  html[data-skin="lisible"] .hero p { font-size: 18px; color: #000; }
+  html[data-skin="lisible"] .chip-c { color: #000; border-color: #000; font-size: 14px; }
+  html[data-skin="lisible"] .tile { background: #fff; color: #000; border: 3px solid #000; border-left: 14px solid var(--c); border-radius: 12px; box-shadow: none; }
+  html[data-skin="lisible"] .tile p { font-size: 17px; }
+  html[data-skin="lisible"] .tile .n { background: #000; font-size: 15px; }
+  html[data-skin="lisible"] .resume, html[data-skin="lisible"] .row { border: 2px solid #000; box-shadow: none; }
+  html[data-skin="lisible"] .row { min-height: 76px; }
+  html[data-skin="lisible"] .row .tx b { font-size: 19px; }
+  html[data-skin="lisible"] .row .tx small { display: block; -webkit-line-clamp: unset; font-size: 16px; color: #2b2b2b; }
+  html[data-skin="lisible"] .row .rt { background: #000; color: #fff; font-size: 14px; }
+  html[data-skin="lisible"] .row .ic { border: 2px solid #000; }
+  html[data-skin="lisible"] .row.off { background: #f2f2f2; color: #333; border: 2px dashed #000; }
+  html[data-skin="lisible"] .row.off .ic { opacity: .7; }
+  html[data-skin="lisible"] .row.off .rt { background: #fff; color: #000; border: 2px solid #000; }
+  html[data-skin="lisible"] .sec { font-size: 15px; color: #000; }
+  html[data-skin="lisible"] .sec::after { height: 2px; background: #000; }
+  html[data-skin="lisible"] .toast { font-size: 18px; background: #000; }
+  html[data-skin="lisible"] a:focus-visible, html[data-skin="lisible"] button:focus-visible { outline: 4px solid #1a5fd0; outline-offset: 3px; }
 </style>
+<script>
+  (function () {
+    var s = "arcade";
+    try { s = localStorage.getItem("salle-skin") || "arcade"; } catch (e) {}
+    if (["arcade", "doux", "lisible"].indexOf(s) < 0) s = "arcade";
+    document.documentElement.dataset.skin = s;
+    if (s !== "arcade") document.documentElement.classList.add("calm");
+  })();
+</script>
 </head>
 <body>
 <header class="bar"><div class="bar-in" id="bar"></div></header>
@@ -184,6 +293,8 @@
   <div class="install" id="install"></div>
 </main>
 <div class="toast" id="toast" role="status"></div>
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Choisir l'affichage"></div>
 
 <script src="catalogue.js"></script>
 <script>
@@ -219,7 +330,7 @@
   const bar = $("bar"), view = $("view");
   function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
   // la police pixel n'a pas de majuscules accentuées
-  function px(s) { return String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  function px(s) { if (document.documentElement.dataset.skin !== "arcade") return String(s == null ? "" : s); return String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
   function fmt(n) { return String(n).replace(".", ","); }
   let toastT;
   function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2200); }
@@ -278,13 +389,42 @@
   }
 
   function setBar(back, small, title) {
-    if (!back) {
-      bar.innerHTML = '<div class="brand"><img src="icons/icon-192.png" alt="">Salle de jeux</div>';
-      return;
-    }
-    bar.innerHTML = '<a class="back" href="' + back + '" aria-label="Retour">‹</a>' +
-      '<div class="ttl"><small>' + esc(px(small)) + '</small><b>' + esc(title) + '</b></div>';
+    bar.innerHTML = back
+      ? '<a class="back" href="' + back + '" aria-label="Retour">‹</a>' +
+        '<div class="ttl"><small>' + esc(px(small)) + '</small><b>' + esc(title) + '</b></div>'
+      : '<div class="brand"><img src="icons/icon-192.png" alt="">Salle de jeux</div>';
+    bar.insertAdjacentHTML("beforeend", '<button type="button" class="skin-btn" aria-label="Changer l’affichage">Aa</button>');
+    bar.lastElementChild.onclick = openSheet;
   }
+
+  /* ---------- Choix de l'affichage ---------- */
+  const SKINS = [
+    { id: "arcade",  em: "🕹️", name: "Arcade",         desc: "Rétro, pixel et BD", sw: "background:#160d2c;color:#ffd23f" },
+    { id: "doux",    em: "🌤️", name: "Doux",           desc: "Clair, calme et arrondi", sw: "background:#f6f2ea" },
+    { id: "lisible", em: "👓", name: "Lecture facile", desc: "Gros texte, contraste fort", sw: "background:#fff" },
+  ];
+  function applySkin(id) {
+    const el = document.documentElement;
+    el.dataset.skin = id;
+    el.classList.toggle("calm", id !== "arcade");
+    const tc = document.querySelector('meta[name="theme-color"]');
+    if (tc) tc.content = id === "arcade" ? "#160d2c" : id === "doux" ? "#fffaf2" : "#ffffff";
+    try { localStorage.setItem("salle-skin", id); } catch (e) {}
+    render();
+  }
+  function openSheet() {
+    const cur = document.documentElement.dataset.skin;
+    const sh = $("sheet"), bg = $("sheetBg");
+    sh.innerHTML = '<h3>Affichage</h3><p>Choisis le style qui te convient le mieux.</p>' +
+      SKINS.map(s => '<button type="button" class="skin-opt' + (s.id === cur ? ' on' : '') + '" data-id="' + s.id + '">' +
+        '<span class="sw" style="' + s.sw + '">' + s.em + '</span><span><b>' + s.name + '</b><small>' + s.desc + '</small></span><span class="ck">✓</span></button>').join("");
+    sh.querySelectorAll(".skin-opt").forEach(btn => btn.onclick = () => { applySkin(btn.dataset.id); closeSheet(); });
+    bg.classList.add("show"); void sh.offsetHeight; sh.classList.add("show");
+    bg.onclick = closeSheet;
+  }
+  function closeSheet() { $("sheet").classList.remove("show"); $("sheetBg").classList.remove("show"); }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+
 
   /* ---------- Rendu ---------- */
   function render() {
@@ -363,7 +503,7 @@
     // SÉQUENCE
     setBar("#" + cls.id + "/" + course.id, cls.name + " · " + courseLabel(course), seq.name);
     document.title = seq.name + " · " + cls.name;
-    view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">Sequence</span><h1>' + esc(seq.name) + '</h1><p>' + esc(seq.notions || "") + '</p></div>');
+    view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">' + px("Séquence") + '</span><h1>' + esc(seq.name) + '</h1><p>' + esc(seq.notions || "") + '</p></div>');
     if (A.seqState(ETAT, seq) !== "ouvert") {
       view.appendChild(empty(etatLoaded ? "Cette séquence n'est pas encore ouverte." : "Chargement…"));
       return;
@@ -399,6 +539,7 @@
     }
   })();
 
+  { const s0 = document.documentElement.dataset.skin; const tc = document.querySelector('meta[name="theme-color"]'); if (tc && s0 !== "arcade") tc.content = s0 === "doux" ? "#fffaf2" : "#ffffff"; }
   if (etatLoaded) render();
   else { setBar(null); view.innerHTML = '<div class="empty">Chargement…</div>'; }
   loadEtat();
