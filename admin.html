@@ -444,8 +444,24 @@
   let statsDays = 7;
   function gcToken() { try { return localStorage.getItem(GC_KEY) || ""; } catch (e) { return ""; } }
   function gcSetToken(t) { try { t ? localStorage.setItem(GC_KEY, t) : localStorage.removeItem(GC_KEY); } catch (e) {} }
-  async function gc(path) {
-    const r = await fetch(GC + "/api/v0" + path, { cache: "no-store", headers: { "Authorization": "Bearer " + gcToken(), "Content-Type": "application/json" } });
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  let gcLast = 0;
+  async function gc(path, tries) {
+    tries = tries || 0;
+    const wait = gcLast + 700 - Date.now();   // GoatCounter : 4 requêtes/s max (préflight compris)
+    if (wait > 0) await sleep(wait);
+    gcLast = Date.now();
+    let r;
+    try {
+      r = await fetch(GC + "/api/v0" + path, { cache: "no-store", headers: { "Authorization": "Bearer " + gcToken(), "Content-Type": "application/json" } });
+    } catch (netErr) {
+      if (tries < 2) { await sleep(1500); return gc(path, tries + 1); }
+      throw netErr;
+    }
+    if (r.status === 429 && tries < 2) { await sleep(1500); return gc(path, tries + 1); }
+    return gcRead(r);
+  }
+  async function gcRead(r) {
     if (!r.ok) {
       let detail = "";
       try { const j = await r.json(); detail = j.error || (j.errors && JSON.stringify(j.errors)) || ""; } catch (e2) {}
@@ -510,9 +526,16 @@
     const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (statsDays - 1));
     const q = "?start=" + encodeURIComponent(iso(start)) + "&end=" + encodeURIComponent(iso(end));
     try {
-      const tot = await gc("/stats/total" + q);
-      const hits = await gc("/stats/hits" + q + "&limit=60");
-      if (document.getElementById("stats")) drawStats(tot, hits, start, end);
+      let tot, hits, hitsErr = null;
+      try { tot = await gc("/stats/total" + q); }
+      catch (e1) { e1.message = "totaux : " + e1.message; throw e1; }
+      try { hits = await gc("/stats/hits" + q + "&limit=50"); }
+      catch (e2) { hits = { hits: [] }; hitsErr = e2; }
+      if (document.getElementById("stats")) {
+        drawStats(tot, hits, start, end);
+        if (hitsErr) document.getElementById("stats").insertAdjacentHTML("afterbegin",
+          '<div class="panel"><p style="margin:0">⚠️ Le détail par page n\'a pas pu être chargé (' + esc(hitsErr.message) + '). Rechargez dans un instant.</p></div>');
+      }
     } catch (e) {
       const box = document.getElementById("stats");
       if (!box) return;
