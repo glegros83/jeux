@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Espace prof</title>
+<meta name="theme-color" content="#1d1a2e">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<style>
+  :root {
+    --bg: #f4f1ea; --bg2: #e9e3d6; --ink: #1d1a2e; --muted: #625d75; --card: #ffffff;
+    --line: rgba(29,26,46,.12); --accent: #ff5a36; --ok: #1f9d6b; --warn: #e08a00; --err: #d23c3c;
+    --shadow: 0 2px 0 rgba(29,26,46,.9); --bar: rgba(244,241,234,.9);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15122b; --bg2: #1d1940; --ink: #f3efff; --muted: #a9a3c4; --card: #231f47;
+      --line: rgba(255,255,255,.1); --shadow: 0 2px 0 rgba(0,0,0,.6); --bar: rgba(21,18,43,.9);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+  .bar { position: sticky; top: 0; z-index: 10; background: var(--bar); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line); padding: calc(env(safe-area-inset-top) + 10px) 16px 10px; }
+  .bar-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+  .bar b { font-size: 18px; } .bar a, .bar button.link { margin-left: auto; color: var(--muted); font-size: 14px; font-weight: 700; }
+  button.link { background: none; border: 0; cursor: pointer; text-decoration: underline; padding: 6px; font: inherit; }
+  main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 110px); }
+
+  .panel { background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; }
+  h1 { font-size: 26px; margin: 0 0 6px; } h2 { font-size: 20px; margin: 0; }
+  .muted { color: var(--muted); } ol { padding-left: 20px; line-height: 1.6; }
+  input[type=password], input[type=text] { width: 100%; font: 600 15px ui-monospace, Consolas, monospace; padding: 12px; border-radius: 12px;
+    border: 2px solid var(--ink); background: var(--bg); color: var(--ink); margin: 8px 0; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--ink); border-radius: 12px; background: var(--accent);
+    color: #fff; font: 800 16px system-ui, sans-serif; padding: 12px 16px; cursor: pointer; box-shadow: var(--shadow); width: 100%; }
+  .btn.ghost { background: var(--card); color: var(--ink); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .msg { font-weight: 700; font-size: 14px; margin-top: 8px; } .msg.err { color: var(--err); } .msg.ok { color: var(--ok); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+  .cls { margin: 22px 0 8px; display: flex; align-items: center; gap: 10px; }
+  .cls .dot { width: 14px; height: 14px; border-radius: 4px; background: var(--c); }
+  .course { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 16px 0 8px; }
+  .item { background: var(--card); border: 2px solid var(--ink); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+  .item.child { margin-left: 18px; border-width: 1.5px; box-shadow: none; }
+  .item.changed { outline: 3px solid var(--warn); outline-offset: 1px; }
+  .item .head { display: flex; align-items: center; gap: 10px; }
+  .item .em { font-size: 22px; flex: none; }
+  .item .t { flex: 1; min-width: 0; }
+  .item .t b { display: block; font-size: 15px; line-height: 1.25; }
+  .item .t small { color: var(--muted); font-size: 12px; }
+  .item .eff { font-size: 12px; color: var(--warn); font-weight: 700; margin-top: 6px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 10px; background: var(--bg2); border-radius: 10px; padding: 3px; }
+  .seg button { border: 0; border-radius: 8px; padding: 9px 4px; font: 800 13px system-ui, sans-serif; background: transparent; color: var(--muted); cursor: pointer; }
+  .seg button.on[data-v=ouvert] { background: var(--ok); color: #fff; }
+  .seg button.on[data-v=grise] { background: var(--warn); color: #fff; }
+  .seg button.on[data-v=masque] { background: var(--ink); color: var(--bg); }
+
+  .save { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--bar); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line); padding: 10px 16px calc(env(safe-area-inset-bottom) + 10px); transform: translateY(110%); transition: .25s; }
+  .save.show { transform: none; }
+  .save-in { max-width: 720px; margin: 0 auto; display: flex; gap: 10px; align-items: center; }
+  .save-in .btn { flex: 2; } .save-in .btn.ghost { flex: 1; }
+  .status { max-width: 720px; margin: 0 auto 8px; font-size: 14px; font-weight: 700; text-align: center; }
+</style>
+</head>
+<body>
+<header class="bar"><div class="bar-in"><b>🔧 Espace prof</b><a href="index.html">Voir le site ›</a></div></header>
+<main id="app"></main>
+<div class="save" id="save">
+  <div class="status" id="status"></div>
+  <div class="save-in"><button class="btn ghost" id="cancel">Annuler</button><button class="btn" id="publish">Publier</button></div>
+</div>
+
+<script src="catalogue.js"></script>
+<script>
+  const OWNER = "glegros83", REPO = "jeux", BRANCH = "main", FILE = "etat.json";
+  const API = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/" + FILE;
+  const TOKEN_KEY = "salle-admin-token";
+  const { CLASSES, SEQUENCES, RESSOURCES } = window.CATALOGUE;
+  const A = window.ACCES;
+  const LABELS = { ouvert: "Ouvert", grise: "À venir", masque: "Masqué" };
+  const TYPE_EM = { jeu: "🎮", quiz: "🧠", fiche: "📄", cours: "📖" };
+
+  const app = document.getElementById("app");
+  const saveBar = document.getElementById("save"), statusEl = document.getElementById("status");
+  function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+  function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } }
+  function setToken(t) { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+  function b64decode(b) { const bin = atob(b.replace(/\s/g, "")); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); }
+  function b64encode(s) { const bytes = new TextEncoder().encode(s); let bin = ""; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+
+  let saved = null, draft = null, sha = null;
+
+  async function gh(method, body) {
+    const r = await fetch(API + (method === "GET" ? "?ref=" + BRANCH + "&t=" + Date.now() : ""), {
+      method, cache: "no-store",
+      headers: { "Authorization": "Bearer " + getToken(), "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+    return r.json();
+  }
+
+  /* ---------- Connexion ---------- */
+  function loginView(err) {
+    saveBar.classList.remove("show");
+    app.innerHTML =
+      '<div class="panel"><h1>Connexion</h1><p class="muted">Cette page permet d\'ouvrir, griser ou masquer les séquences et activités. Elle utilise une <b>clé d\'accès GitHub</b>, à coller une seule fois sur cet appareil.</p>' +
+      '<input type="password" id="tok" placeholder="github_pat_…" autocomplete="off" spellcheck="false">' +
+      '<button class="btn" id="go">Se connecter</button>' +
+      (err ? '<div class="msg err">' + esc(err) + '</div>' : '') + '</div>' +
+      '<div class="panel"><h2>Créer la clé (une seule fois)</h2><ol>' +
+        '<li>Ouvrir <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → Fine-grained token</a></li>' +
+        '<li><b>Token name</b> : <i>Salle de jeux admin</i></li>' +
+        '<li><b>Expiration</b> : la date de fin d\'année scolaire</li>' +
+        '<li><b>Repository access</b> : <i>Only select repositories</i> → <b>jeux</b></li>' +
+        '<li><b>Permissions</b> → <i>Contents</i> : <b>Read and write</b></li>' +
+        '<li><b>Generate token</b>, copier la clé et la coller ici.</li>' +
+      '</ol><p class="muted">La clé reste uniquement dans ce navigateur. Ne la donnez à personne. Si le téléphone est perdu, supprimez-la sur github.com.</p></div>';
+    document.getElementById("go").onclick = async () => {
+      const t = document.getElementById("tok").value.trim();
+      if (!t) return;
+      setToken(t);
+      load();
+    };
+  }
+
+  async function load() {
+    if (!getToken()) return loginView();
+    app.innerHTML = '<div class="panel">Chargement…</div>';
+    try {
+      const f = await gh("GET");
+      sha = f.sha;
+      saved = JSON.parse(b64decode(f.content));
+      saved.sequences = saved.sequences || {}; saved.ressources = saved.ressources || {};
+      draft = clone(saved);
+      render();
+    } catch (e) {
+      setToken("");
+      loginView(e.status === 401 ? "Clé refusée par GitHub (invalide ou expirée)." :
+                e.status === 404 ? "Clé sans accès au dépôt « jeux » : vérifiez « Repository access » et « Contents »." :
+                "Impossible de joindre GitHub (" + e.message + ").");
+    }
+  }
+
+  /* ---------- Tableau de bord ---------- */
+  function seg(cur, onPick) {
+    const d = document.createElement("div"); d.className = "seg";
+    for (const v of ["ouvert", "grise", "masque"]) {
+      const b = document.createElement("button"); b.type = "button"; b.dataset.v = v; b.textContent = LABELS[v];
+      if (v === cur) b.classList.add("on");
+      b.onclick = () => onPick(v);
+      d.appendChild(b);
+    }
+    return d;
+  }
+
+  function item({ em, title, sub, cur, changed, child, eff, onPick }) {
+    const d = document.createElement("div");
+    d.className = "item" + (child ? " child" : "") + (changed ? " changed" : "");
+    d.innerHTML = '<div class="head"><span class="em">' + em + '</span><div class="t"><b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div></div>';
+    d.appendChild(seg(cur, onPick));
+    if (eff) d.insertAdjacentHTML("beforeend", '<div class="eff">' + esc(eff) + '</div>');
+    return d;
+  }
+
+  function setSeq(key, v) { draft.sequences[key] = v; render(); }
+  function setRes(id, v) { if (v === "ouvert") delete draft.ressources[id]; else draft.ressources[id] = v; render(); }
+
+  function countChanges() {
+    let n = 0;
+    for (const s of SEQUENCES) { const k = A.seqKey(s); if (A.seqState(draft, s) !== A.seqState(saved, s)) n++; }
+    for (const r of RESSOURCES) if (A.resOwnState(draft, r) !== A.resOwnState(saved, r)) n++;
+    return n;
+  }
+
+  function render() {
+    const y = window.scrollY;
+    app.innerHTML = '<p class="legend"><span>🟢 <b>Ouvert</b> : visible et accessible</span><span>🟠 <b>À venir</b> : visible, grisé</span><span>⚫ <b>Masqué</b> : invisible</span></p>';
+    for (const c of CLASSES) {
+      app.insertAdjacentHTML("beforeend", '<div class="cls" style="--c:' + c.color + '"><span class="dot"></span><h2>' + esc(c.name) + '</h2></div>');
+      for (const k of c.courses) {
+        const seqs = SEQUENCES.filter(s => s.cls === c.id && s.course === k.id);
+        const loose = RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && !r.seq);
+        app.insertAdjacentHTML("beforeend", '<div class="course">' + esc(k.name + (k.name === "Enseignement pro" ? " · " + k.sub : "")) + '</div>');
+        if (!seqs.length && !loose.length) { app.insertAdjacentHTML("beforeend", '<p class="muted" style="font-size:14px;margin:0 0 8px">Rien pour l\'instant.</p>'); continue; }
+        for (const s of seqs) {
+          const key = A.seqKey(s), cur = A.seqState(draft, s);
+          app.appendChild(item({ em: s.emoji, title: s.name, sub: "Séquence", cur, changed: cur !== A.seqState(saved, s), onPick: v => setSeq(key, v) }));
+          for (const r of RESSOURCES.filter(r => r.cls === c.id && r.course === k.id && r.seq === s.id)) app.appendChild(resItem(r));
+        }
+        for (const r of loose) app.appendChild(resItem(r, true));
+      }
+    }
+    app.insertAdjacentHTML("beforeend", '<p style="text-align:center;margin-top:28px"><button class="link" id="logout">Se déconnecter de cet appareil</button></p>');
+    document.getElementById("logout").onclick = () => { if (confirm("Oublier la clé GitHub sur cet appareil ?")) { setToken(""); loginView(); } };
+    window.scrollTo(0, y);
+
+    const n = countChanges();
+    saveBar.classList.toggle("show", n > 0 || !!statusEl.textContent);
+    const pb = document.getElementById("publish");
+    pb.textContent = n ? "Publier (" + n + ")" : "Publier";
+    pb.disabled = n === 0;
+  }
+
+  function resItem(r, loose) {
+    const own = A.resOwnState(draft, r), eff = A.resState(draft, r);
+    return item({ em: TYPE_EM[r.type] || "•", title: r.title, sub: r.type.charAt(0).toUpperCase() + r.type.slice(1), cur: own, child: !loose,
+      changed: own !== A.resOwnState(saved, r),
+      eff: eff !== own ? "→ " + LABELS[eff] + " pour les élèves, car la séquence est « " + LABELS[eff] + " »" : "",
+      onPick: v => setRes(r.id, v) });
+  }
+
+  document.getElementById("cancel").onclick = () => { draft = clone(saved); statusEl.textContent = ""; render(); };
+
+  document.getElementById("publish").onclick = async () => {
+    const pb = document.getElementById("publish");
+    pb.disabled = true; statusEl.className = "status"; statusEl.textContent = "Enregistrement…";
+    const out = { sequences: {}, ressources: {} };
+    Object.keys(draft.sequences).sort().forEach(k => out.sequences[k] = draft.sequences[k]);
+    Object.keys(draft.ressources).sort().forEach(k => out.ressources[k] = draft.ressources[k]);
+    const text = JSON.stringify(out, null, 2) + "\n";
+    try {
+      const res = await gh("PUT", { message: "Espace prof : mise à jour des accès", content: b64encode(text), sha, branch: BRANCH });
+      sha = res.content.sha; saved = clone(out); draft = clone(out);
+      statusEl.textContent = "⏳ Enregistré. Mise en ligne en cours (environ 1 min)…";
+      render();
+      waitLive(text);
+    } catch (e) {
+      statusEl.className = "status"; statusEl.style.color = "var(--err)";
+      statusEl.textContent = e.status === 409 ? "Le fichier a changé ailleurs : rechargez la page." :
+                             e.status === 401 || e.status === 403 ? "Clé refusée : reconnectez-vous." : "Échec : " + e.message;
+      pb.disabled = false;
+    }
+  };
+
+  async function waitLive(text) {
+    const want = JSON.stringify(JSON.parse(text));
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      try {
+        const r = await fetch("etat.json?t=" + Date.now(), { cache: "no-store" });
+        if (r.ok && JSON.stringify(await r.json()) === want) {
+          statusEl.style.color = "var(--ok)"; statusEl.textContent = "✅ En ligne : les élèves voient les changements.";
+          setTimeout(() => { statusEl.textContent = ""; statusEl.style.color = ""; render(); }, 6000);
+          return;
+        }
+      } catch (e) {}
+    }
+    statusEl.textContent = "Enregistré, mais la mise en ligne prend plus de temps que prévu. Vérifiez dans quelques minutes.";
+  }
+
+  load();
+</script>
+</body>
+</html>

@@ -2,207 +2,149 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Salle de jeux</title>
-<meta name="description" content="Les jeux pédagogiques de PMCV2 et SMRC2 — choisis ta classe, ton cours, et entre ton code.">
-<meta name="theme-color" content="#1b1640">
+<meta name="description" content="Jeux, quiz et fiches de révision pour PMCV2 et SMRC2.">
+<meta name="theme-color" content="#1d1a2e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Salle de jeux">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
   :root {
-    --bg: #f4f1ea;
-    --bg2: #e9e3d6;
-    --ink: #1d1a2e;
-    --muted: #625d75;
-    --card: #ffffff;
-    --err: #d23c3c;
-    --ok: #1f9d6b;
-    --accent: #ff5a36;
-    --shadow: 0 2px 0 rgba(29,26,46,.9);
+    --bg: #f4f1ea; --bg2: #e9e3d6; --ink: #1d1a2e; --muted: #625d75; --card: #ffffff;
+    --line: rgba(29,26,46,.12); --accent: #ff5a36; --ok: #1f9d6b;
+    --shadow: 0 2px 0 rgba(29,26,46,.9); --bar: rgba(244,241,234,.86);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #15122b; --bg2: #1d1940; --ink: #f3efff; --muted: #a9a3c4;
-      --card: #231f47; --shadow: 0 2px 0 rgba(0,0,0,.6);
+      --bg: #15122b; --bg2: #1d1940; --ink: #f3efff; --muted: #a9a3c4; --card: #231f47;
+      --line: rgba(255,255,255,.1); --shadow: 0 2px 0 rgba(0,0,0,.6); --bar: rgba(21,18,43,.86);
     }
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
-    background: radial-gradient(circle at 15% 0%, var(--bg2), transparent 55%), var(--bg);
-    color: var(--ink);
+    background: var(--bg); color: var(--ink);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
-    -webkit-tap-highlight-color: transparent;
+    min-height: 100vh; min-height: 100dvh; -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
   }
-  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
+  a { color: inherit; }
 
-  nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 34px; margin-bottom: 14px; font-size: 14px; }
-  nav a { color: var(--muted); text-decoration: none; font-weight: 600; }
-  nav a:hover { color: var(--ink); }
-  nav .sep { color: var(--muted); opacity: .5; }
-  nav .here { font-weight: 700; }
-  .back {
-    display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
-    border: 2px solid var(--ink); border-radius: 10px; background: var(--card); color: var(--ink);
-    text-decoration: none; font-weight: 700; margin-right: 6px; box-shadow: var(--shadow);
+  /* ---------- Barre du haut (fixe) ---------- */
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bar); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--line);
+    padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
+  }
+  .bar-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .bar .back {
+    flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 12px; background: var(--card); border: 2px solid var(--ink); text-decoration: none;
+    font-size: 20px; font-weight: 800; box-shadow: var(--shadow);
+  }
+  .bar .ttl { min-width: 0; flex: 1; }
+  .bar .ttl small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar .ttl b { display: block; font-size: 17px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 19px; letter-spacing: -.01em; }
+  .brand img { width: 36px; height: 36px; border-radius: 10px; }
+
+  main { max-width: 720px; margin: 0 auto; padding: 18px 16px calc(env(safe-area-inset-bottom) + 40px); }
+
+  /* ---------- En-tête de page ---------- */
+  .hero { margin: 6px 0 18px; }
+  .hero h1 { font-size: clamp(28px, 8vw, 40px); line-height: 1.05; margin: 0 0 6px; letter-spacing: -.02em; }
+  .hero p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.4; }
+  .chip-c {
+    display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--c, var(--accent)); border: 2px solid var(--c, var(--accent)); border-radius: 999px; padding: 3px 10px; margin-bottom: 10px;
   }
 
-  header { text-align: center; margin-bottom: 22px; }
-  .badge {
-    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--c, var(--accent)); border: 2px solid var(--c, var(--accent));
-    border-radius: 999px; padding: 4px 12px; margin-bottom: 12px;
+  /* ---------- Grandes tuiles (accueil) ---------- */
+  .tiles { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 560px) { .tiles { grid-template-columns: 1fr 1fr; } }
+  .tile {
+    position: relative; display: block; text-decoration: none; overflow: hidden;
+    background: var(--c); color: #fff; border: 2px solid var(--ink); border-radius: 20px;
+    padding: 18px 18px 16px; box-shadow: var(--shadow); min-height: 128px;
   }
-  h1 { font-size: clamp(30px, 8vw, 46px); line-height: 1.05; margin: 0 0 8px; letter-spacing: -.02em; }
-  header p { color: var(--muted); margin: 0; font-size: 16px; }
+  .tile .em { font-size: 34px; line-height: 1; }
+  .tile h2 { margin: 12px 0 2px; font-size: 28px; letter-spacing: -.01em; }
+  .tile p { margin: 0; font-size: 14px; opacity: .92; line-height: 1.3; padding-right: 70px; }
+  .tile .n { position: absolute; right: 14px; bottom: 14px; background: rgba(0,0,0,.22); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 800; }
+  .tile:active { transform: translateY(1px); }
 
-  form {
-    display: flex; gap: 8px; background: var(--card); border: 2px solid var(--ink);
-    border-radius: 16px; padding: 8px; box-shadow: var(--shadow); margin-bottom: 8px;
+  /* ---------- Carte Reprendre ---------- */
+  .resume {
+    display: flex; align-items: center; gap: 12px; text-decoration: none;
+    background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 12px 14px; margin-bottom: 18px;
   }
-  form.shake { animation: shake .4s; border-color: var(--err); }
-  @keyframes shake { 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
-  input {
-    flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink);
-    font: 700 20px/1 ui-monospace, "SF Mono", Consolas, monospace; letter-spacing: .15em;
-    text-transform: uppercase; padding: 10px 8px; outline: none;
+  .resume .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--c); display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
+  .resume small { display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .resume b { display: block; font-size: 16px; }
+  .resume .go { margin-left: auto; font-weight: 900; font-size: 20px; color: var(--c); }
+
+  /* ---------- Listes compactes ---------- */
+  .sec { display: flex; align-items: center; gap: 8px; margin: 22px 0 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+  .sec:first-child { margin-top: 0; }
+  .sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .list { display: grid; gap: 10px; }
+  .row {
+    display: flex; align-items: center; gap: 12px; min-height: 68px; text-decoration: none;
+    background: var(--card); border: 2px solid var(--ink); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 10px 12px; cursor: pointer; width: 100%; text-align: left; font: inherit; color: inherit;
   }
-  input::placeholder { color: var(--muted); letter-spacing: .05em; font-weight: 500; text-transform: none; }
-  button {
-    border: 0; border-radius: 10px; background: var(--c, var(--accent)); color: #fff;
-    font: 700 16px system-ui, sans-serif; padding: 0 18px; cursor: pointer;
+  .row:active { transform: translateY(1px); }
+  .row .ic {
+    flex: none; width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; background: var(--bg2); background: color-mix(in srgb, var(--c) 18%, var(--card)); border: 2px solid var(--c);
   }
-  button:active { transform: translateY(1px); }
-  #msg { min-height: 22px; text-align: center; font-size: 14px; font-weight: 600; margin-bottom: 14px; }
-  #msg.err { color: var(--err); } #msg.ok { color: var(--ok); }
+  .row .tx { flex: 1; min-width: 0; }
+  .row .tx b { display: block; font-size: 16px; line-height: 1.25; }
+  .row .tx small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 13px; line-height: 1.3; margin-top: 2px; }
+  .row .rt { flex: none; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 5px 10px; background: var(--c); color: #fff; white-space: nowrap; }
+  .row.off { border-style: dashed; box-shadow: none; cursor: default; }
+  .row.off .ic, .row.off .tx { filter: grayscale(1); opacity: .5; }
+  .row.off .rt { background: var(--bg2); color: var(--muted); }
+  .row.soon .rt { background: var(--bg2); color: var(--muted); }
 
-  .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-  @media (min-width: 600px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .empty { text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 18px; padding: 30px 18px; }
+  .empty .em { font-size: 40px; display: block; margin-bottom: 8px; }
 
-  .card {
-    position: relative; display: block; text-decoration: none; color: inherit;
-    background: var(--card); border: 2px solid var(--ink); border-radius: 18px;
-    padding: 18px; box-shadow: var(--shadow); overflow: hidden; transition: transform .15s;
+  /* ---------- Bandeau « installer » et toast ---------- */
+  .install {
+    display: none; align-items: center; gap: 12px; margin-top: 26px; padding: 12px 14px;
+    border: 2px dashed var(--line); border-radius: 16px; font-size: 14px; color: var(--muted);
   }
-  a.card:hover { transform: translateY(-2px); }
-  .card .stripe { position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
-  .card .emoji { font-size: 40px; line-height: 1; margin-bottom: 10px; display: block; }
-  .card h2 { font-size: 20px; margin: 0 0 4px; }
-  .card p { margin: 0; color: var(--muted); font-size: 14px; }
-  .card .state {
-    position: absolute; top: 14px; right: 14px; font-size: 12px; font-weight: 700;
-    border-radius: 999px; padding: 4px 10px; background: var(--bg2); color: var(--muted);
+  .install.show { display: flex; }
+  .install b { color: var(--ink); }
+  .install button { margin-left: auto; flex: none; border: 0; border-radius: 10px; background: var(--ink); color: var(--bg); font: 800 14px system-ui, sans-serif; padding: 10px 14px; cursor: pointer; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 18px); transform: translate(-50%, 20px);
+    background: var(--ink); color: var(--bg); font-weight: 700; font-size: 14px; padding: 12px 16px; border-radius: 12px;
+    opacity: 0; pointer-events: none; transition: .25s; max-width: calc(100% - 32px); text-align: center; z-index: 20;
   }
-  .card.go .state { background: var(--c); color: #fff; }
-
-  .card.big { padding: 26px 20px; }
-  .card.big h2 { font-size: 30px; letter-spacing: -.01em; }
-
-  .card.locked { cursor: pointer; }
-  .card.locked .emoji, .card.locked h2, .card.locked p { filter: grayscale(1); opacity: .45; }
-  .card.soon { border-style: dashed; box-shadow: none; }
-  .card.soon .emoji, .card.soon h2, .card.soon p { opacity: .55; }
-  .card.pop { animation: pop .5s; }
-  @keyframes pop { 40% { transform: scale(1.04); } }
-
-  .empty {
-    text-align: center; color: var(--muted); border: 2px dashed var(--muted); border-radius: 18px;
-    padding: 30px 18px; opacity: .8;
-  }
-  .empty .emoji { font-size: 40px; display: block; margin-bottom: 8px; }
-
-  .section { margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
-  .section:first-child { margin-top: 0; }
-  .section::after { content: ""; flex: 1; height: 2px; background: var(--ink); opacity: .12; }
-
-  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 28px; }
-  footer button { background: none; color: var(--muted); text-decoration: underline; padding: 0; font-weight: 500; font-size: 13px; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
 </style>
 </head>
 <body>
+<header class="bar"><div class="bar-in" id="bar"></div></header>
 <main>
-  <nav id="nav"></nav>
-  <header id="head"></header>
-
-  <form id="f" autocomplete="off">
-    <input id="code" placeholder="Code donné par ton prof" aria-label="Code d'accès" autocapitalize="characters" spellcheck="false" enterkeyhint="go">
-    <button type="submit">Valider</button>
-  </form>
-  <div id="msg" role="status"></div>
-
   <div id="view"></div>
-
-  <footer>
-    <button type="button" id="reset">Verrouiller à nouveau les jeux sur cet appareil</button>
-  </footer>
+  <div class="install" id="install"></div>
 </main>
+<div class="toast" id="toast" role="status"></div>
 
+<script src="catalogue.js"></script>
 <script>
-  /* ================= CONFIGURATION =================
-     CLASSES    : les classes et leurs cours
-     SEQUENCES  : les séquences d'un cours (facultatif)
-     RESSOURCES : jeux, quiz, fiches PDF, cours en ligne.
-       type   : "jeu" | "quiz" | "fiche" | "cours"
-       cls / course / seq : où la ressource est rangée (seq facultatif)
-       hash   : uniquement pour les jeux — empreinte SHA-256 de "jeux:CODE" */
-
-  const CLASSES = [
-    { id: "pmcv2", name: "PMCV2", emoji: "🛍️", color: "#ff5a36",
-      full: "Première Métiers du Commerce et de la Vente",
-      courses: [
-        { id: "pro",   emoji: "🏪", name: "Enseignement pro", sub: "Tronc commun" },
-        { id: "optA",  emoji: "🎯", name: "Option A", sub: "Animation et gestion de l'espace commercial" },
-      ] },
-    { id: "smrc2", name: "SMRC2", emoji: "🤝", color: "#3b6fe0",
-      full: "Seconde Métiers de la Relation Client",
-      courses: [
-        { id: "accueil",  emoji: "🛎️", name: "Enseignement pro", sub: "Accueil" },
-        { id: "ecodroit", emoji: "⚖️", name: "Éco-droit", sub: "Économie et droit" },
-        { id: "soutien",  emoji: "🧭", name: "Soutien au parcours", sub: "Construire son orientation" },
-      ] },
-  ];
-
-  const SEQUENCES = [
-    { cls: "pmcv2", course: "pro", id: "chalandise", emoji: "🗺️",
-      name: "La zone de chalandise",
-      notions: "Isochrones et isométriques · zones primaire, secondaire, tertiaire · CA potentiel et rentabilité" },
-    { cls: "pmcv2", course: "pro", id: "veille", emoji: "🔎",
-      name: "La veille commerciale",
-      notions: "Sources internes et externes · les 5 étapes de la veille · critères d'une information utile" },
-  ];
-
-  const RESSOURCES = [
-    // ---- PMCV2 · Enseignement pro · Zone de chalandise
-    { type: "jeu", id: "pion", cls: "pmcv2", course: "pro", seq: "chalandise", emoji: "📍",
-      title: "Le Pion Rouge", desc: "Explore la zone de chalandise.",
-      url: "Le-Pion-Rouge.html", color: "#d6336c",
-      hash: "8581090ff3d8eb2cad0399017b09b4de6a2bbbb80f8ba7b19f8d6ce25e3a9e24" },
-    { type: "quiz", id: "zone-chalandise", cls: "pmcv2", course: "pro", seq: "chalandise", emoji: "🧠",
-      title: "Quiz : la zone de chalandise", desc: "10 questions chronométrées · calculatrice conseillée",
-      url: "quiz.html?q=zone-chalandise", color: "#ff5a36" },
-    { type: "fiche", id: "fiche-chalandise", cls: "pmcv2", course: "pro", seq: "chalandise", emoji: "📄",
-      title: "Fiche : la zone de chalandise", desc: "L'essentiel à retenir + je sais utiliser (recto-verso)",
-      url: "fiches/zone-de-chalandise.pdf", color: "#e8a400" },
-
-    // ---- PMCV2 · Enseignement pro · Veille commerciale
-    { type: "fiche", id: "fiche-veille", cls: "pmcv2", course: "pro", seq: "veille", emoji: "📄",
-      title: "Fiche : la veille commerciale", desc: "Sources, 5 étapes, critères d'une info utile (recto-verso)",
-      url: "fiches/veille-commerciale.pdf", color: "#1f9d6b" },
-
-    // ---- SMRC2
-    { type: "jeu", id: "accueil", cls: "smrc2", course: "accueil", emoji: "🛎️",
-      title: "Panique à l'accueil", desc: "Gère la foule et garde ton calme.",
-      url: "Panique-a-l-accueil.html", color: "#ff5a36",
-      hash: "a6062afd65f94b809a757002817f3f33216fd4ee49e4de5fe2873100104e0888" },
-    { type: "jeu", id: "springfield", cls: "smrc2", course: "ecodroit", emoji: "⚡",
-      title: "Panne à Springfield", desc: "Trouve l'origine de la panne.",
-      url: "Panne-a-Springfield.html", color: "#e8a400",
-      hash: "6b369a143d712d79f13290610108af45188c6f7044fa45fffccff130facfddbf" },
-    { type: "jeu", id: "cap", cls: "smrc2", course: "soutien", emoji: "🧭",
-      title: "Mon cap pour la Première", desc: "Trace ta route pour l'an prochain.",
-      url: "Mon-cap-pour-la-Premiere.html", color: "#3b6fe0",
-      hash: "7b0b3ae66181338c7ea3b80948e36eda48dc11432b35d2be413e4b578a8737fd" },
-  ];
-
+  const { CLASSES, SEQUENCES, RESSOURCES } = window.CATALOGUE;
+  const A = window.ACCES;
   const TYPES = [
     { id: "cours", label: "📖 Cours en ligne" },
     { id: "fiche", label: "📄 Fiches de révision" },
@@ -210,27 +152,38 @@
     { id: "jeu",   label: "🎮 Jeux" },
   ];
 
-  /* ================= LOGIQUE ================= */
+  /* ---------- Stockage local (toujours protégé) ---------- */
+  function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  const KEY = "salle-de-jeux-debloques";
-  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
-  function save(list) { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {} }
-  function quizBest(id) {
+  /* ---------- État ouvert / à venir / masqué ---------- */
+  let ETAT = lsGet("salle-etat-cache", null) || { sequences: {}, ressources: {} };
+  let etatLoaded = !!lsGet("salle-etat-cache", null);
+  async function loadEtat() {
     try {
-      const h = JSON.parse(localStorage.getItem("quiz-historique:" + id)) || [];
-      return h.length ? Math.max(...h.map(x => x.n)) : null;
-    } catch (e) { return null; }
+      const r = await fetch("etat.json?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) throw 0;
+      const e = await r.json();
+      const changed = JSON.stringify(e) !== JSON.stringify(ETAT) || !etatLoaded;
+      ETAT = e; etatLoaded = true; lsSet("salle-etat-cache", e);
+      if (changed) render();
+    } catch (err) { if (!etatLoaded) { etatLoaded = true; render(); } }
   }
-  let unlocked = load();
 
+  /* ---------- Outils ---------- */
   const $ = (id) => document.getElementById(id);
-  const nav = $("nav"), head = $("head"), view = $("view");
-  const form = $("f"), input = $("code"), msg = $("msg");
-
+  const bar = $("bar"), view = $("view");
   function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
-  function say(text, cls) { msg.textContent = text; msg.className = cls || ""; }
-  function countLabel(n) { return n + " ressource" + (n > 1 ? "s" : ""); }
   function fmt(n) { return String(n).replace(".", ","); }
+  let toastT;
+  function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2200); }
+  function quizBest(id) { const h = lsGet("quiz-historique:" + id, []); return h.length ? Math.max(...h.map(x => x.n)) : null; }
+  const visibleRes = (list) => list.filter(r => A.resState(ETAT, r) !== "masque");
+  const openRes = (list) => list.filter(r => A.resState(ETAT, r) === "ouvert");
+  const resOf = (c, k, s) => RESSOURCES.filter(r => r.cls === c && (!k || r.course === k) && (s === undefined || (r.seq || null) === s));
+  const seqsOf = (c, k) => SEQUENCES.filter(s => s.cls === c && s.course === k && A.seqState(ETAT, s) !== "masque");
+  function courseLabel(k) { return k.name === "Enseignement pro" ? k.name + " · " + k.sub : k.name; }
+  function plural(n, w) { return n + " " + w + (n > 1 ? "s" : ""); }
 
   function route() {
     const [c, k, s] = location.hash.replace(/^#\/?/, "").split("/");
@@ -240,175 +193,168 @@
     return { cls, course, seq };
   }
 
-  function card({ tag = "div", href, cls = "", color, emoji, title, desc, state, blank }) {
-    const el = document.createElement(tag);
-    el.className = "card " + cls;
-    if (href) el.href = href;
-    if (blank) { el.target = "_blank"; el.rel = "noopener"; }
-    if (color) el.style.setProperty("--c", color);
-    el.innerHTML =
-      '<span class="stripe"></span>' +
-      (state ? '<span class="state">' + esc(state) + '</span>' : '') +
-      '<span class="emoji">' + emoji + '</span>' +
-      '<h2>' + esc(title) + '</h2>' + (desc ? '<p>' + esc(desc) + '</p>' : '');
+  function row({ href, color, emoji, title, desc, right, off, soon, blank, onTap }) {
+    const el = document.createElement(href && !off ? "a" : "button");
+    el.className = "row" + (off ? " off" : "") + (soon ? " soon" : "");
+    if (href && !off) { el.href = href; if (blank) { el.target = "_blank"; el.rel = "noopener"; } }
+    else el.type = "button";
+    el.style.setProperty("--c", color);
+    el.innerHTML = '<span class="ic">' + emoji + '</span><span class="tx"><b>' + esc(title) + '</b>' +
+      (desc ? '<small>' + esc(desc) + '</small>' : '') + '</span>' + (right ? '<span class="rt">' + esc(right) + '</span>' : '');
+    if (onTap) el.addEventListener("click", onTap);
     return el;
   }
 
-  function resourceCard(r, popId) {
-    if (r.type === "jeu") {
-      const open = unlocked.includes(r.id);
-      const el = card({ tag: open ? "a" : "div", href: open ? r.url : null,
-        cls: (open ? "go" : "locked") + (r.id === popId ? " pop" : ""), color: r.color,
-        emoji: r.emoji, title: r.title, desc: r.desc, state: open ? "Jouer ▸" : "🔒 Verrouillé" });
-      if (!open) el.addEventListener("click", () => { input.focus(); say("Ce jeu est verrouillé : entre son code.", "err"); });
-      return el;
-    }
-    let state = "Ouvrir ▸";
-    if (r.type === "quiz") { const b = quizBest(r.id); state = b === null ? "À faire ▸" : "Record " + fmt(b) + "/20"; }
-    if (r.type === "fiche") state = "PDF ▸";
-    return card({ tag: "a", href: r.url, cls: "go", color: r.color, emoji: r.emoji,
-      title: r.title, desc: r.desc, state, blank: r.type === "fiche" });
+  function list(items) { const d = document.createElement("div"); d.className = "list"; items.forEach(i => d.appendChild(i)); return d; }
+  function sec(label) { const d = document.createElement("div"); d.className = "sec"; d.textContent = label; return d; }
+  function empty(text) { const d = document.createElement("div"); d.className = "empty"; d.innerHTML = '<span class="em">🚧</span><strong>Bientôt disponible</strong><br>' + esc(text); return d; }
+
+  function resourceRow(r) {
+    const st = A.resState(ETAT, r);
+    if (st === "grise") return row({ color: r.color, emoji: r.emoji, title: r.title, desc: r.desc, right: "🔒 À venir", off: true,
+      onTap: () => toast("Pas encore ouvert : ton prof l'ouvrira bientôt.") });
+    let right = "Ouvrir";
+    if (r.type === "jeu") right = "Jouer ▸";
+    if (r.type === "fiche") right = "PDF";
+    if (r.type === "quiz") { const b = quizBest(r.id); right = b === null ? "À faire" : "★ " + fmt(b) + "/20"; }
+    return row({ href: r.url, color: r.color, emoji: r.emoji, title: r.title, desc: r.desc, right, blank: r.type === "fiche" });
   }
 
-  // Affiche une liste de ressources rangées par type, avec un titre par type
-  function sections(list, popId) {
+  function byType(resList) {
     const frag = document.createDocumentFragment();
     for (const t of TYPES) {
-      const items = list.filter(r => r.type === t.id);
+      const items = resList.filter(r => r.type === t.id);
       if (!items.length) continue;
-      const h = document.createElement("div");
-      h.className = "section"; h.textContent = t.label;
-      frag.appendChild(h);
-      const grid = document.createElement("div"); grid.className = "grid";
-      items.forEach(r => grid.appendChild(resourceCard(r, popId)));
-      frag.appendChild(grid);
+      frag.appendChild(sec(t.label));
+      frag.appendChild(list(items.map(resourceRow)));
     }
     return frag;
   }
 
-  function empty(text) {
-    const d = document.createElement("div");
-    d.className = "empty";
-    d.innerHTML = '<span class="emoji">🚧</span><strong>Bientôt disponible</strong><br>' + esc(text);
-    return d;
+  function setBar(back, small, title) {
+    if (!back) {
+      bar.innerHTML = '<div class="brand"><img src="icons/icon-192.png" alt="">Salle de jeux</div>';
+      return;
+    }
+    bar.innerHTML = '<a class="back" href="' + back + '" aria-label="Retour">‹</a>' +
+      '<div class="ttl"><small>' + esc(small) + '</small><b>' + esc(title) + '</b></div>';
   }
 
-  function courseLabel(k) { return k.name === "Enseignement pro" ? k.name + " · " + k.sub : k.name; }
-
-  function render(popId) {
+  /* ---------- Rendu ---------- */
+  function render() {
     const { cls, course, seq } = route();
     document.documentElement.style.setProperty("--c", cls ? cls.color : "");
     view.innerHTML = "";
 
-    // Fil d'Ariane
-    const crumbs = [];
-    if (cls) crumbs.push({ href: "#" + cls.id, label: cls.name });
-    if (course) crumbs.push({ href: "#" + cls.id + "/" + course.id, label: courseLabel(course) });
-    if (seq) crumbs.push({ label: seq.name });
-    if (!crumbs.length) nav.innerHTML = "";
-    else {
-      const back = crumbs.length > 1 ? crumbs[crumbs.length - 2].href : "#";
-      nav.innerHTML = '<a class="back" href="' + back + '" aria-label="Retour">←</a><a href="#">Accueil</a>' +
-        crumbs.map((c, n) => '<span class="sep">›</span>' + (n === crumbs.length - 1
-          ? '<span class="here">' + esc(c.label) + '</span>'
-          : '<a href="' + c.href + '">' + esc(c.label) + '</a>')).join("");
-    }
-
+    // ACCUEIL
     if (!cls) {
-      // ACCUEIL : choix de la classe
-      head.innerHTML = '<span class="badge">Salle de jeux</span><h1>Choisis ta classe</h1>' +
-        '<p>Jeux, quiz et fiches de révision, rangés par cours.</p>';
-      const grid = document.createElement("div"); grid.className = "grid";
+      setBar(null);
+      document.title = "Salle de jeux";
+      view.insertAdjacentHTML("beforeend", '<div class="hero"><h1>Salut ! 👋</h1><p>Jeux, quiz et fiches de révision. Choisis ta classe.</p></div>');
+      const last = lsGet("salle-derniere", null);
+      if (last && last.hash) {
+        const [c, k, s] = last.hash.replace(/^#/, "").split("/");
+        const lc = CLASSES.find(x => x.id === c);
+        const ls = s && SEQUENCES.find(x => x.cls === c && x.course === k && x.id === s);
+        const valid = lc && (!ls || A.seqState(ETAT, ls) === "ouvert");
+        if (valid) {
+          const a = document.createElement("a");
+          a.className = "resume"; a.href = last.hash; a.style.setProperty("--c", lc.color);
+          a.innerHTML = '<span class="ic">' + (last.emoji || "▶️") + '</span><span><small>Reprendre</small><b>' + esc(last.title) + '</b></span><span class="go">›</span>';
+          view.appendChild(a);
+        }
+      }
+      const tiles = document.createElement("div"); tiles.className = "tiles";
       for (const c of CLASSES) {
-        const n = RESSOURCES.filter(r => r.cls === c.id).length;
-        grid.appendChild(card({ tag: "a", href: "#" + c.id, cls: "big go", color: c.color,
-          emoji: c.emoji, title: c.name, desc: c.full, state: countLabel(n) }));
+        const n = openRes(visibleRes(resOf(c.id))).length;
+        const a = document.createElement("a");
+        a.className = "tile"; a.href = "#" + c.id; a.style.setProperty("--c", c.color);
+        a.innerHTML = '<div class="em">' + c.emoji + '</div><h2>' + esc(c.name) + '</h2><p>' + esc(c.full) + '</p><span class="n">' + plural(n, "activité") + '</span>';
+        tiles.appendChild(a);
       }
-      view.appendChild(grid);
+      view.appendChild(tiles);
       return;
     }
 
+    // CLASSE
     if (!course) {
-      // CLASSE : choix du cours
-      head.innerHTML = '<span class="badge">' + esc(cls.name) + '</span><h1>Choisis ton cours</h1><p>' + esc(cls.full) + '</p>';
-      const grid = document.createElement("div"); grid.className = "grid";
-      for (const k of cls.courses) {
-        const n = RESSOURCES.filter(r => r.cls === cls.id && r.course === k.id).length;
-        grid.appendChild(card({ tag: "a", href: "#" + cls.id + "/" + k.id, cls: n ? "go" : "soon",
-          color: cls.color, emoji: k.emoji, title: k.name, desc: k.sub, state: n ? countLabel(n) : "Bientôt" }));
-      }
-      view.appendChild(grid);
+      setBar("#", "Classe", cls.name);
+      document.title = cls.name + " · Salle de jeux";
+      view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">' + esc(cls.name) + '</span><h1>Choisis ton cours</h1><p>' + esc(cls.full) + '</p></div>');
+      view.appendChild(list(cls.courses.map(k => {
+        const n = openRes(visibleRes(resOf(cls.id, k.id))).length;
+        return row({ href: n ? "#" + cls.id + "/" + k.id : null, color: cls.color, emoji: k.emoji, title: k.name, desc: k.sub,
+          right: n ? n + " ›" : "Bientôt", soon: !n, onTap: n ? null : () => toast("Rien pour l'instant dans ce cours.") });
+      })));
       return;
     }
 
+    // COURS
     if (!seq) {
-      // COURS : séquences + ressources hors séquence
-      head.innerHTML = '<span class="badge">' + esc(cls.name) + '</span><h1>' + esc(course.name) + '</h1><p>' + esc(course.sub || "") + '</p>';
-      const seqs = SEQUENCES.filter(s => s.cls === cls.id && s.course === course.id);
-      const loose = RESSOURCES.filter(r => r.cls === cls.id && r.course === course.id && !r.seq);
-      if (!seqs.length && !loose.length) { view.appendChild(empty("Aucune ressource pour ce cours pour l'instant.")); return; }
+      setBar("#" + cls.id, cls.name, courseLabel(course));
+      document.title = courseLabel(course) + " · " + cls.name;
+      lsSet("salle-derniere", { hash: "#" + cls.id + "/" + course.id, title: cls.name + " · " + courseLabel(course), emoji: course.emoji });
+      view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">' + esc(cls.name) + '</span><h1>' + esc(course.name) + '</h1><p>' + esc(course.sub || "") + '</p></div>');
+      const seqs = seqsOf(cls.id, course.id);
+      const loose = visibleRes(resOf(cls.id, course.id, null));
+      if (!seqs.length && !loose.length) { view.appendChild(empty("Aucune activité pour ce cours pour l'instant.")); return; }
       if (seqs.length) {
-        const h = document.createElement("div"); h.className = "section"; h.textContent = "📚 Séquences";
-        view.appendChild(h);
-        const grid = document.createElement("div"); grid.className = "grid";
-        seqs.forEach((s, n) => {
-          const count = RESSOURCES.filter(r => r.cls === cls.id && r.course === course.id && r.seq === s.id).length;
-          grid.appendChild(card({ tag: "a", href: "#" + cls.id + "/" + course.id + "/" + s.id, cls: count ? "go" : "soon",
-            color: cls.color, emoji: s.emoji, title: s.name, desc: s.notions, state: count ? countLabel(count) : "Bientôt" }));
-        });
-        view.appendChild(grid);
+        view.appendChild(sec("📚 Séquences"));
+        view.appendChild(list(seqs.map(s => {
+          const open = A.seqState(ETAT, s) === "ouvert";
+          const n = openRes(visibleRes(resOf(cls.id, course.id, s.id))).length;
+          if (!open) return row({ color: cls.color, emoji: s.emoji, title: s.name, desc: s.notions, right: "🔒 À venir", off: true,
+            onTap: () => toast("Cette séquence n'est pas encore ouverte.") });
+          return row({ href: "#" + cls.id + "/" + course.id + "/" + s.id, color: cls.color, emoji: s.emoji, title: s.name,
+            desc: s.notions, right: n ? n + " ›" : "Bientôt", soon: !n });
+        })));
       }
-      view.appendChild(sections(loose, popId));
+      view.appendChild(byType(loose));
       return;
     }
 
-    // SÉQUENCE : ressources par type
-    head.innerHTML = '<span class="badge">' + esc(cls.name + " · " + courseLabel(course)) + '</span><h1>' + esc(seq.name) + '</h1><p>' + esc(seq.notions || "") + '</p>';
-    const list = RESSOURCES.filter(r => r.cls === cls.id && r.course === course.id && r.seq === seq.id);
-    if (!list.length) { view.appendChild(empty("Aucune ressource pour cette séquence pour l'instant.")); return; }
-    view.appendChild(sections(list, popId));
-  }
-
-  function normalize(s) {
-    return s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-  }
-
-  async function sha256(text) {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const code = normalize(input.value);
-    if (!code) return;
-    let h;
-    try { h = await sha256("jeux:" + code); }
-    catch (err) { say("Ton navigateur ne peut pas vérifier le code. Essaie un autre navigateur.", "err"); return; }
-    const g = RESSOURCES.find(x => x.type === "jeu" && x.hash === h);
-    if (!g) {
-      form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
-      say("Code inconnu… vérifie l'orthographe.", "err");
+    // SÉQUENCE
+    setBar("#" + cls.id + "/" + course.id, cls.name + " · " + courseLabel(course), seq.name);
+    document.title = seq.name + " · " + cls.name;
+    view.insertAdjacentHTML("beforeend", '<div class="hero"><span class="chip-c">Séquence</span><h1>' + esc(seq.name) + '</h1><p>' + esc(seq.notions || "") + '</p></div>');
+    if (A.seqState(ETAT, seq) !== "ouvert") {
+      view.appendChild(empty(etatLoaded ? "Cette séquence n'est pas encore ouverte." : "Chargement…"));
       return;
     }
-    if (!unlocked.includes(g.id)) { unlocked.push(g.id); save(unlocked); }
-    input.value = "";
-    say("🎉 « " + g.title + " » débloqué ! Ouverture…", "ok");
-    const target = "#" + [g.cls, g.course, g.seq].filter(Boolean).join("/");
-    if (location.hash !== target) history.replaceState(null, "", target);
-    render(g.id);
-    setTimeout(() => { location.href = g.url; }, 900);
-  });
+    lsSet("salle-derniere", { hash: "#" + cls.id + "/" + course.id + "/" + seq.id, title: seq.name, emoji: seq.emoji });
+    const items = visibleRes(resOf(cls.id, course.id, seq.id));
+    if (!items.length) { view.appendChild(empty("Aucune activité dans cette séquence pour l'instant.")); return; }
+    view.appendChild(byType(items));
+  }
 
-  form.addEventListener("animationend", () => form.classList.remove("shake"));
-  window.addEventListener("hashchange", () => { say(""); render(); window.scrollTo(0, 0); });
-  window.addEventListener("pageshow", (e) => { if (e.persisted) render(); }); // rafraîchit les records au retour d'un quiz
+  window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+  window.addEventListener("pageshow", (e) => { if (e.persisted) { render(); loadEtat(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) loadEtat(); });
 
-  $("reset").addEventListener("click", () => {
-    unlocked = []; save(unlocked); render(); say("Tous les jeux sont de nouveau verrouillés.", "");
-  });
+  /* ---------- Ajouter à l'écran d'accueil ---------- */
+  (function installHint() {
+    const box = $("install");
+    const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    if (standalone || lsGet("salle-install-ferme", false)) return;
+    let deferred = null;
+    const close = '<button type="button" aria-label="Fermer" style="background:none;color:var(--muted);padding:6px;margin-left:4px">✕</button>';
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault(); deferred = e;
+      box.innerHTML = '<span style="font-size:24px">📲</span><span><b>Installer l\'appli</b><br>Accès direct depuis ton écran d\'accueil.</span><button type="button" id="inst">Installer</button>' + close;
+      box.classList.add("show");
+      $("inst").onclick = async () => { deferred.prompt(); await deferred.userChoice; box.classList.remove("show"); };
+      box.lastElementChild.onclick = () => { box.classList.remove("show"); lsSet("salle-install-ferme", true); };
+    });
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      box.innerHTML = '<span style="font-size:24px">📲</span><span><b>Ajoute-moi à ton écran d\'accueil</b><br>Touche <b>Partager</b> ⎋ puis <b>« Sur l\'écran d\'accueil »</b>.</span>' + close;
+      box.classList.add("show");
+      box.lastElementChild.onclick = () => { box.classList.remove("show"); lsSet("salle-install-ferme", true); };
+    }
+  })();
 
-  render();
+  if (etatLoaded) render();
+  else { setBar(null); view.innerHTML = '<div class="empty">Chargement…</div>'; }
+  loadEtat();
 </script>
 </body>
 </html>
