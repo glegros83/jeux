@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Diagnostic PDF</title>
+<style>
+  :root { --bg: #f4f1ea; --card: #fff; --ink: #1d1a2e; --muted: #625d75; --ok: #1f7a4a; --ko: #c0352b; --warn: #a86400; --line: #ddd5c4; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 28px; margin: 0 0 6px; }
+  h2 { font-size: 19px; margin: 0 0 10px; }
+  .muted { color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 14px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  td { padding: 8px 6px; border-top: 1px solid var(--line); vertical-align: top; }
+  td:first-child { width: 34px; font-size: 18px; }
+  td small { display: block; color: var(--muted); }
+  .ok { color: var(--ok); } .ko { color: var(--ko); } .warn { color: var(--warn); }
+  .btn { display: inline-block; background: #1d1a2e; color: #fff; border: 0; border-radius: 10px; padding: 12px 16px; font: 700 15px system-ui, sans-serif; cursor: pointer; text-decoration: none; margin: 4px 6px 4px 0; }
+  .btn.ghost { background: #fff; color: var(--ink); border: 2px solid var(--ink); }
+  textarea { width: 100%; height: 170px; font: 13px ui-monospace, Consolas, monospace; border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  ol li { margin: 6px 0; }
+  .verdict { font-weight: 700; font-size: 17px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🔎 Diagnostic PDF</h1>
+  <p class="muted">À ouvrir sur un ordinateur du lycée. Cette page n'envoie rien : elle teste seulement ce que le navigateur sait faire.</p>
+
+  <div class="card">
+    <h2>1. Le navigateur</h2>
+    <p class="verdict" id="browser">…</p>
+    <p class="muted" id="ua" style="font-size:13px;word-break:break-all"></p>
+  </div>
+
+  <div class="card">
+    <h2>2. Fonctions utilisées par le lecteur PDF de CockpitProf (pdf.js 5)</h2>
+    <table id="tests"></table>
+    <p class="verdict" id="verdict" style="margin-top:12px"></p>
+  </div>
+
+  <div class="card">
+    <h2>3. Test à la main : les fiches de la salle de jeux</h2>
+    <ol>
+      <li><a class="btn" href="fiches/zone-de-chalandise.pdf" target="_blank" rel="noopener">Ouvrir la fiche Zone de chalandise</a> : le PDF s'affiche-t-il ?</li>
+      <li><a class="btn" href="fiches/veille-commerciale.pdf" target="_blank" rel="noopener">Ouvrir la fiche Veille commerciale</a> : le PDF s'affiche-t-il ?</li>
+      <li>Aperçu intégré dans la page (comme une visionneuse dans une appli) :<br>
+        <button class="btn ghost" id="embedBtn" type="button">Afficher l'aperçu intégré</button>
+        <div id="embed"></div></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>4. Le rapport</h2>
+    <p class="muted">Copiez ce texte (ou prenez une photo de l'écran) et transmettez-le à Claude, en précisant si les fiches du point 3 se sont ouvertes.</p>
+    <textarea id="report" readonly></textarea>
+    <button class="btn" id="copy" type="button">Copier le rapport</button> <span id="copied" class="ok"></span>
+  </div>
+</main>
+
+<script>
+(function () {
+  var ua = navigator.userAgent;
+  document.getElementById("ua").textContent = ua;
+
+  function browserName() {
+    var m;
+    if ((m = ua.match(/Edg\/(\d+)/))) return "Microsoft Edge " + m[1];
+    if ((m = ua.match(/OPR\/(\d+)/))) return "Opera " + m[1];
+    if ((m = ua.match(/Firefox\/(\d+)/))) return "Firefox " + m[1];
+    if ((m = ua.match(/Chrome\/(\d+)/))) return "Chrome " + m[1];
+    if ((m = ua.match(/Version\/(\d+).*Safari/))) return "Safari " + m[1];
+    if (/Trident|MSIE/.test(ua)) return "Internet Explorer";
+    return "Navigateur inconnu";
+  }
+  document.getElementById("browser").textContent = browserName();
+
+  var rows = [];
+  function row(ok, label, detail, critical) {
+    rows.push({ ok: ok, label: label, detail: detail, critical: critical });
+  }
+  function has(fn) { try { return !!fn(); } catch (e) { return false; } }
+
+  row(has(function () { return typeof Uint8Array.prototype.toHex === "function"; }), "Uint8Array.toHex",
+      "Très récent. Absent → CockpitProf le remplace déjà par un correctif.", false);
+  row(has(function () { return typeof Promise.withResolvers === "function"; }), "Promise.withResolvers",
+      "Utilisé par pdf.js 4 et 5. Absent → le lecteur PDF plante.", true);
+  row(has(function () { return typeof structuredClone === "function"; }), "structuredClone", "Copie de données entre le lecteur et la page.", true);
+  row(has(function () { return typeof [].at === "function"; }), "Array.at", "Fonction JavaScript moderne utilisée par pdf.js.", true);
+  row(has(function () { return typeof ReadableStream === "function" && typeof ReadableStream.prototype[Symbol.asyncIterator] === "function"; }),
+      "ReadableStream itérable", "Lecture progressive du fichier.", false);
+  row(has(function () { return typeof OffscreenCanvas === "function"; }), "OffscreenCanvas", "Dessin des pages en arrière-plan.", false);
+  row(typeof Worker === "function", "Web Workers", "pdf.js travaille dans un « worker ».", true);
+  row(navigator.pdfViewerEnabled === true, "Visionneuse PDF du navigateur",
+      navigator.pdfViewerEnabled === undefined ? "Information non disponible sur ce navigateur." : "Celle qu'utilise la salle de jeux.", false);
+
+  // Test asynchrone : worker de type module créé depuis un blob (méthode exacte de CockpitProf)
+  var pending = 1;
+  try {
+    var src = "self.postMessage(typeof Promise.withResolvers === 'function' ? 'ok-wr' : 'ok');";
+    var url = URL.createObjectURL(new Blob([src], { type: "text/javascript" }));
+    var w = new Worker(url, { type: "module" });
+    var done = false;
+    var t = setTimeout(function () { if (!done) { done = true; row(false, "Worker module (blob)", "Pas de réponse : bloqué ou non pris en charge.", true); finish(); } }, 3000);
+    w.onmessage = function () { if (done) return; done = true; clearTimeout(t); row(true, "Worker module (blob)", "Méthode utilisée par CockpitProf pour lancer pdf.js.", true); finish(); };
+    w.onerror = function () { if (done) return; done = true; clearTimeout(t); row(false, "Worker module (blob)", "Erreur au lancement : bloqué ou non pris en charge.", true); finish(); };
+  } catch (e) { row(false, "Worker module (blob)", "Impossible : " + e.message, true); finish(); }
+
+  function finish() {
+    if (--pending > 0) return;
+    var tb = document.getElementById("tests");
+    tb.innerHTML = rows.map(function (r) {
+      var icon = r.ok ? "✅" : (r.critical ? "❌" : "⚠️");
+      return "<tr><td>" + icon + "</td><td><b>" + r.label + "</b><small>" + r.detail + "</small></td></tr>";
+    }).join("");
+    var blocking = rows.filter(function (r) { return !r.ok && r.critical; });
+    var v = document.getElementById("verdict");
+    if (blocking.length) {
+      v.className = "verdict ko";
+      v.textContent = "❌ Ce navigateur ne peut probablement pas faire fonctionner le lecteur PDF de CockpitProf (" + blocking.map(function (r) { return r.label; }).join(", ") + ").";
+    } else {
+      v.className = "verdict ok";
+      v.textContent = "✅ Les fonctions nécessaires sont présentes. Si CockpitProf échoue quand même, la cause est ailleurs (réseau, filtrage, fichier).";
+    }
+    var lines = ["DIAGNOSTIC PDF — " + new Date().toLocaleString("fr-FR"), "Navigateur : " + browserName(), "UA : " + ua, ""];
+    rows.forEach(function (r) { lines.push((r.ok ? "[OK] " : r.critical ? "[KO] " : "[--] ") + r.label); });
+    lines.push("", "Verdict : " + v.textContent);
+    document.getElementById("report").value = lines.join("\n");
+  }
+
+  document.getElementById("embedBtn").onclick = function () {
+    document.getElementById("embed").innerHTML =
+      '<iframe src="fiches/zone-de-chalandise.pdf" title="Aperçu PDF" style="width:100%;height:420px;border:1px solid #ddd5c4;border-radius:10px;margin-top:10px"></iframe>' +
+      '<p class="muted">Vous voyez la fiche ci-dessus ? Si la zone reste vide ou propose un téléchargement, la visionneuse intégrée est bloquée sur ce poste.</p>';
+  };
+
+  document.getElementById("copy").onclick = function () {
+    var ta = document.getElementById("report");
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) {}
+    if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(function () { ok = true; }, function () {});
+    document.getElementById("copied").textContent = "Copié ✔";
+  };
+})();
+</script>
+</body>
+</html>
